@@ -10,11 +10,10 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
-        /* FIX UTAMA: Kunci tinggi body agar pas 100% layar HP tanpa scroll window */
         html, body {
             height: 100%;
             width: 100%;
-            overflow: hidden; /* Mencegah scroll pada body */
+            overflow: hidden; 
             font-family: 'Segoe UI', sans-serif; 
             background-color: #f3f4f6;
             -webkit-user-select: none;
@@ -25,7 +24,6 @@
         .hide { display: none !important; }
         .show { display: flex !important; }
         
-        /* Container halaman menggunakan Dynamic Viewport Height (dvh) */
         .page-container {
             width: 100%; 
             height: 100dvh; 
@@ -48,6 +46,10 @@
         
         .category-btn.active {
             background-color: #2563eb; color: white; border-color: #2563eb;
+        }
+
+        .filter-btn.active {
+            background-color: #7e22ce; color: white; border-color: #7e22ce;
         }
         
         .receipt-paper {
@@ -120,7 +122,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">Connected to Firebase</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">Develope by Zii</p>
         </div>
     </div>
 
@@ -265,18 +267,36 @@
         </div>
     </div>
 
-    <!-- 4. DATABASE -->
+    <!-- 4. DATABASE (LAPORAN) - UPDATE FILTER UI -->
     <div id="view-database" class="page-container hide bg-white">
-        <div class="bg-purple-700 text-white p-4 shadow-md flex-none flex items-center justify-between z-10">
-            <div class="flex items-center gap-3">
-                <button onclick="navigate('view-lobby')" class="active:scale-90 transition p-2"><i class="fas fa-arrow-left text-xl"></i></button>
-                <h2 class="font-bold text-lg">Laporan Cloud</h2>
+        <!-- Header Laporan -->
+        <div class="bg-purple-800 text-white p-4 shadow-md flex-none z-10">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <button onclick="navigate('view-lobby')" class="active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
+                    <h2 class="font-bold text-lg">Laporan Penjualan</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] opacity-80" id="report-period-label">Total Omzet Hari Ini</p>
+                    <p class="font-bold text-lg" id="report-grand-total">Rp 0</p>
+                </div>
             </div>
-            <div class="text-right">
-                <p class="text-[10px] opacity-80">Omzet Total</p>
-                <p class="font-bold text-lg" id="report-grand-total">Rp 0</p>
+            
+            <!-- Toolbar Filter -->
+            <div class="flex gap-2 overflow-x-auto pb-1" id="report-filters">
+                <button onclick="window.setReportFilter('today')" class="filter-btn active px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Hari Ini</button>
+                <button onclick="window.setReportFilter('yesterday')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Kemarin</button>
+                <button onclick="window.setReportFilter('month')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Bulan Ini</button>
+                <div class="relative">
+                    <input type="date" id="custom-date-picker" onchange="window.setReportFilter('custom', this.value)" class="absolute opacity-0 w-full h-full cursor-pointer">
+                    <button class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap flex items-center gap-1">
+                        <i class="fas fa-calendar-alt"></i> Pilih Tanggal
+                    </button>
+                </div>
             </div>
         </div>
+
+        <!-- List Transaksi -->
         <div class="flex-1 overflow-y-auto p-2 bg-gray-50 pb-20" id="transaction-list">
              <div class="text-center mt-10 text-gray-400 text-xs"><i class="fas fa-circle-notch fa-spin"></i> Mengambil Data...</div>
         </div>
@@ -298,7 +318,6 @@
                     <span>HUTANG</span> <span class="text-[10px] font-normal">Bon/Credit</span>
                 </button>
             </div>
-             <!-- Actions: WA, Simpan, dan HAPUS (Fitur Baru) -->
              <div id="view-actions" class="p-4 bg-gray-50 border-t hidden flex flex-col gap-2">
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="window.sendToWA()" class="bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
@@ -341,6 +360,10 @@
         let currentViewedTrx = null;
         let calcValue = "0";
         let manualSessionCart = []; 
+        
+        // FILTER STATE
+        let reportFilterMode = 'today'; // today, yesterday, month, custom
+        let reportFilterDate = null; // untuk custom date string YYYY-MM-DD
 
         // LISTENER REALTIME
         const menuCol = collection(db, "menus");
@@ -370,7 +393,9 @@
 
             if(viewId === 'view-cashier') renderMenuGrid();
             if(viewId === 'view-admin') renderAdminList();
-            if(viewId === 'view-database') renderTransactions();
+            if(viewId === 'view-database') {
+                window.setReportFilter('today'); // Default view hari ini saat masuk
+            }
             
             if(viewId !== 'view-calculator') {
                 window.clearCalc();
@@ -389,6 +414,23 @@
             if(cat === 'tambahan') btns[4].classList.add('active');
 
             renderMenuGrid();
+        }
+
+        // --- FILTER LAPORAN LOGIC ---
+        window.setReportFilter = function(mode, customDateVal = null) {
+            reportFilterMode = mode;
+            if(customDateVal) reportFilterDate = customDateVal;
+
+            // Update UI Button Active State
+            const btns = document.getElementById('report-filters').querySelectorAll('button');
+            btns.forEach(btn => btn.classList.remove('active'));
+            
+            if(mode === 'today') btns[0].classList.add('active');
+            if(mode === 'yesterday') btns[1].classList.add('active');
+            if(mode === 'month') btns[2].classList.add('active');
+            if(mode === 'custom') btns[3].classList.add('active'); // Tombol kalender
+
+            renderTransactions();
         }
 
         // --- LOGIKA KALKULATOR ---
@@ -542,10 +584,8 @@
             }
         }
 
-        // FITUR BARU: HAPUS TRANSAKSI
         window.deleteTransaction = async function() {
             if(!currentViewedTrx) return;
-            
             Swal.fire({
                 title: 'Hapus Transaksi?',
                 text: "Data penjualan ini akan dihapus permanen.",
@@ -675,17 +715,68 @@
             });
         }
 
+        // --- UPDATE RENDER TRANSACTIONS DENGAN FILTER ---
         function renderTransactions() {
             const list = document.getElementById('transaction-list');
             const totalEl = document.getElementById('report-grand-total');
+            const labelEl = document.getElementById('report-period-label');
             list.innerHTML = '';
-            if(transactions.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">Belum ada data.</p>';
+            
+            // Logika Filter
+            const now = new Date();
+            let filteredTrx = transactions;
+            let filterLabel = "Semua Transaksi";
+
+            if (reportFilterMode === 'today') {
+                const todayStr = now.toLocaleDateString('id-ID');
+                filteredTrx = transactions.filter(t => {
+                    const d = new Date(t.timestamp).toLocaleDateString('id-ID');
+                    return d === todayStr;
+                });
+                filterLabel = "Omzet Hari Ini (" + todayStr + ")";
+            } 
+            else if (reportFilterMode === 'yesterday') {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yestStr = yesterday.toLocaleDateString('id-ID');
+                filteredTrx = transactions.filter(t => {
+                    const d = new Date(t.timestamp).toLocaleDateString('id-ID');
+                    return d === yestStr;
+                });
+                filterLabel = "Omzet Kemarin (" + yestStr + ")";
+            }
+            else if (reportFilterMode === 'month') {
+                const thisMonth = now.getMonth();
+                const thisYear = now.getFullYear();
+                filteredTrx = transactions.filter(t => {
+                    const d = new Date(t.timestamp);
+                    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+                });
+                filterLabel = "Omzet Bulan Ini (" + (thisMonth + 1) + "/" + thisYear + ")";
+            }
+            else if (reportFilterMode === 'custom' && reportFilterDate) {
+                // reportFilterDate format YYYY-MM-DD
+                // Convert to id-ID format D/M/YYYY for simple string compare or use date object
+                const selected = new Date(reportFilterDate);
+                const selStr = selected.toLocaleDateString('id-ID');
+                
+                filteredTrx = transactions.filter(t => {
+                    const d = new Date(t.timestamp).toLocaleDateString('id-ID');
+                    return d === selStr;
+                });
+                filterLabel = "Omzet Tanggal " + selStr;
+            }
+
+            labelEl.innerText = filterLabel;
+
+            if(filteredTrx.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">Tidak ada data di periode ini.</p>';
                 totalEl.innerText = 'Rp 0';
                 return;
             }
+
             let omzet = 0;
-            transactions.forEach(trx => {
+            filteredTrx.forEach(trx => {
                 omzet += trx.total;
                 const el = document.createElement('div');
                 const isDebt = trx.method === 'HUTANG';
@@ -749,7 +840,7 @@
                     <div class="receipt-dashed my-3"></div>
                     <div class="flex justify-between text-lg font-bold"><span>TOTAL</span><span>Rp ${total.toLocaleString('id-ID')}</span></div>
                     ${methodHTML}
-                    <div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div>
+                    <div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Lancar Rejekinya</div>
                 </div>
             `;
         }
@@ -759,7 +850,7 @@
             const trx = currentViewedTrx;
             let text = `*WARUNG MIEKOPIES*\nPelanggan: ${trx.buyer}\nTanggal: ${trx.date}\n----------------\n`;
             (trx.items || []).forEach(i => { text += `${i.name} (${i.qty}) : Rp ${(i.price * i.qty).toLocaleString('id-ID')}\n`; });
-            text += `----------------\n*TOTAL: Rp ${trx.total.toLocaleString('id-ID')}*\nMetode: ${trx.method}\n\nMatur Suksma!`;
+            text += `----------------\n*TOTAL: Rp ${trx.total.toLocaleString('id-ID')}*\nMetode: ${trx.method}\n\nLancar Terus Rejekinya!`;
             window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
         }
 
