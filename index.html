@@ -10,23 +10,33 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
-        body { 
+        /* FIX UTAMA: Kunci tinggi body agar pas 100% layar HP tanpa scroll window */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Mencegah scroll pada body */
             font-family: 'Segoe UI', sans-serif; 
-            background-color: #f3f4f6; 
-            overflow: hidden; 
+            background-color: #f3f4f6;
             -webkit-user-select: none;
             user-select: none;
             touch-action: manipulation;
         }
+
         .hide { display: none !important; }
         .show { display: flex !important; }
         
+        /* Container halaman menggunakan Dynamic Viewport Height (dvh) */
         .page-container {
             width: 100%; 
-            height: 100dvh; 
+            height: 100dvh; /* Tinggi menyesuaikan layar aktif (mengabaikan address bar browser) */
+            display: flex;
             flex-direction: column;
+            position: absolute; /* Pastikan menumpuk dengan benar */
+            top: 0; left: 0;
+            background-color: #f3f4f6;
             animation: fadeIn 0.3s ease-in-out;
         }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -53,7 +63,7 @@
             background-color: white;
             border: 1px solid #e5e7eb;
             border-radius: 0.75rem;
-            font-size: 1.5rem;
+            font-size: 1.25rem; /* Font agak diperkecil sedikit agar muat */
             font-weight: bold;
             color: #374151;
             display: flex;
@@ -71,15 +81,14 @@
 <body>
 
     <!-- 1. LOBBY -->
-    <div id="view-lobby" class="page-container show bg-gray-900">
-        <div class="flex-1 flex flex-col items-center justify-center p-6 text-white text-center">
-            <div class="mb-6">
+    <div id="view-lobby" class="page-container show bg-gray-900 z-50">
+        <div class="flex-1 flex flex-col items-center justify-center p-6 text-white text-center overflow-y-auto">
+            <div class="mb-6 flex-none">
                 <h1 class="text-3xl font-extrabold text-yellow-400 mb-1">WARUNG MIEKOPIES</h1>
                 <p class="text-gray-400 text-sm">Nusadua Bali • <span class="text-green-400 font-bold">ONLINE</span></p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 w-full max-w-sm">
-                <!-- Tombol Mulai Jualan -->
+            <div class="grid grid-cols-2 gap-3 w-full max-w-sm flex-none">
                 <button onclick="navigate('view-cashier')" class="col-span-2 bg-blue-600 hover:bg-blue-700 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left">
                     <div class="bg-blue-800 p-3 rounded-full w-10 h-10 flex items-center justify-center">
                         <i class="fas fa-cash-register text-lg"></i>
@@ -90,7 +99,6 @@
                     </div>
                 </button>
 
-                <!-- Tombol Kasir Manual -->
                 <button onclick="navigate('view-calculator')" class="col-span-2 bg-teal-600 hover:bg-teal-700 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left">
                     <div class="bg-teal-800 p-3 rounded-full w-10 h-10 flex items-center justify-center">
                         <i class="fas fa-calculator text-lg"></i>
@@ -112,16 +120,16 @@
                 </button>
             </div>
             
-            <p class="absolute bottom-5 text-xs text-gray-600">Connected to Firebase</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">Connected to Firebase</p>
         </div>
     </div>
 
     <!-- 2. KASIR (POS) -->
-    <div id="view-cashier" class="page-container hide bg-gray-50 flex flex-col h-screen">
-        <!-- Header -->
-        <div class="bg-white shadow-sm z-10 flex-none">
-            <div class="flex items-center justify-between px-4 py-3 border-b">
-                <button onclick="navigate('view-lobby')" class="text-gray-600 hover:text-gray-900 active:scale-90 transition">
+    <div id="view-cashier" class="page-container hide">
+        <!-- HEADER (Fixed Height) -->
+        <div class="bg-white shadow-sm z-10 flex-none w-full">
+            <div class="flex items-center justify-between px-4 py-2 border-b">
+                <button onclick="navigate('view-lobby')" class="text-gray-600 hover:text-gray-900 active:scale-90 transition p-2">
                     <i class="fas fa-home text-lg"></i>
                 </button>
                 <h2 class="font-bold text-gray-800 text-sm">Kasir Miekopies</h2>
@@ -138,86 +146,96 @@
             </div>
         </div>
 
-        <!-- Area Menu -->
-        <div class="flex-1 overflow-y-auto p-2 bg-gray-50" id="pos-menu-grid">
+        <!-- AREA MENU (Flexible, Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-2 bg-gray-50 relative" id="pos-menu-grid">
             <div id="loading-menu" class="text-center mt-10 text-gray-400 text-xs hidden">
                 <i class="fas fa-circle-notch fa-spin"></i> Memuat Menu...
             </div>
-            <div class="grid grid-cols-3 gap-2 pb-24" id="menu-grid-container"></div>
+            <!-- Padding bottom besar agar konten paling bawah tidak mepet -->
+            <div class="grid grid-cols-3 gap-2 pb-10" id="menu-grid-container"></div>
         </div>
 
-        <!-- Area Cart -->
-        <div class="bg-white border-t rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-20 flex-none h-[35dvh] flex flex-col relative">
-            <div class="p-3 border-b bg-gray-50 flex items-center gap-2">
+        <!-- AREA CART (Fixed Height 35%) -->
+        <div class="bg-white border-t rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-20 flex-none h-[35%] flex flex-col w-full">
+            <div class="p-2 border-b bg-gray-50 flex items-center gap-2 flex-none">
                 <i class="fas fa-user-circle text-gray-400 text-lg"></i>
-                <input type="text" id="buyer-name" placeholder="Nama Pelanggan..." class="flex-1 bg-transparent outline-none text-sm font-bold text-gray-700">
+                <input type="text" id="buyer-name" placeholder="Nama Pelanggan..." class="flex-1 bg-transparent outline-none text-sm font-bold text-gray-700 h-8">
                 <button onclick="window.clearCart()" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded hover:bg-red-100 border border-red-200 active:scale-95 transition">
                     <i class="fas fa-trash-alt mr-1"></i> Reset
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-4" id="cart-list">
-                <p class="text-center text-gray-400 text-xs mt-6 italic">Belum ada pesanan</p>
+            
+            <!-- List Belanja Scrollable -->
+            <div class="flex-1 overflow-y-auto p-3" id="cart-list">
+                <p class="text-center text-gray-400 text-xs mt-4 italic">Belum ada pesanan</p>
             </div>
-            <div class="p-4 pb-6 bg-gray-800 text-white flex justify-between items-center"> 
+
+            <!-- Footer Tombol Bayar (Fixed at Bottom of Cart) -->
+            <div class="p-3 bg-gray-800 text-white flex justify-between items-center flex-none pb-safe"> 
                 <div>
-                    <p class="text-xs text-gray-400">Total Tagihan</p>
-                    <p class="text-xl font-bold text-yellow-400" id="cart-total">Rp 0</p>
+                    <p class="text-[10px] text-gray-400">Total Tagihan</p>
+                    <p class="text-lg font-bold text-yellow-400" id="cart-total">Rp 0</p>
                 </div>
-                <button onclick="window.showBillPreview()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition transform active:scale-95 flex items-center gap-2">
-                    Bayar <i class="fas fa-chevron-right text-xs"></i>
+                <button onclick="window.showBillPreview()" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-lg font-bold shadow-lg transition transform active:scale-95 flex items-center gap-2 text-sm">
+                    Bayar <i class="fas fa-chevron-right text-[10px]"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 5. KASIR MANUAL (CALCULATOR UPDATE) -->
-    <div id="view-calculator" class="page-container hide bg-gray-100 flex flex-col h-screen">
-        <div class="bg-white p-4 shadow-sm flex items-center gap-3 flex-none">
-            <button onclick="navigate('view-lobby')" class="text-gray-600"><i class="fas fa-times text-xl"></i></button>
+    <!-- 5. KASIR MANUAL (CALCULATOR FIX) -->
+    <div id="view-calculator" class="page-container hide bg-gray-100">
+        <!-- Header -->
+        <div class="bg-white p-3 shadow-sm flex items-center gap-3 flex-none">
+            <button onclick="navigate('view-lobby')" class="text-gray-600 p-2"><i class="fas fa-times text-xl"></i></button>
             <h2 class="font-bold text-lg">Kasir Manual</h2>
         </div>
 
-        <!-- Area History & Input -->
-        <div class="flex-1 flex flex-col p-4 w-full overflow-hidden">
-            <!-- List History Manual -->
-            <div class="flex-1 overflow-y-auto mb-2 border-b border-gray-200 pb-2" id="manual-history-list">
-                <p class="text-center text-gray-400 text-xs mt-10">Belum ada item ditambahkan</p>
+        <!-- Container Utama (Mengisi sisa ruang) -->
+        <div class="flex-1 flex flex-col p-3 w-full overflow-hidden">
+            
+            <!-- List History Manual (Scrollable, mengambil sisa ruang) -->
+            <div class="flex-1 overflow-y-auto mb-2 border border-gray-200 bg-white rounded-lg p-2" id="manual-history-list">
+                <p class="text-center text-gray-400 text-xs mt-4">Belum ada item manual</p>
             </div>
 
-            <!-- Layar Display Input -->
-            <div class="bg-white p-4 rounded-xl shadow-sm mb-3 text-right border border-gray-200">
-                <p class="text-[10px] text-gray-400 mb-1">Input Harga Baru</p>
-                <div class="text-3xl font-bold text-gray-800" id="calc-display">0</div>
-            </div>
+            <!-- Area Input & Keypad (Fixed Height/Shrinkable but prioritize) -->
+            <div class="flex-none flex flex-col gap-2">
+                <!-- Layar Display -->
+                <div class="bg-white p-3 rounded-xl shadow-sm text-right border border-gray-200">
+                    <p class="text-[10px] text-gray-400">Input Harga Baru</p>
+                    <div class="text-3xl font-bold text-gray-800" id="calc-display">0</div>
+                </div>
 
-            <!-- Keypad Grid -->
-            <div class="grid grid-cols-4 gap-2 h-[40vh] flex-none">
-                <button onclick="appendCalc('7')" class="calc-btn">7</button>
-                <button onclick="appendCalc('8')" class="calc-btn">8</button>
-                <button onclick="appendCalc('9')" class="calc-btn">9</button>
-                <button onclick="clearCalc()" class="calc-btn text-red-500 bg-red-50 border-red-100">C</button>
+                <!-- Keypad -->
+                <div class="grid grid-cols-4 gap-2 h-[40vh] max-h-[300px]">
+                    <button onclick="appendCalc('7')" class="calc-btn">7</button>
+                    <button onclick="appendCalc('8')" class="calc-btn">8</button>
+                    <button onclick="appendCalc('9')" class="calc-btn">9</button>
+                    <button onclick="clearCalc()" class="calc-btn text-red-500 bg-red-50 border-red-100">C</button>
 
-                <button onclick="appendCalc('4')" class="calc-btn">4</button>
-                <button onclick="appendCalc('5')" class="calc-btn">5</button>
-                <button onclick="appendCalc('6')" class="calc-btn">6</button>
-                <button onclick="backspaceCalc()" class="calc-btn text-orange-500"><i class="fas fa-backspace"></i></button>
+                    <button onclick="appendCalc('4')" class="calc-btn">4</button>
+                    <button onclick="appendCalc('5')" class="calc-btn">5</button>
+                    <button onclick="appendCalc('6')" class="calc-btn">6</button>
+                    <button onclick="backspaceCalc()" class="calc-btn text-orange-500"><i class="fas fa-backspace"></i></button>
 
-                <button onclick="appendCalc('1')" class="calc-btn">1</button>
-                <button onclick="appendCalc('2')" class="calc-btn">2</button>
-                <button onclick="appendCalc('3')" class="calc-btn">3</button>
-                <!-- Tombol TAMBAH (Add to list) -->
-                <button onclick="addToManualList()" class="calc-btn row-span-2 bg-blue-100 text-blue-600 border-blue-200 hover:bg-blue-200 active:bg-blue-300 text-sm flex-col gap-1">
-                    <i class="fas fa-plus text-xl"></i>
-                    <span class="text-[10px]">TAMBAH</span>
-                </button>
+                    <button onclick="appendCalc('1')" class="calc-btn">1</button>
+                    <button onclick="appendCalc('2')" class="calc-btn">2</button>
+                    <button onclick="appendCalc('3')" class="calc-btn">3</button>
+                    
+                    <button onclick="addToManualList()" class="calc-btn row-span-2 bg-blue-100 text-blue-600 border-blue-200 hover:bg-blue-200 active:bg-blue-300 text-sm flex-col gap-1">
+                        <i class="fas fa-plus text-lg"></i>
+                        <span class="text-[10px]">ADD</span>
+                    </button>
 
-                <button onclick="appendCalc('0')" class="calc-btn col-span-2">0</button>
-                <button onclick="appendCalc('00')" class="calc-btn">00</button>
+                    <button onclick="appendCalc('0')" class="calc-btn col-span-2">0</button>
+                    <button onclick="appendCalc('00')" class="calc-btn">00</button>
+                </div>
             </div>
         </div>
 
-        <!-- Footer Tombol Masuk Keranjang -->
-        <div id="manual-footer" class="p-4 bg-white border-t flex-none hidden">
+        <!-- Footer Tombol Masuk Keranjang (Fixed Bottom) -->
+        <div id="manual-footer" class="p-3 bg-white border-t flex-none hidden pb-safe">
             <button onclick="finishManualSession()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg flex justify-between px-6 items-center active:scale-95 transition">
                 <span>Masuk Keranjang</span>
                 <span id="manual-total-display">Rp 0</span>
@@ -226,10 +244,10 @@
     </div>
 
     <!-- 3. KELOLA MENU -->
-    <div id="view-admin" class="page-container hide bg-gray-100 overflow-y-auto">
-        <div class="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center justify-between">
+    <div id="view-admin" class="page-container hide bg-gray-100">
+        <div class="bg-white p-4 shadow-sm z-10 flex-none flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <button onclick="navigate('view-lobby')" class="text-gray-600 active:scale-90 transition"><i class="fas fa-arrow-left text-xl"></i></button>
+                <button onclick="navigate('view-lobby')" class="text-gray-600 active:scale-90 transition p-2"><i class="fas fa-arrow-left text-xl"></i></button>
                 <h2 class="font-bold text-lg">Kelola Menu</h2>
             </div>
             <button onclick="window.seedDefaultMenus()" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded border border-blue-200">
@@ -237,7 +255,7 @@
             </button>
         </div>
 
-        <div class="p-4 max-w-lg mx-auto pb-20">
+        <div class="flex-1 overflow-y-auto p-4 pb-20">
             <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah Menu Baru</h3>
                 <div class="space-y-3">
@@ -264,10 +282,10 @@
     </div>
 
     <!-- 4. DATABASE -->
-    <div id="view-database" class="page-container hide bg-white flex flex-col">
-        <div class="bg-purple-700 text-white p-4 shadow-md flex items-center justify-between z-10">
+    <div id="view-database" class="page-container hide bg-white">
+        <div class="bg-purple-700 text-white p-4 shadow-md flex-none flex items-center justify-between z-10">
             <div class="flex items-center gap-3">
-                <button onclick="navigate('view-lobby')" class="active:scale-90 transition"><i class="fas fa-arrow-left text-xl"></i></button>
+                <button onclick="navigate('view-lobby')" class="active:scale-90 transition p-2"><i class="fas fa-arrow-left text-xl"></i></button>
                 <h2 class="font-bold text-lg">Laporan Cloud</h2>
             </div>
             <div class="text-right">
@@ -331,7 +349,6 @@
         let currentCategory = 'all';
         let currentViewedTrx = null;
         let calcValue = "0";
-        // STATE BARU: Cart Manual Sementara
         let manualSessionCart = []; 
 
         // LISTENER REALTIME
@@ -364,9 +381,7 @@
             if(viewId === 'view-admin') renderAdminList();
             if(viewId === 'view-database') renderTransactions();
             
-            // Reset manual saat keluar
             if(viewId !== 'view-calculator') {
-                // Jangan reset cart, tapi reset display input
                 window.clearCalc();
             }
         }
@@ -408,21 +423,11 @@
             document.getElementById('calc-display').innerText = num.toLocaleString('id-ID');
         }
 
-        // FUNGSI BARU: Tambah ke list sementara (belum ke cart utama)
         window.addToManualList = function() {
             const price = parseInt(calcValue);
             if(price <= 0) return;
-
-            // Tambah ke array sesi manual
-            manualSessionCart.push({
-                price: price,
-                id: Date.now()
-            });
-
-            // Reset input
+            manualSessionCart.push({ price: price, id: Date.now() });
             window.clearCalc();
-            
-            // Render ulang list history
             renderManualHistory();
         }
 
@@ -440,12 +445,9 @@
             let html = '';
             let total = 0;
             
-            // Render dari item terbaru di atas
             [...manualSessionCart].reverse().forEach((item, index) => {
                 total += item.price;
-                // Kita hitung index asli untuk hapus
                 const originalIndex = manualSessionCart.length - 1 - index;
-                
                 html += `
                     <div class="flex justify-between items-center bg-white p-2 mb-1 border-b border-gray-100 last:border-0">
                         <span class="text-sm text-gray-600">Item Manual #${manualSessionCart.length - index}</span>
@@ -467,14 +469,11 @@
             renderManualHistory();
         }
 
-        // FUNGSI BARU: Finalisasi masuk ke Cart Utama
         window.finishManualSession = function() {
             if(manualSessionCart.length === 0) return;
-
-            // Loop semua item manual dan masukkan ke cart global
             manualSessionCart.forEach(m => {
                 const manualItem = {
-                    id: 'manual_' + m.id, // ID unik
+                    id: 'manual_' + m.id, 
                     name: "Item Manual",
                     price: m.price,
                     qty: 1,
@@ -483,32 +482,19 @@
                 cart.push(manualItem);
             });
 
-            // Bersihkan sesi manual
             manualSessionCart = [];
             renderManualHistory();
             window.clearCalc();
-
-            // Pindah ke Kasir
             window.navigate('view-cashier');
             renderCart();
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Masuk Keranjang',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 1500
-            });
+            Swal.fire({icon: 'success', title: 'Masuk Keranjang', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500});
         }
 
-
         // --- LOGIKA KASIR ---
-
         window.addToCart = function(itemId) {
             const item = menus.find(m => m.id === itemId);
             if(!item) return;
-
             const existing = cart.find(c => c.id === item.id);
             if(existing) existing.qty++;
             else cart.push({ ...item, qty: 1 });
@@ -545,19 +531,13 @@
 
             try {
                 await addDoc(collection(db, "menus"), {
-                    name: name,
-                    price: parseInt(price),
-                    category: cat,
-                    icon: icon,
-                    color: color
+                    name: name, price: parseInt(price), category: cat, icon: icon, color: color
                 });
-                
                 document.getElementById('new-menu-name').value = '';
                 document.getElementById('new-menu-price').value = '';
                 Swal.fire({icon: 'success', title: 'Tersimpan di Cloud', timer: 1000, showConfirmButton: false});
             } catch (e) {
-                console.error(e);
-                Swal.fire('Error', 'Gagal simpan ke database. Cek koneksi.', 'error');
+                Swal.fire('Error', 'Gagal simpan ke database.', 'error');
             }
         }
 
@@ -574,24 +554,15 @@
         window.processPayment = async function(method) {
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
             const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
-            
             Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
-
             try {
                 await addDoc(collection(db, "transactions"), {
-                    buyer: buyer,
-                    items: cart,
-                    total: total,
-                    method: method,
-                    timestamp: Date.now(),
-                    date: new Date().toLocaleString('id-ID')
+                    buyer: buyer, items: cart, total: total, method: method, timestamp: Date.now(), date: new Date().toLocaleString('id-ID')
                 });
-
                 window.closeBillModal();
                 cart = [];
                 document.getElementById('buyer-name').value = '';
                 renderCart();
-
                 Swal.fire({icon: 'success', title: 'Transaksi Berhasil', timer: 1500, showConfirmButton: false});
             } catch (e) {
                 Swal.fire('Error', 'Gagal menyimpan transaksi', 'error');
@@ -606,7 +577,6 @@
                 { name: "Kopi Hitam", price: 5000, category: "minuman", icon: "fa-mug-hot", color: "bg-gray-200" },
                 { name: "Es Teh", price: 5000, category: "minuman", icon: "fa-glass-water", color: "bg-blue-100" }
             ];
-            
             Swal.fire({title: 'Mengupload...', didOpen: () => Swal.showLoading()});
             let batchPromises = defaultMenus.map(m => addDoc(collection(db, "menus"), m));
             await Promise.all(batchPromises);
@@ -617,14 +587,11 @@
         function renderMenuGrid() {
             const container = document.getElementById('menu-grid-container');
             container.innerHTML = '';
-            
             const filteredMenus = currentCategory === 'all' ? menus : menus.filter(m => m.category === currentCategory);
-
             if(filteredMenus.length === 0) {
                  container.innerHTML = '<p class="col-span-3 text-center text-gray-400 mt-10 text-xs">Kosong</p>';
                 return;
             }
-
             filteredMenus.forEach(item => {
                 const el = document.createElement('div');
                 el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer h-24 text-center transition active:scale-95`;
@@ -642,28 +609,22 @@
             const list = document.getElementById('cart-list');
             const totalEl = document.getElementById('cart-total');
             list.innerHTML = '';
-            
             if(cart.length === 0) {
                 list.innerHTML = '<p class="text-center text-gray-400 text-xs mt-6 italic">Belum ada pesanan</p>';
                 totalEl.innerText = 'Rp 0';
                 return;
             }
-
             let total = 0;
             cart.forEach((item, index) => {
                 const subtotal = item.price * item.qty;
                 total += subtotal;
                 const row = document.createElement('div');
                 row.className = 'flex justify-between items-center mb-2 bg-white p-2 rounded shadow-sm border border-gray-100';
-                
                 let itemNameHTML = ` <div class="font-bold text-xs text-gray-700">${item.name}</div>`;
                 if(item.isManual) itemNameHTML = ` <div class="font-bold text-xs text-teal-700"><i class="fas fa-edit mr-1"></i>${item.name}</div>`;
 
                 row.innerHTML = `
-                    <div>
-                        ${itemNameHTML}
-                        <div class="text-[10px] text-gray-500">${item.qty} x ${item.price.toLocaleString()}</div>
-                    </div>
+                    <div>${itemNameHTML}<div class="text-[10px] text-gray-500">${item.qty} x ${item.price.toLocaleString()}</div></div>
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-xs">Rp ${subtotal.toLocaleString()}</span>
                         <div class="flex items-center bg-gray-100 rounded">
@@ -680,28 +641,19 @@
         function renderAdminList() {
             const list = document.getElementById('admin-menu-list');
             list.innerHTML = '';
-            
             if(menus.length === 0) {
                 list.innerHTML = '<p class="text-center text-gray-400 text-sm">Belum ada menu.</p>';
                 return;
             }
-
             menus.forEach((item) => {
                 const row = document.createElement('div');
                 row.className = 'bg-white border rounded p-3 flex justify-between items-center shadow-sm mb-2';
                 row.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100">
-                            <i class="fas ${item.icon}"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-sm text-gray-800">${item.name}</div>
-                            <div class="text-xs text-gray-500">${item.category} • Rp ${item.price.toLocaleString()}</div>
-                        </div>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100"><i class="fas ${item.icon}"></i></div>
+                        <div><div class="font-bold text-sm text-gray-800">${item.name}</div><div class="text-xs text-gray-500">${item.category} • Rp ${item.price.toLocaleString()}</div></div>
                     </div>
-                    <button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95"><i class="fas fa-trash"></i></button>
                 `;
                 list.appendChild(row);
             });
@@ -711,38 +663,27 @@
             const list = document.getElementById('transaction-list');
             const totalEl = document.getElementById('report-grand-total');
             list.innerHTML = '';
-            
             if(transactions.length === 0) {
                 list.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">Belum ada data.</p>';
                 totalEl.innerText = 'Rp 0';
                 return;
             }
-
             let omzet = 0;
             transactions.forEach(trx => {
                 omzet += trx.total;
                 const el = document.createElement('div');
                 const isDebt = trx.method === 'HUTANG';
-                
                 el.onclick = () => window.viewTransactionDetail(trx.id);
                 el.className = `bg-white p-4 mb-3 rounded-lg shadow-sm border-l-4 ${isDebt ? 'border-red-500' : 'border-green-500'} cursor-pointer hover:bg-gray-50 transition active:bg-gray-100`;
-                
                 el.innerHTML = `
                     <div class="flex justify-between items-start mb-1">
-                        <div>
-                            <span class="font-bold text-gray-800 text-sm">${trx.buyer}</span>
-                            <span class="text-[10px] text-gray-400 block">${trx.date}</span>
-                        </div>
+                        <div><span class="font-bold text-gray-800 text-sm">${trx.buyer}</span><span class="text-[10px] text-gray-400 block">${trx.date}</span></div>
                         <span class="font-bold text-xs px-2 py-1 rounded ${isDebt ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">${trx.method}</span>
                     </div>
-                    <div class="flex justify-between items-end mt-2">
-                        <span class="text-xs text-gray-500">${trx.items ? trx.items.length : 0} Menu</span>
-                        <span class="font-bold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</span>
-                    </div>
+                    <div class="flex justify-between items-end mt-2"><span class="text-xs text-gray-500">${trx.items ? trx.items.length : 0} Menu</span><span class="font-bold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</span></div>
                 `;
                 list.appendChild(el);
             });
-
             totalEl.innerText = 'Rp ' + omzet.toLocaleString('id-ID');
         }
 
@@ -751,9 +692,7 @@
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
             const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
             const date = new Date().toLocaleString('id-ID');
-            
             document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date);
-            
             document.getElementById('payment-actions').classList.remove('hidden');
             document.getElementById('payment-actions').classList.add('grid');
             document.getElementById('view-actions').classList.add('hidden');
@@ -765,9 +704,7 @@
             const trx = transactions.find(t => t.id === trxId);
             if(!trx) return;
             currentViewedTrx = trx;
-            
             document.getElementById('bill-content').innerHTML = generateReceiptHTML(trx.buyer, trx.items, trx.total, trx.date, trx.method);
-            
             document.getElementById('payment-actions').classList.add('hidden');
             document.getElementById('payment-actions').classList.remove('grid');
             document.getElementById('view-actions').classList.remove('hidden');
@@ -786,38 +723,17 @@
                     <span>${(item.price * item.qty).toLocaleString('id-ID')}</span>
                 </div>
             `).join('');
-
-            let methodHTML = method ? `
-                <div class="receipt-dashed my-2"></div>
-                <div class="flex justify-between font-bold">
-                    <span>Metode:</span>
-                    <span class="${method === 'HUTANG' ? 'text-red-600' : 'text-green-600'}">${method}</span>
-                </div>
-            ` : '';
-
+            let methodHTML = method ? `<div class="receipt-dashed my-2"></div><div class="flex justify-between font-bold"><span>Metode:</span><span class="${method === 'HUTANG' ? 'text-red-600' : 'text-green-600'}">${method}</span></div>` : '';
             return `
                 <div class="p-2">
-                    <div class="text-center mb-4">
-                        <h2 class="font-bold text-lg uppercase tracking-wider">WARUNG MIEKOPIES</h2>
-                        <p class="text-xs text-gray-500">Nusadua Bali</p>
-                    </div>
+                    <div class="text-center mb-4"><h2 class="font-bold text-lg uppercase tracking-wider">WARUNG MIEKOPIES</h2><p class="text-xs text-gray-500">Nusadua Bali</p></div>
                     <div class="receipt-dashed mb-3"></div>
-                    <div class="flex justify-between text-xs mb-3 text-gray-500">
-                        <span>${date}</span>
-                        <span class="font-bold text-gray-800">${buyerName}</span>
-                    </div>
-                    <div class="space-y-1 text-sm text-gray-700">
-                        ${itemRows}
-                    </div>
+                    <div class="flex justify-between text-xs mb-3 text-gray-500"><span>${date}</span><span class="font-bold text-gray-800">${buyerName}</span></div>
+                    <div class="space-y-1 text-sm text-gray-700">${itemRows}</div>
                     <div class="receipt-dashed my-3"></div>
-                    <div class="flex justify-between text-lg font-bold">
-                        <span>TOTAL</span>
-                        <span>Rp ${total.toLocaleString('id-ID')}</span>
-                    </div>
+                    <div class="flex justify-between text-lg font-bold"><span>TOTAL</span><span>Rp ${total.toLocaleString('id-ID')}</span></div>
                     ${methodHTML}
-                    <div class="mt-6 text-center text-xs text-gray-400">
-                        Terima Kasih - Matur Suksma
-                    </div>
+                    <div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div>
                 </div>
             `;
         }
@@ -826,9 +742,7 @@
             if(!currentViewedTrx) return;
             const trx = currentViewedTrx;
             let text = `*WARUNG MIEKOPIES*\nPelanggan: ${trx.buyer}\nTanggal: ${trx.date}\n----------------\n`;
-            (trx.items || []).forEach(i => {
-                text += `${i.name} (${i.qty}) : Rp ${(i.price * i.qty).toLocaleString('id-ID')}\n`;
-            });
+            (trx.items || []).forEach(i => { text += `${i.name} (${i.qty}) : Rp ${(i.price * i.qty).toLocaleString('id-ID')}\n`; });
             text += `----------------\n*TOTAL: Rp ${trx.total.toLocaleString('id-ID')}*\nMetode: ${trx.method}\n\nMatur Suksma!`;
             window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
         }
@@ -848,7 +762,6 @@
                 });
             }, 500);
         }
-
     </script>
 </body>
 </html>
