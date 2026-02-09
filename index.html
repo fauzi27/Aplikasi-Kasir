@@ -22,7 +22,8 @@
         .show { display: flex !important; }
         
         .page-container {
-            width: 100%; height: 100vh;
+            width: 100%; 
+            height: 100dvh; 
             flex-direction: column;
             animation: fadeIn 0.3s ease-in-out;
         }
@@ -47,6 +48,24 @@
         .receipt-dashed {
             border-bottom: 2px dashed #cbd5e1;
         }
+
+        .calc-btn {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: transform 0.1s;
+        }
+        .calc-btn:active {
+            transform: scale(0.95);
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 <body>
@@ -54,40 +73,42 @@
     <!-- 1. LOBBY -->
     <div id="view-lobby" class="page-container show bg-gray-900">
         <div class="flex-1 flex flex-col items-center justify-center p-6 text-white text-center">
-            <div class="mb-8">
+            <div class="mb-6">
                 <h1 class="text-3xl font-extrabold text-yellow-400 mb-1">WARUNG MIEKOPIES</h1>
                 <p class="text-gray-400 text-sm">Nusadua Bali • <span class="text-green-400 font-bold">ONLINE</span></p>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 w-full max-w-sm">
-                <button onclick="navigate('view-cashier')" class="bg-blue-600 hover:bg-blue-700 p-5 rounded-xl shadow-lg flex items-center gap-4 transition transform active:scale-95 text-left">
-                    <div class="bg-blue-800 p-3 rounded-full w-12 h-12 flex items-center justify-center">
-                        <i class="fas fa-cash-register text-xl"></i>
+            <div class="grid grid-cols-2 gap-3 w-full max-w-sm">
+                <!-- Tombol Mulai Jualan -->
+                <button onclick="navigate('view-cashier')" class="col-span-2 bg-blue-600 hover:bg-blue-700 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left">
+                    <div class="bg-blue-800 p-3 rounded-full w-10 h-10 flex items-center justify-center">
+                        <i class="fas fa-cash-register text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg">Mulai Jualan</h3>
-                        <p class="text-xs text-blue-200">Buka Kasir</p>
+                        <h3 class="font-bold text-base">Mulai Jualan</h3>
+                        <p class="text-[10px] text-blue-200">Buka Kasir Menu</p>
                     </div>
                 </button>
 
-                <button onclick="navigate('view-database')" class="bg-purple-600 hover:bg-purple-700 p-5 rounded-xl shadow-lg flex items-center gap-4 transition transform active:scale-95 text-left">
-                    <div class="bg-purple-800 p-3 rounded-full w-12 h-12 flex items-center justify-center">
-                        <i class="fas fa-file-invoice text-xl"></i>
+                <!-- Tombol Kasir Manual -->
+                <button onclick="navigate('view-calculator')" class="col-span-2 bg-teal-600 hover:bg-teal-700 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left">
+                    <div class="bg-teal-800 p-3 rounded-full w-10 h-10 flex items-center justify-center">
+                        <i class="fas fa-calculator text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-lg">Laporan</h3>
-                        <p class="text-xs text-purple-200">Riwayat Transaksi Cloud</p>
+                        <h3 class="font-bold text-base">Kasir Manual</h3>
+                        <p class="text-[10px] text-teal-200">Input Harga Langsung</p>
                     </div>
                 </button>
 
-                <button onclick="navigate('view-admin')" class="bg-orange-600 hover:bg-orange-700 p-5 rounded-xl shadow-lg flex items-center gap-4 transition transform active:scale-95 text-left">
-                    <div class="bg-orange-800 p-3 rounded-full w-12 h-12 flex items-center justify-center">
-                        <i class="fas fa-utensils text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-lg">Menu Makanan</h3>
-                        <p class="text-xs text-orange-200">Tambah/Edit Produk</p>
-                    </div>
+                <button onclick="navigate('view-database')" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                    <i class="fas fa-file-invoice text-2xl mb-1"></i>
+                    <h3 class="font-bold text-sm">Laporan</h3>
+                </button>
+
+                <button onclick="navigate('view-admin')" class="bg-orange-600 hover:bg-orange-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                    <i class="fas fa-utensils text-2xl mb-1"></i>
+                    <h3 class="font-bold text-sm">Kelola Menu</h3>
                 </button>
             </div>
             
@@ -95,15 +116,18 @@
         </div>
     </div>
 
-    <!-- 2. KASIR -->
+    <!-- 2. KASIR (POS) -->
     <div id="view-cashier" class="page-container hide bg-gray-50 flex flex-col h-screen">
+        <!-- Header -->
         <div class="bg-white shadow-sm z-10 flex-none">
             <div class="flex items-center justify-between px-4 py-3 border-b">
                 <button onclick="navigate('view-lobby')" class="text-gray-600 hover:text-gray-900 active:scale-90 transition">
                     <i class="fas fa-home text-lg"></i>
                 </button>
                 <h2 class="font-bold text-gray-800 text-sm">Kasir Miekopies</h2>
-                <div class="w-6"></div> 
+                <button onclick="navigate('view-calculator')" class="text-teal-600 text-xs font-bold border border-teal-200 bg-teal-50 px-2 py-1 rounded">
+                    <i class="fas fa-calculator"></i>
+                </button>
             </div>
             <div class="flex gap-2 p-2 overflow-x-auto whitespace-nowrap bg-gray-100" id="category-tabs">
                 <button onclick="setCategory('all')" class="category-btn active px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition">Semua</button>
@@ -114,14 +138,16 @@
             </div>
         </div>
 
+        <!-- Area Menu -->
         <div class="flex-1 overflow-y-auto p-2 bg-gray-50" id="pos-menu-grid">
             <div id="loading-menu" class="text-center mt-10 text-gray-400 text-xs hidden">
                 <i class="fas fa-circle-notch fa-spin"></i> Memuat Menu...
             </div>
-            <div class="grid grid-cols-3 gap-2 pb-20" id="menu-grid-container"></div>
+            <div class="grid grid-cols-3 gap-2 pb-24" id="menu-grid-container"></div>
         </div>
 
-        <div class="bg-white border-t rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-20 flex-none h-[35vh] flex flex-col relative">
+        <!-- Area Cart -->
+        <div class="bg-white border-t rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] z-20 flex-none h-[35dvh] flex flex-col relative">
             <div class="p-3 border-b bg-gray-50 flex items-center gap-2">
                 <i class="fas fa-user-circle text-gray-400 text-lg"></i>
                 <input type="text" id="buyer-name" placeholder="Nama Pelanggan..." class="flex-1 bg-transparent outline-none text-sm font-bold text-gray-700">
@@ -132,7 +158,7 @@
             <div class="flex-1 overflow-y-auto p-4" id="cart-list">
                 <p class="text-center text-gray-400 text-xs mt-6 italic">Belum ada pesanan</p>
             </div>
-            <div class="p-4 bg-gray-800 text-white flex justify-between items-center"> 
+            <div class="p-4 pb-6 bg-gray-800 text-white flex justify-between items-center"> 
                 <div>
                     <p class="text-xs text-gray-400">Total Tagihan</p>
                     <p class="text-xl font-bold text-yellow-400" id="cart-total">Rp 0</p>
@@ -144,6 +170,61 @@
         </div>
     </div>
 
+    <!-- 5. KASIR MANUAL (CALCULATOR UPDATE) -->
+    <div id="view-calculator" class="page-container hide bg-gray-100 flex flex-col h-screen">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-3 flex-none">
+            <button onclick="navigate('view-lobby')" class="text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <h2 class="font-bold text-lg">Kasir Manual</h2>
+        </div>
+
+        <!-- Area History & Input -->
+        <div class="flex-1 flex flex-col p-4 w-full overflow-hidden">
+            <!-- List History Manual -->
+            <div class="flex-1 overflow-y-auto mb-2 border-b border-gray-200 pb-2" id="manual-history-list">
+                <p class="text-center text-gray-400 text-xs mt-10">Belum ada item ditambahkan</p>
+            </div>
+
+            <!-- Layar Display Input -->
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-3 text-right border border-gray-200">
+                <p class="text-[10px] text-gray-400 mb-1">Input Harga Baru</p>
+                <div class="text-3xl font-bold text-gray-800" id="calc-display">0</div>
+            </div>
+
+            <!-- Keypad Grid -->
+            <div class="grid grid-cols-4 gap-2 h-[40vh] flex-none">
+                <button onclick="appendCalc('7')" class="calc-btn">7</button>
+                <button onclick="appendCalc('8')" class="calc-btn">8</button>
+                <button onclick="appendCalc('9')" class="calc-btn">9</button>
+                <button onclick="clearCalc()" class="calc-btn text-red-500 bg-red-50 border-red-100">C</button>
+
+                <button onclick="appendCalc('4')" class="calc-btn">4</button>
+                <button onclick="appendCalc('5')" class="calc-btn">5</button>
+                <button onclick="appendCalc('6')" class="calc-btn">6</button>
+                <button onclick="backspaceCalc()" class="calc-btn text-orange-500"><i class="fas fa-backspace"></i></button>
+
+                <button onclick="appendCalc('1')" class="calc-btn">1</button>
+                <button onclick="appendCalc('2')" class="calc-btn">2</button>
+                <button onclick="appendCalc('3')" class="calc-btn">3</button>
+                <!-- Tombol TAMBAH (Add to list) -->
+                <button onclick="addToManualList()" class="calc-btn row-span-2 bg-blue-100 text-blue-600 border-blue-200 hover:bg-blue-200 active:bg-blue-300 text-sm flex-col gap-1">
+                    <i class="fas fa-plus text-xl"></i>
+                    <span class="text-[10px]">TAMBAH</span>
+                </button>
+
+                <button onclick="appendCalc('0')" class="calc-btn col-span-2">0</button>
+                <button onclick="appendCalc('00')" class="calc-btn">00</button>
+            </div>
+        </div>
+
+        <!-- Footer Tombol Masuk Keranjang -->
+        <div id="manual-footer" class="p-4 bg-white border-t flex-none hidden">
+            <button onclick="finishManualSession()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg flex justify-between px-6 items-center active:scale-95 transition">
+                <span>Masuk Keranjang</span>
+                <span id="manual-total-display">Rp 0</span>
+            </button>
+        </div>
+    </div>
+
     <!-- 3. KELOLA MENU -->
     <div id="view-admin" class="page-container hide bg-gray-100 overflow-y-auto">
         <div class="bg-white p-4 shadow-sm sticky top-0 z-10 flex items-center justify-between">
@@ -152,7 +233,7 @@
                 <h2 class="font-bold text-lg">Kelola Menu</h2>
             </div>
             <button onclick="window.seedDefaultMenus()" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded border border-blue-200">
-                <i class="fas fa-cloud-upload-alt"></i> Upload Menu Bawaan
+                <i class="fas fa-cloud-upload-alt"></i> Upload Default
             </button>
         </div>
 
@@ -231,7 +312,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // --- KONFIGURASI FIREBASE ANDA ---
         const firebaseConfig = {
             apiKey: "AIzaSyAWi2L7bJewUmTeR_SwGM0sdwjFLdOisCs",
             authDomain: "kasir-128a2.firebaseapp.com",
@@ -242,41 +322,35 @@
             measurementId: "G-NM9MSXY677"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // State Global
         let menus = [];
         let transactions = [];
         let cart = [];
         let currentCategory = 'all';
         let currentViewedTrx = null;
+        let calcValue = "0";
+        // STATE BARU: Cart Manual Sementara
+        let manualSessionCart = []; 
 
-        // --- REALTIME LISTENER MENUS ---
-        // Ini yang membuat HP A dan HP B sinkron otomatis
+        // LISTENER REALTIME
         const menuCol = collection(db, "menus");
         onSnapshot(menuCol, (snapshot) => {
             menus = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Render ulang jika sedang di halaman terkait
             if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
             if(!document.getElementById('view-admin').classList.contains('hide')) renderAdminList();
-            
-            // Hilangkan loading
             document.getElementById('loading-menu').classList.add('hidden');
         });
 
-        // --- REALTIME LISTENER TRANSACTIONS ---
         const trxCol = collection(db, "transactions");
         const qTrx = query(trxCol, orderBy("timestamp", "desc"));
         onSnapshot(qTrx, (snapshot) => {
             transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
             if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
         });
 
-        // --- EXPORT FUNCTION KE WINDOW AGAR BISA DIPANGGIL HTML ---
+        // --- GLOBAL WINDOW FUNCTIONS ---
         
         window.navigate = function(viewId) {
             document.querySelectorAll('.page-container').forEach(el => {
@@ -289,6 +363,12 @@
             if(viewId === 'view-cashier') renderMenuGrid();
             if(viewId === 'view-admin') renderAdminList();
             if(viewId === 'view-database') renderTransactions();
+            
+            // Reset manual saat keluar
+            if(viewId !== 'view-calculator') {
+                // Jangan reset cart, tapi reset display input
+                window.clearCalc();
+            }
         }
 
         window.setCategory = function(cat) {
@@ -304,6 +384,126 @@
 
             renderMenuGrid();
         }
+
+        // --- LOGIKA KALKULATOR UPDATE ---
+        window.appendCalc = function(val) {
+            if(calcValue === "0") calcValue = val;
+            else calcValue += val;
+            updateCalcDisplay();
+        }
+
+        window.clearCalc = function() {
+            calcValue = "0";
+            updateCalcDisplay();
+        }
+
+        window.backspaceCalc = function() {
+            if(calcValue.length > 1) calcValue = calcValue.slice(0, -1);
+            else calcValue = "0";
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            const num = parseInt(calcValue);
+            document.getElementById('calc-display').innerText = num.toLocaleString('id-ID');
+        }
+
+        // FUNGSI BARU: Tambah ke list sementara (belum ke cart utama)
+        window.addToManualList = function() {
+            const price = parseInt(calcValue);
+            if(price <= 0) return;
+
+            // Tambah ke array sesi manual
+            manualSessionCart.push({
+                price: price,
+                id: Date.now()
+            });
+
+            // Reset input
+            window.clearCalc();
+            
+            // Render ulang list history
+            renderManualHistory();
+        }
+
+        function renderManualHistory() {
+            const container = document.getElementById('manual-history-list');
+            const footer = document.getElementById('manual-footer');
+            const totalDisplay = document.getElementById('manual-total-display');
+            
+            if(manualSessionCart.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 text-xs mt-10">Belum ada item ditambahkan</p>';
+                footer.classList.add('hidden');
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+            
+            // Render dari item terbaru di atas
+            [...manualSessionCart].reverse().forEach((item, index) => {
+                total += item.price;
+                // Kita hitung index asli untuk hapus
+                const originalIndex = manualSessionCart.length - 1 - index;
+                
+                html += `
+                    <div class="flex justify-between items-center bg-white p-2 mb-1 border-b border-gray-100 last:border-0">
+                        <span class="text-sm text-gray-600">Item Manual #${manualSessionCart.length - index}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-gray-800">Rp ${item.price.toLocaleString('id-ID')}</span>
+                            <button onclick="window.removeManualItem(${originalIndex})" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            totalDisplay.innerText = 'Rp ' + total.toLocaleString('id-ID');
+            footer.classList.remove('hidden');
+        }
+
+        window.removeManualItem = function(index) {
+            manualSessionCart.splice(index, 1);
+            renderManualHistory();
+        }
+
+        // FUNGSI BARU: Finalisasi masuk ke Cart Utama
+        window.finishManualSession = function() {
+            if(manualSessionCart.length === 0) return;
+
+            // Loop semua item manual dan masukkan ke cart global
+            manualSessionCart.forEach(m => {
+                const manualItem = {
+                    id: 'manual_' + m.id, // ID unik
+                    name: "Item Manual",
+                    price: m.price,
+                    qty: 1,
+                    isManual: true
+                };
+                cart.push(manualItem);
+            });
+
+            // Bersihkan sesi manual
+            manualSessionCart = [];
+            renderManualHistory();
+            window.clearCalc();
+
+            // Pindah ke Kasir
+            window.navigate('view-cashier');
+            renderCart();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Masuk Keranjang',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+
+
+        // --- LOGIKA KASIR ---
 
         window.addToCart = function(itemId) {
             const item = menus.find(m => m.id === itemId);
@@ -328,7 +528,6 @@
             }
         }
 
-        // --- FUNGSI CLOUD: TAMBAH MENU ---
         window.addNewMenu = async function() {
             const name = document.getElementById('new-menu-name').value;
             const price = document.getElementById('new-menu-price').value;
@@ -362,28 +561,16 @@
             }
         }
 
-        // --- FUNGSI CLOUD: HAPUS MENU ---
         window.deleteMenu = async function(docId) {
-            Swal.fire({
-                title: 'Hapus Permanen?',
-                text: "Menu akan hilang dari semua perangkat",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Ya, Hapus'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        await deleteDoc(doc(db, "menus", docId));
-                        Swal.fire('Terhapus', 'Menu dihapus dari cloud', 'success');
-                    } catch (e) {
-                        Swal.fire('Error', 'Gagal menghapus', 'error');
-                    }
+            if(confirm('Hapus permanen menu ini?')) {
+                try {
+                    await deleteDoc(doc(db, "menus", docId));
+                } catch (e) {
+                    Swal.fire('Error', 'Gagal menghapus', 'error');
                 }
-            });
+            }
         }
 
-        // --- FUNGSI CLOUD: BAYAR ---
         window.processPayment = async function(method) {
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
             const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
@@ -405,13 +592,12 @@
                 document.getElementById('buyer-name').value = '';
                 renderCart();
 
-                Swal.fire({icon: 'success', title: 'Transaksi Berhasil', text: 'Data tersimpan di cloud', timer: 1500, showConfirmButton: false});
+                Swal.fire({icon: 'success', title: 'Transaksi Berhasil', timer: 1500, showConfirmButton: false});
             } catch (e) {
                 Swal.fire('Error', 'Gagal menyimpan transaksi', 'error');
             }
         }
 
-        // --- FUNGSI SEEDING DATA (Tombol Bantuan) ---
         window.seedDefaultMenus = async function() {
             const defaultMenus = [
                 { name: "Mie Goreng", price: 12000, category: "makanan", icon: "fa-utensils", color: "bg-orange-100" },
@@ -422,14 +608,12 @@
             ];
             
             Swal.fire({title: 'Mengupload...', didOpen: () => Swal.showLoading()});
-            
             let batchPromises = defaultMenus.map(m => addDoc(collection(db, "menus"), m));
             await Promise.all(batchPromises);
-            
             Swal.fire('Selesai', 'Menu bawaan berhasil diupload!', 'success');
         }
 
-        // --- RENDER FUNCTIONS ---
+        // RENDERERS
         function renderMenuGrid() {
             const container = document.getElementById('menu-grid-container');
             container.innerHTML = '';
@@ -437,18 +621,13 @@
             const filteredMenus = currentCategory === 'all' ? menus : menus.filter(m => m.category === currentCategory);
 
             if(filteredMenus.length === 0) {
-                if(menus.length === 0) {
-                     container.innerHTML = '<p class="col-span-3 text-center text-gray-400 mt-10 text-xs">Menu Kosong. Silakan ke menu Admin > Upload Menu Bawaan.</p>';
-                } else {
-                     container.innerHTML = '<p class="col-span-3 text-center text-gray-400 mt-10 text-xs">Tidak ada menu di kategori ini</p>';
-                }
+                 container.innerHTML = '<p class="col-span-3 text-center text-gray-400 mt-10 text-xs">Kosong</p>';
                 return;
             }
 
             filteredMenus.forEach(item => {
                 const el = document.createElement('div');
                 el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer h-24 text-center transition active:scale-95`;
-                // PENTING: Pass item.id string
                 el.onclick = () => window.addToCart(item.id);
                 el.innerHTML = `
                     <i class="fas ${item.icon || 'fa-utensils'} text-xl mb-1 text-gray-700 opacity-70"></i>
@@ -476,9 +655,13 @@
                 total += subtotal;
                 const row = document.createElement('div');
                 row.className = 'flex justify-between items-center mb-2 bg-white p-2 rounded shadow-sm border border-gray-100';
+                
+                let itemNameHTML = ` <div class="font-bold text-xs text-gray-700">${item.name}</div>`;
+                if(item.isManual) itemNameHTML = ` <div class="font-bold text-xs text-teal-700"><i class="fas fa-edit mr-1"></i>${item.name}</div>`;
+
                 row.innerHTML = `
                     <div>
-                        <div class="font-bold text-xs text-gray-700">${item.name}</div>
+                        ${itemNameHTML}
                         <div class="text-[10px] text-gray-500">${item.qty} x ${item.price.toLocaleString()}</div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -499,14 +682,13 @@
             list.innerHTML = '';
             
             if(menus.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-400 text-sm">Belum ada menu di database.</p>';
+                list.innerHTML = '<p class="text-center text-gray-400 text-sm">Belum ada menu.</p>';
                 return;
             }
 
             menus.forEach((item) => {
                 const row = document.createElement('div');
                 row.className = 'bg-white border rounded p-3 flex justify-between items-center shadow-sm mb-2';
-                // Pass Doc ID string
                 row.innerHTML = `
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100">
@@ -531,7 +713,7 @@
             list.innerHTML = '';
             
             if(transactions.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">Belum ada data transaksi.</p>';
+                list.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">Belum ada data.</p>';
                 totalEl.innerText = 'Rp 0';
                 return;
             }
@@ -564,7 +746,6 @@
             totalEl.innerText = 'Rp ' + omzet.toLocaleString('id-ID');
         }
 
-        // --- BILL / STRUK FUNCTIONS ---
         window.showBillPreview = function() {
             if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
