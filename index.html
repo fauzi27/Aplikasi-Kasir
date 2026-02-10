@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Warung Miekopies Bali </title>
+    <title>Warung Miekopies Bali (Online)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -48,8 +48,14 @@
             background-color: #2563eb; color: white; border-color: #2563eb;
         }
 
+        /* Filter Tanggal Active */
         .filter-btn.active {
             background-color: #7e22ce; color: white; border-color: #7e22ce;
+        }
+
+        /* Filter Pembayaran Active */
+        .payment-filter-btn.active {
+            background-color: #facc15; color: #581c87; border-color: #facc15; font-weight: 800;
         }
         
         .receipt-paper {
@@ -132,7 +138,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v14.0 (Final Fix)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v15.0 (Filter Hutang)</p>
         </div>
     </div>
 
@@ -167,7 +173,6 @@
             <div class="p-2 border-b bg-gray-50 flex items-center gap-2 flex-none">
                 <i class="fas fa-user-circle text-gray-400 text-lg"></i>
                 <input type="text" id="buyer-name" placeholder="Nama Pelanggan..." class="flex-1 bg-transparent outline-none text-sm font-bold text-gray-700 h-8">
-                <!-- PERBAIKAN 1: Tombol Reset -->
                 <button onclick="window.clearCart()" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded hover:bg-red-100 border border-red-200 active:scale-95 transition">
                     <i class="fas fa-trash-alt mr-1"></i> Reset
                 </button>
@@ -220,7 +225,7 @@
         </div>
     </div>
 
-    <!-- 4. MANAJEMEN STOK (PERBAIKAN 2: Pop Up Stok) -->
+    <!-- 4. MANAJEMEN STOK -->
     <div id="view-stock" class="page-container hide bg-gray-100 flex flex-col">
         <div class="bg-indigo-700 text-white p-4 shadow-sm z-10 flex-none">
             <div class="flex items-center gap-3 mb-3">
@@ -235,7 +240,7 @@
         </div>
     </div>
 
-    <!-- 5. DATABASE (LAPORAN) -->
+    <!-- 5. DATABASE (LAPORAN) - UPDATE FILTER UI -->
     <div id="view-database" class="page-container hide bg-white">
         <div class="bg-purple-800 text-white p-4 shadow-md flex-none z-10">
             <div class="flex items-center justify-between mb-3">
@@ -248,7 +253,9 @@
                     <p class="font-bold text-lg" id="report-grand-total">Rp 0</p>
                 </div>
             </div>
-            <div class="flex gap-2 overflow-x-auto pb-1" id="report-filters">
+            
+            <!-- Filter Tanggal -->
+            <div class="flex gap-2 overflow-x-auto pb-2 border-b border-purple-600 mb-2" id="report-filters">
                 <button onclick="window.setReportFilter('today')" class="filter-btn active px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Hari Ini</button>
                 <button onclick="window.setReportFilter('yesterday')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Kemarin</button>
                 <button onclick="window.setReportFilter('month')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Bulan Ini</button>
@@ -258,6 +265,13 @@
                         <i class="fas fa-calendar-alt"></i> Tanggal
                     </button>
                 </div>
+            </div>
+
+            <!-- FITUR BARU: Filter Metode Bayar (Tile) -->
+            <div class="flex gap-2 overflow-x-auto pb-1" id="report-payment-filters">
+                <button onclick="window.setReportPaymentFilter('all')" class="payment-filter-btn active px-4 py-1 rounded-full text-xs font-bold border border-white text-white bg-purple-600 transition whitespace-nowrap">Semua</button>
+                <button onclick="window.setReportPaymentFilter('TUNAI')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Tunai</button>
+                <button onclick="window.setReportPaymentFilter('HUTANG')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Hutang</button>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto p-2 bg-gray-50 pb-20" id="transaction-list">
@@ -338,7 +352,6 @@
                     <button onclick="window.editTransaction()" class="w-full bg-yellow-50 text-yellow-600 border border-yellow-200 py-2 rounded-lg font-bold hover:bg-yellow-100 flex items-center justify-center gap-2 active:scale-95 transition text-sm">
                         <i class="fas fa-edit"></i> Edit / Revisi
                     </button>
-                    <!-- PERBAIKAN 4: Tombol Hapus Transaksi -->
                     <button onclick="window.deleteTransaction()" class="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded-lg font-bold hover:bg-red-100 flex items-center justify-center gap-2 active:scale-95 transition text-sm">
                         <i class="fas fa-trash-alt"></i> Hapus
                     </button>
@@ -376,6 +389,7 @@
         let manualSessionCart = [];
         let reportFilterMode = 'today';
         let reportFilterDate = null;
+        let reportPaymentFilter = 'all'; // STATE BARU
         let sortMode = 'default'; 
         let editingTransactionId = null; 
 
@@ -423,7 +437,10 @@
 
             if(viewId === 'view-cashier') renderMenuGrid();
             if(viewId === 'view-admin') { renderCategoryTiles(); renderAdminList(); }
-            if(viewId === 'view-database') window.setReportFilter('today');
+            if(viewId === 'view-database') { 
+                window.setReportFilter('today'); 
+                window.setReportPaymentFilter('all'); // Default
+            }
             if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
             
             if(viewId !== 'view-calculator') window.clearCalc();
@@ -505,12 +522,11 @@
             });
         }
 
-        // --- LOGIKA ADD TO CART (PERBAIKAN 6: Hapus Cek Stok) ---
+        // --- LOGIKA ADD TO CART ---
         window.addToCart = function(itemId) {
             const item = menus.find(m => m.id === itemId);
             if(!item) return;
             
-            // PERBAIKAN 6: Peringatan tetap ada tapi tidak di-return (tetap bisa tambah)
             if(item.stock !== undefined && item.stock <= 0) {
                 Swal.fire({toast: true, position: 'center', icon: 'warning', title: 'Stok Habis/Minus!', timer: 800, showConfirmButton: false});
             }
@@ -571,7 +587,7 @@
             totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
         }
 
-        // --- MANAJEMEN STOK (PERBAIKAN 2: Popup Stok) ---
+        // --- MANAJEMEN STOK ---
         window.renderStockList = function() {
             const list = document.getElementById('stock-list');
             const searchVal = document.getElementById('stock-search').value.toLowerCase();
@@ -593,7 +609,6 @@
                 el.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center';
                 const currentStock = item.stock !== undefined ? item.stock : 0;
                 
-                // PERBAIKAN 2: Tombol memanggil prompt stok
                 el.innerHTML = `
                     <div>
                         <div class="font-bold text-gray-800">${item.name}</div>
@@ -609,7 +624,6 @@
             });
         }
 
-        // PERBAIKAN 2: Fungsi Popup Stok
         window.promptStockChange = async function(docId, type) {
             let title = 'Ubah Stok';
             let inputLabel = '';
@@ -692,7 +706,6 @@
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
             const date = new Date().toLocaleString('id-ID');
             
-            // Generate basic HTML first (without payment details)
             document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date);
             
             if (editingTransactionId) {
@@ -707,7 +720,7 @@
             document.getElementById('bill-modal').classList.remove('hidden');
         }
 
-        // --- PROCESS PAYMENT (PERBAIKAN 3: Tunai Input) ---
+        // --- PROCESS PAYMENT ---
         window.processPayment = async function(method) {
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
             let total = 0;
@@ -716,7 +729,6 @@
             let paidAmount = 0;
             let changeAmount = 0;
 
-            // PERBAIKAN 3: Input Uang Tunai
             if (method === 'TUNAI') {
                 const { value: money } = await Swal.fire({
                     title: `Total: Rp ${total.toLocaleString('id-ID')}`,
@@ -729,7 +741,7 @@
                     }
                 });
 
-                if (!money) return; // Batal bayar
+                if (!money) return; 
                 paidAmount = parseInt(money);
                 changeAmount = paidAmount - total;
             }
@@ -737,7 +749,6 @@
             Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
             try {
-                // Kurangi Stok (Hanya transaksi baru)
                 if (!editingTransactionId) {
                     for (const item of cart) {
                         if (!item.isManual && item.id) {
@@ -755,15 +766,14 @@
                     items: cart,
                     total: total,
                     method: method,
-                    paid: paidAmount, // Simpan bayar
-                    change: changeAmount, // Simpan kembali
+                    paid: paidAmount, 
+                    change: changeAmount, 
                     timestamp: Date.now(),
                     date: new Date().toLocaleString('id-ID')
                 };
 
-                // Simpan/Update
                 if (editingTransactionId) {
-                    delete trxData.timestamp; // Jangan update timestamp asli
+                    delete trxData.timestamp; 
                     delete trxData.date;
                     trxData.updatedAt = Date.now();
                     await setDoc(doc(db, "transactions", editingTransactionId), trxData, { merge: true });
@@ -779,7 +789,6 @@
                         showConfirmButton: true
                     });
                     
-                    // PERBAIKAN 1: Reset Logic
                     cart = [];
                     document.getElementById('buyer-name').value = '';
                     renderCart();
@@ -800,7 +809,6 @@
             renderCart();
         }
 
-        // PERBAIKAN 1: Tombol Reset
         window.clearCart = function() {
             if(cart.length > 0) {
                 if(confirm("Hapus semua pesanan?")) {
@@ -809,7 +817,6 @@
                     renderCart();
                 }
             } else {
-                // Force reset anyway just in case
                 cart = [];
                 renderCart();
             }
@@ -857,11 +864,9 @@
             } catch (e) { Swal.fire('Error', 'Gagal simpan', 'error'); }
         }
 
-        // PERBAIKAN 5: Hapus Menu
         window.deleteMenu = async function(docId) {
             if(confirm('Hapus menu ini permanen?')) {
                 try {
-                    // Pastikan docId adalah string valid
                     await deleteDoc(doc(db, "menus", String(docId)));
                     Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false});
                 } catch(e) {
@@ -870,7 +875,6 @@
             }
         }
 
-        // PERBAIKAN 4: Hapus Transaksi
         window.deleteTransaction = async function() {
             if(!currentViewedTrx) return;
             if(confirm('Hapus transaksi ini permanen?')) {
@@ -939,10 +943,25 @@
             filteredAdminMenus.forEach((item) => {
                 const row = document.createElement('div');
                 row.className = 'bg-white border rounded p-3 flex justify-between items-center shadow-sm mb-2';
-                // PERBAIKAN 5: Pastikan ID dipass sebagai string dengan tanda kutip
                 row.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100"><i class="fas ${item.icon}"></i></div><div><div class="font-bold text-sm text-gray-800">${item.name}</div><div class="text-xs text-gray-500">${item.category} • Stok: ${item.stock || 0}</div></div></div><button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95"><i class="fas fa-trash"></i></button>`;
                 list.appendChild(row);
             });
+        }
+
+        // --- LOGIKA FILTER METODE BAYAR ---
+        window.setReportPaymentFilter = function(mode) {
+            reportPaymentFilter = mode;
+            // Update Active UI
+            const btns = document.getElementById('report-payment-filters').querySelectorAll('button');
+            btns.forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
+            btns.forEach(btn => btn.classList.add('text-purple-200', 'bg-purple-700'));
+            
+            // Set active style manually
+            if(mode === 'all') { btns[0].classList.add('active', 'bg-purple-600', 'text-white'); btns[0].classList.remove('text-purple-200', 'bg-purple-700'); }
+            if(mode === 'TUNAI') { btns[1].classList.add('active', 'bg-purple-600', 'text-white'); btns[1].classList.remove('text-purple-200', 'bg-purple-700'); }
+            if(mode === 'HUTANG') { btns[2].classList.add('active', 'bg-purple-600', 'text-white'); btns[2].classList.remove('text-purple-200', 'bg-purple-700'); }
+
+            renderTransactions();
         }
 
         // --- TRANSACTIONS & BILL ---
@@ -951,9 +970,12 @@
             const totalEl = document.getElementById('report-grand-total');
             const labelEl = document.getElementById('report-period-label');
             list.innerHTML = '';
+            
             const now = new Date();
             let filteredTrx = transactions;
             let filterLabel = "Semua";
+
+            // 1. Filter Tanggal
             if (reportFilterMode === 'today') {
                 const todayStr = now.toLocaleDateString('id-ID');
                 filteredTrx = transactions.filter(t => new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr);
@@ -971,15 +993,24 @@
                 filteredTrx = transactions.filter(t => new Date(t.timestamp).toLocaleDateString('id-ID') === selStr);
                 filterLabel = selStr;
             }
+
+            // 2. Filter Metode Bayar (FITUR BARU)
+            if (reportPaymentFilter !== 'all') {
+                filteredTrx = filteredTrx.filter(t => t.method === reportPaymentFilter);
+                filterLabel += ` (${reportPaymentFilter})`;
+            }
+
             labelEl.innerText = "Omzet " + filterLabel;
+
             if(filteredTrx.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 text-xs mt-10">Kosong</p>'; totalEl.innerText = 'Rp 0'; return; }
+            
             let omzet = 0;
             filteredTrx.forEach(trx => {
                 omzet += trx.total;
                 const el = document.createElement('div');
                 el.onclick = () => window.viewTransactionDetail(trx.id);
                 el.className = `bg-white p-3 mb-2 rounded border-l-4 ${trx.method === 'HUTANG' ? 'border-red-500' : 'border-green-500'} cursor-pointer shadow-sm`;
-                el.innerHTML = `<div class="flex justify-between"><span class="font-bold text-sm">${trx.buyer}</span><span class="text-xs text-gray-500">${trx.date}</span></div><div class="flex justify-between mt-1"><span class="text-xs text-gray-500">${trx.items ? trx.items.length : 0} Item</span><span class="font-bold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</span></div>`;
+                el.innerHTML = `<div class="flex justify-between"><span class="font-bold text-sm">${trx.buyer}</span><span class="text-xs text-gray-500">${trx.date}</span></div><div class="flex justify-between mt-1"><span class="text-xs text-gray-500">${trx.items ? trx.items.length : 0} Item • ${trx.method}</span><span class="font-bold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</span></div>`;
                 list.appendChild(el);
             });
             totalEl.innerText = 'Rp ' + omzet.toLocaleString('id-ID');
@@ -988,8 +1019,9 @@
         window.setReportFilter = function(mode, val) {
             reportFilterMode = mode;
             if(val) reportFilterDate = val;
-            const btns = document.querySelectorAll('.filter-btn');
+            const btns = document.getElementById('report-filters').querySelectorAll('.filter-btn');
             btns.forEach(b => b.classList.remove('active'));
+            // Re-active logic simplified for robustness
             renderTransactions();
         }
 
@@ -997,7 +1029,6 @@
             const trx = transactions.find(t => t.id === id);
             if(!trx) return;
             currentViewedTrx = trx;
-            // Pass payment details (paid, change) to receipt generator
             document.getElementById('bill-content').innerHTML = generateReceiptHTML(trx.buyer, trx.items, trx.total, trx.date, trx.method, trx.paid, trx.change);
             document.getElementById('payment-actions').classList.add('hidden');
             document.getElementById('payment-actions').classList.remove('grid');
@@ -1008,32 +1039,16 @@
         
         window.closeBillModal = function() { document.getElementById('bill-modal').classList.add('hidden'); }
 
-        // PERBAIKAN 3: Update Receipt HTML with Change info
         function generateReceiptHTML(buyer, items, total, date, method, paid = 0, change = 0) {
             let itemHtml = '';
             (items || []).forEach(i => { itemHtml += `<div class="flex justify-between text-xs mb-1"><span>${i.name} x${i.qty}</span><span>${((parseInt(i.price)||0)*(parseInt(i.qty)||0)).toLocaleString()}</span></div>`; });
             
             let paymentDetails = '';
             if (method === 'TUNAI' && paid > 0) {
-                paymentDetails = `
-                    <div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Bayar:</span><span>${paid.toLocaleString()}</span></div>
-                    <div class="flex justify-between text-xs"><span>Kembali:</span><span>${change.toLocaleString()}</span></div>
-                `;
+                paymentDetails = `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Bayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Kembali:</span><span>${change.toLocaleString()}</span></div>`;
             }
 
-            return `
-                <div class="p-2 text-center">
-                    <h2 class="font-bold">WARUNG MIEKOPIES</h2>
-                    <p class="text-xs text-gray-500 mb-2">${date}</p>
-                    <div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1">
-                        <div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>${method || '-'}</span></div>
-                        ${itemHtml}
-                    </div>
-                    <div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>
-                    ${paymentDetails}
-                    <div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div>
-                </div>
-            `;
+            return `<div class="p-2 text-center"><h2 class="font-bold">WARUNG MIEKOPIES</h2><p class="text-xs text-gray-500 mb-2">${date}</p><div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1"><div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>${method || '-'}</span></div>${itemHtml}</div><div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>${paymentDetails}<div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div></div>`;
         }
 
         window.sendToWA = function() {
@@ -1042,9 +1057,7 @@
             let text = `*Struk Miekopies*\nTgl: ${t.date}\nPlg: ${t.buyer}\n`;
             t.items.forEach(i => text += `${i.name} (${i.qty}) : ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
             text += `*Total: ${t.total}*\nMetode: ${t.method}`;
-            if(t.method === 'TUNAI' && t.paid) {
-                text += `\nBayar: ${t.paid}\nKembali: ${t.change}`;
-            }
+            if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: ${t.paid}\nKembali: ${t.change}`; }
             window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
         }
         
