@@ -48,12 +48,10 @@
             background-color: #2563eb; color: white; border-color: #2563eb;
         }
 
-        /* Filter Tanggal Active */
         .filter-btn.active {
             background-color: #7e22ce; color: white; border-color: #7e22ce;
         }
 
-        /* Filter Pembayaran Active */
         .payment-filter-btn.active {
             background-color: #facc15; color: #581c87; border-color: #facc15; font-weight: 800;
         }
@@ -138,7 +136,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v15.0 (Filter Hutang)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v16.0 (Export & Sort)</p>
         </div>
     </div>
 
@@ -192,19 +190,26 @@
         </div>
     </div>
 
-    <!-- 3. KELOLA MENU (ADMIN) -->
+    <!-- 3. KELOLA MENU (ADMIN) - UPDATE: SEARCH & SORT -->
     <div id="view-admin" class="page-container hide bg-gray-100">
-        <div class="bg-white p-4 shadow-sm z-10 flex-none flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <button onclick="navigate('view-lobby')" class="text-gray-600 active:scale-90 transition p-2"><i class="fas fa-arrow-left text-xl"></i></button>
-                <h2 class="font-bold text-lg">Kelola Menu</h2>
+        <div class="bg-white p-4 shadow-sm z-10 flex-none flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <button onclick="navigate('view-lobby')" class="text-gray-600 active:scale-90 transition p-2"><i class="fas fa-arrow-left text-xl"></i></button>
+                    <h2 class="font-bold text-lg">Kelola Menu</h2>
+                </div>
+                <!-- Tombol Sortir Admin -->
+                <button onclick="window.toggleAdminSort()" class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded border border-gray-300 flex items-center gap-1 font-bold">
+                    <i class="fas fa-sort-amount-down"></i> <span id="admin-sort-label">A-Z</span>
+                </button>
             </div>
-            <button onclick="window.seedDefaultMenus()" class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded border border-blue-200">
-                <i class="fas fa-cloud-upload-alt"></i> Default
-            </button>
+            
+            <!-- FITUR BARU: SEARCH BAR ADMIN -->
+            <input type="text" id="admin-search" onkeyup="window.renderAdminList()" placeholder="Cari menu untuk diedit/hapus..." class="w-full p-2 rounded text-gray-800 text-sm outline-none border border-gray-200 bg-gray-50">
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 pb-20">
+            <!-- Form Tambah -->
             <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah / Edit Menu</h3>
                 <div class="flex gap-2 overflow-x-auto mb-3 pb-1" id="admin-cat-tiles"></div>
@@ -220,17 +225,28 @@
                     </button>
                 </div>
             </div>
-            <h3 class="font-bold text-gray-600 text-xs mb-2 px-1">Daftar Menu (Filter: <span id="admin-filter-label">Semua</span>)</h3>
+            
+            <!-- List Menu -->
+            <div class="flex justify-between items-end mb-2 px-1">
+                <h3 class="font-bold text-gray-600 text-xs">Daftar Menu (Filter: <span id="admin-filter-label">Semua</span>)</h3>
+                <button onclick="window.seedDefaultMenus()" class="text-[10px] text-blue-500 underline">Upload Default</button>
+            </div>
             <div class="space-y-2" id="admin-menu-list"></div>
         </div>
     </div>
 
-    <!-- 4. MANAJEMEN STOK -->
+    <!-- 4. MANAJEMEN STOK (UPDATE: SORTIR) -->
     <div id="view-stock" class="page-container hide bg-gray-100 flex flex-col">
         <div class="bg-indigo-700 text-white p-4 shadow-sm z-10 flex-none">
-            <div class="flex items-center gap-3 mb-3">
-                <button onclick="navigate('view-lobby')" class="text-white active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
-                <h2 class="font-bold text-lg">Manajemen Stok</h2>
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <button onclick="navigate('view-lobby')" class="text-white active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
+                    <h2 class="font-bold text-lg">Manajemen Stok</h2>
+                </div>
+                <!-- Tombol Sortir Stok -->
+                <button onclick="window.toggleStockSort()" class="text-xs bg-indigo-800 text-white px-3 py-1 rounded border border-indigo-500 flex items-center gap-1 font-bold">
+                    <i class="fas fa-sort"></i> <span id="stock-sort-label">A-Z</span>
+                </button>
             </div>
             <input type="text" id="stock-search" onkeyup="window.renderStockList()" placeholder="Cari nama menu..." class="w-full p-2 rounded text-gray-800 text-sm outline-none mb-2">
             <div class="flex gap-2 overflow-x-auto pb-1" id="stock-cat-tiles"></div>
@@ -240,7 +256,7 @@
         </div>
     </div>
 
-    <!-- 5. DATABASE (LAPORAN) - UPDATE FILTER UI -->
+    <!-- 5. DATABASE (LAPORAN) - UPDATE: EXPORT BUTTON -->
     <div id="view-database" class="page-container hide bg-white">
         <div class="bg-purple-800 text-white p-4 shadow-md flex-none z-10">
             <div class="flex items-center justify-between mb-3">
@@ -254,7 +270,6 @@
                 </div>
             </div>
             
-            <!-- Filter Tanggal -->
             <div class="flex gap-2 overflow-x-auto pb-2 border-b border-purple-600 mb-2" id="report-filters">
                 <button onclick="window.setReportFilter('today')" class="filter-btn active px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Hari Ini</button>
                 <button onclick="window.setReportFilter('yesterday')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Kemarin</button>
@@ -267,11 +282,17 @@
                 </div>
             </div>
 
-            <!-- FITUR BARU: Filter Metode Bayar (Tile) -->
-            <div class="flex gap-2 overflow-x-auto pb-1" id="report-payment-filters">
-                <button onclick="window.setReportPaymentFilter('all')" class="payment-filter-btn active px-4 py-1 rounded-full text-xs font-bold border border-white text-white bg-purple-600 transition whitespace-nowrap">Semua</button>
-                <button onclick="window.setReportPaymentFilter('TUNAI')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Tunai</button>
-                <button onclick="window.setReportPaymentFilter('HUTANG')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Hutang</button>
+            <!-- Baris Filter Payment & Export -->
+            <div class="flex justify-between items-center gap-2 pb-1">
+                <div class="flex gap-2 overflow-x-auto" id="report-payment-filters">
+                    <button onclick="window.setReportPaymentFilter('all')" class="payment-filter-btn active px-3 py-1 rounded-full text-xs font-bold border border-white text-white bg-purple-600 transition whitespace-nowrap">Semua</button>
+                    <button onclick="window.setReportPaymentFilter('TUNAI')" class="payment-filter-btn px-3 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Tunai</button>
+                    <button onclick="window.setReportPaymentFilter('HUTANG')" class="payment-filter-btn px-3 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Hutang</button>
+                </div>
+                <!-- FITUR BARU: TOMBOL EXPORT -->
+                <button onclick="window.exportReportToCSV()" class="px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white border border-green-400 hover:bg-green-600 flex items-center gap-1 shadow-sm whitespace-nowrap">
+                    <i class="fas fa-file-excel"></i> Export
+                </button>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto p-2 bg-gray-50 pb-20" id="transaction-list">
@@ -382,6 +403,7 @@
         let menus = [];
         let categories = []; 
         let transactions = [];
+        let filteredTransactions = []; // Menyimpan hasil filter untuk export
         let cart = [];
         let currentCategory = 'all';
         let currentViewedTrx = null;
@@ -389,8 +411,13 @@
         let manualSessionCart = [];
         let reportFilterMode = 'today';
         let reportFilterDate = null;
-        let reportPaymentFilter = 'all'; // STATE BARU
+        let reportPaymentFilter = 'all';
+        
+        // Sorting States
         let sortMode = 'default'; 
+        let adminSortMode = 'name_asc'; // name_asc, price_high, price_low
+        let stockSortMode = 'name_asc'; // name_asc, stock_low, stock_high
+        
         let editingTransactionId = null; 
 
         // --- FETCH KATEGORI ---
@@ -439,7 +466,7 @@
             if(viewId === 'view-admin') { renderCategoryTiles(); renderAdminList(); }
             if(viewId === 'view-database') { 
                 window.setReportFilter('today'); 
-                window.setReportPaymentFilter('all'); // Default
+                window.setReportPaymentFilter('all'); 
             }
             if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
             
@@ -493,101 +520,15 @@
             }
         }
 
-        // --- RENDER MENU GRID ---
-        function renderMenuGrid() {
-            const container = document.getElementById('menu-grid-container');
-            container.innerHTML = '';
-            
-            let filteredMenus = currentCategory === 'all' ? menus : menus.filter(m => (m.category || '').toLowerCase() === currentCategory);
-            filteredMenus = getSortedMenus(filteredMenus);
-
-            if(filteredMenus.length === 0) {
-                 container.innerHTML = '<p class="col-span-3 text-center text-gray-400 mt-10 text-xs">Kosong</p>';
-                return;
-            }
-
-            filteredMenus.forEach(item => {
-                const el = document.createElement('div');
-                const stockDisplay = item.stock !== undefined ? `<span class="text-[10px] ${item.stock < 5 ? 'text-red-500 font-bold' : 'text-gray-400'}">Stok: ${item.stock}</span>` : '';
-                
-                el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer h-28 text-center transition active:scale-95`;
-                el.onclick = () => window.addToCart(item.id);
-                el.innerHTML = `
-                    <i class="fas ${item.icon || 'fa-utensils'} text-xl mb-1 text-gray-700 opacity-70"></i>
-                    <h4 class="font-bold text-[10px] leading-tight text-gray-800 line-clamp-2 h-6 flex items-center justify-center overflow-hidden w-full">${item.name}</h4>
-                    <p class="text-xs text-blue-700 font-bold mt-0.5">Rp ${item.price.toLocaleString('id-ID')}</p>
-                    ${stockDisplay}
-                `;
-                container.appendChild(el);
-            });
+        // --- MANAJEMEN STOK (SORT & FILTER) ---
+        window.toggleStockSort = function() {
+            const label = document.getElementById('stock-sort-label');
+            if(stockSortMode === 'name_asc') { stockSortMode = 'stock_low'; label.innerText = "Stok Menipis"; }
+            else if(stockSortMode === 'stock_low') { stockSortMode = 'stock_high'; label.innerText = "Stok Banyak"; }
+            else { stockSortMode = 'name_asc'; label.innerText = "Nama A-Z"; }
+            renderStockList();
         }
 
-        // --- LOGIKA ADD TO CART ---
-        window.addToCart = function(itemId) {
-            const item = menus.find(m => m.id === itemId);
-            if(!item) return;
-            
-            if(item.stock !== undefined && item.stock <= 0) {
-                Swal.fire({toast: true, position: 'center', icon: 'warning', title: 'Stok Habis/Minus!', timer: 800, showConfirmButton: false});
-            }
-
-            const existing = cart.find(c => c.id === item.id);
-            if(existing) {
-                existing.qty++;
-            } else {
-                cart.push({
-                    id: item.id,
-                    name: item.name,
-                    price: parseInt(item.price),
-                    qty: 1,
-                    isManual: false
-                });
-            }
-            renderCart();
-        }
-
-        // --- RENDER CART ---
-        function renderCart() {
-            const list = document.getElementById('cart-list');
-            const totalEl = document.getElementById('cart-total');
-            list.innerHTML = '';
-            
-            let total = 0;
-            if(cart.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-400 text-xs mt-4 italic">Belum ada pesanan</p>';
-                totalEl.innerText = 'Rp 0';
-                return;
-            }
-            
-            cart.forEach((item, index) => {
-                const subtotal = item.price * item.qty;
-                total += subtotal;
-                
-                const row = document.createElement('div');
-                row.className = 'flex justify-between items-center mb-2 bg-white p-2 rounded shadow-sm border border-gray-100';
-                
-                let itemNameHTML = `<div class="font-bold text-xs text-gray-800">${item.name}</div>`;
-                if(item.isManual) itemNameHTML = `<div class="font-bold text-xs text-teal-700"><i class="fas fa-edit mr-1"></i>${item.name}</div>`;
-
-                row.innerHTML = `
-                    <div>
-                        ${itemNameHTML}
-                        <div class="text-[10px] text-gray-500">${item.qty} x ${item.price.toLocaleString('id-ID')}</div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-xs text-gray-700">Rp ${subtotal.toLocaleString('id-ID')}</span>
-                        <div class="flex items-center bg-gray-100 rounded">
-                             <button onclick="window.updateQty(${index}, -1)" class="w-8 h-8 text-red-500 text-sm font-bold hover:bg-gray-200 rounded active:bg-gray-300">-</button>
-                             <button onclick="window.updateQty(${index}, 1)" class="w-8 h-8 text-blue-500 text-sm font-bold hover:bg-gray-200 rounded active:bg-gray-300">+</button>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(row);
-            });
-            totalEl.innerText = 'Rp ' + total.toLocaleString('id-ID');
-        }
-
-        // --- MANAJEMEN STOK ---
         window.renderStockList = function() {
             const list = document.getElementById('stock-list');
             const searchVal = document.getElementById('stock-search').value.toLowerCase();
@@ -598,6 +539,11 @@
                 const matchSearch = m.name.toLowerCase().includes(searchVal);
                 return matchCat && matchSearch;
             });
+
+            // Sort logic
+            if(stockSortMode === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
+            if(stockSortMode === 'stock_low') filtered.sort((a,b) => (a.stock||0) - (b.stock||0));
+            if(stockSortMode === 'stock_high') filtered.sort((a,b) => (b.stock||0) - (a.stock||0));
 
             if(filtered.length === 0) {
                 list.innerHTML = '<p class="text-center text-gray-400 text-xs">Menu tidak ditemukan</p>';
@@ -637,9 +583,7 @@
                 input: 'number',
                 inputLabel: inputLabel,
                 showCancelButton: true,
-                inputValidator: (value) => {
-                    if (!value) return 'Harus diisi!';
-                }
+                inputValidator: (value) => { if (!value) return 'Harus diisi!'; }
             });
 
             if (quantity) {
@@ -656,315 +600,44 @@
             }
         }
 
-        // --- FITUR EDIT TRANSAKSI ---
-        window.editTransaction = function() {
-            if(!currentViewedTrx) return;
-            editingTransactionId = currentViewedTrx.id;
-            
-            cart = currentViewedTrx.items.map(item => ({
-                id: item.id || ('manual_' + Date.now()),
-                name: item.name,
-                price: parseInt(item.price),
-                qty: parseInt(item.qty),
-                isManual: item.isManual || false
-            }));
-            
-            document.getElementById('buyer-name').value = currentViewedTrx.buyer;
-            
-            document.getElementById('edit-mode-indicator').classList.remove('hidden');
-            document.getElementById('btn-main-pay').innerHTML = 'Simpan Revisi <i class="fas fa-save ml-1"></i>';
-            document.getElementById('btn-main-pay').classList.replace('bg-green-500', 'bg-yellow-500');
-            document.getElementById('btn-main-pay').classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
-            
-            window.closeBillModal();
-            window.navigate('view-cashier');
-            renderCart();
-            
-            Swal.fire({ title: 'Mode Edit', text: 'Silakan revisi pesanan', icon: 'info', timer: 1500, showConfirmButton: false });
+        // --- ADMIN (UPDATE: SORT & SEARCH) ---
+        window.toggleAdminSort = function() {
+            const label = document.getElementById('admin-sort-label');
+            if(adminSortMode === 'name_asc') { adminSortMode = 'price_low'; label.innerText = "Termurah"; }
+            else if(adminSortMode === 'price_low') { adminSortMode = 'price_high'; label.innerText = "Termahal"; }
+            else { adminSortMode = 'name_asc'; label.innerText = "A-Z"; }
+            renderAdminList();
         }
 
-        function exitEditMode() {
-            editingTransactionId = null;
-            document.getElementById('edit-mode-indicator').classList.add('hidden');
-            document.getElementById('btn-main-pay').innerHTML = 'Bayar <i class="fas fa-chevron-right text-[10px]"></i>';
-            document.getElementById('btn-main-pay').classList.replace('bg-yellow-500', 'bg-green-500');
-            document.getElementById('btn-main-pay').classList.replace('hover:bg-yellow-600', 'hover:bg-green-600');
-            document.getElementById('buyer-name').value = '';
-            cart = [];
-            renderCart();
-        }
-
-        // --- BILL PREVIEW ---
-        window.showBillPreview = function() {
-            if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
-            
-            let total = 0;
-            try {
-                total = cart.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.qty) || 0)), 0);
-            } catch(e) { total = 0; }
-
-            const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
-            const date = new Date().toLocaleString('id-ID');
-            
-            document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date);
-            
-            if (editingTransactionId) {
-                document.getElementById('bill-modal-title').innerText = "Konfirmasi Revisi";
-            } else {
-                document.getElementById('bill-modal-title').innerText = "Detail Transaksi";
-            }
-            document.getElementById('payment-actions').classList.remove('hidden');
-            document.getElementById('payment-actions').classList.add('grid');
-            document.getElementById('view-actions').classList.add('hidden');
-            document.getElementById('view-actions').classList.remove('flex');
-            document.getElementById('bill-modal').classList.remove('hidden');
-        }
-
-        // --- PROCESS PAYMENT ---
-        window.processPayment = async function(method) {
-            const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
-            let total = 0;
-            cart.forEach(i => total += ((parseInt(i.price)||0) * (parseInt(i.qty)||0)));
-            
-            let paidAmount = 0;
-            let changeAmount = 0;
-
-            if (method === 'TUNAI') {
-                const { value: money } = await Swal.fire({
-                    title: `Total: Rp ${total.toLocaleString('id-ID')}`,
-                    input: 'number',
-                    inputLabel: 'Masukkan Jumlah Uang Diterima',
-                    showCancelButton: true,
-                    inputValidator: (value) => {
-                        if (!value) return 'Harus diisi!';
-                        if (parseInt(value) < total) return 'Uang kurang!';
-                    }
-                });
-
-                if (!money) return; 
-                paidAmount = parseInt(money);
-                changeAmount = paidAmount - total;
-            }
-
-            Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
-
-            try {
-                if (!editingTransactionId) {
-                    for (const item of cart) {
-                        if (!item.isManual && item.id) {
-                            const menuItem = menus.find(m => m.id === item.id);
-                            if (menuItem) {
-                                const newStock = (menuItem.stock || 0) - item.qty;
-                                await setDoc(doc(db, "menus", item.id), { stock: newStock }, { merge: true });
-                            }
-                        }
-                    }
-                }
-
-                const trxData = {
-                    buyer: buyer,
-                    items: cart,
-                    total: total,
-                    method: method,
-                    paid: paidAmount, 
-                    change: changeAmount, 
-                    timestamp: Date.now(),
-                    date: new Date().toLocaleString('id-ID')
-                };
-
-                if (editingTransactionId) {
-                    delete trxData.timestamp; 
-                    delete trxData.date;
-                    trxData.updatedAt = Date.now();
-                    await setDoc(doc(db, "transactions", editingTransactionId), trxData, { merge: true });
-                    Swal.fire({icon: 'success', title: 'Revisi Disimpan', timer: 1500, showConfirmButton: false});
-                    exitEditMode();
-                } else {
-                    await addDoc(collection(db, "transactions"), trxData);
-                    Swal.fire({
-                        icon: 'success', 
-                        title: 'Transaksi Berhasil', 
-                        text: method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : '',
-                        timer: 3000, 
-                        showConfirmButton: true
-                    });
-                    
-                    cart = [];
-                    document.getElementById('buyer-name').value = '';
-                    renderCart();
-                }
-
-                window.closeBillModal();
-                
-            } catch (e) {
-                console.error(e);
-                Swal.fire('Error', 'Gagal menyimpan: ' + e.message, 'error');
-            }
-        }
-
-        // --- HELPER FUNCTIONS ---
-        window.updateQty = function(idx, change) {
-            cart[idx].qty += change;
-            if(cart[idx].qty <= 0) cart.splice(idx, 1);
-            renderCart();
-        }
-
-        window.clearCart = function() {
-            if(cart.length > 0) {
-                if(confirm("Hapus semua pesanan?")) {
-                    cart = [];
-                    document.getElementById('buyer-name').value = '';
-                    renderCart();
-                }
-            } else {
-                cart = [];
-                renderCart();
-            }
-        }
-
-        window.toggleSort = function() {
-            const label = document.getElementById('sort-label');
-            if(sortMode === 'default') { sortMode = 'name_asc'; label.innerText = "Nama A-Z"; }
-            else if(sortMode === 'name_asc') { sortMode = 'price_high'; label.innerText = "Termahal"; }
-            else if(sortMode === 'price_high') { sortMode = 'price_low'; label.innerText = "Termurah"; }
-            else { sortMode = 'default'; label.innerText = "Default"; }
-            renderMenuGrid();
-        }
-
-        function getSortedMenus(menuList) {
-            let sorted = [...menuList];
-            if(sortMode === 'name_asc') sorted.sort((a,b) => a.name.localeCompare(b.name));
-            if(sortMode === 'price_high') sorted.sort((a,b) => b.price - a.price);
-            if(sortMode === 'price_low') sorted.sort((a,b) => a.price - b.price);
-            return sorted;
-        }
-
-        window.addNewMenu = async function() {
-            const name = document.getElementById('new-menu-name').value;
-            const price = document.getElementById('new-menu-price').value;
-            const stock = document.getElementById('new-menu-stock').value;
-            let cat = document.getElementById('selected-admin-cat').value;
-            if(!cat || cat === 'all') cat = 'makanan';
-
-            if(!name || !price) return Swal.fire('Error', 'Lengkapi data', 'error');
-
-            let icon = 'fa-utensils';
-            let color = 'bg-white';
-            if(cat.includes('minum')) { icon = 'fa-glass-water'; color = 'bg-blue-50'; }
-            if(cat.includes('camil')) { icon = 'fa-bread-slice'; color = 'bg-yellow-50'; }
-            
-            Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
-            try {
-                await addDoc(collection(db, "menus"), {
-                    name: name, price: parseInt(price), category: cat, icon: icon, color: color, stock: parseInt(stock) || 0
-                });
-                document.getElementById('new-menu-name').value = '';
-                document.getElementById('new-menu-price').value = '';
-                Swal.fire({icon: 'success', title: 'Tersimpan', timer: 1000, showConfirmButton: false});
-            } catch (e) { Swal.fire('Error', 'Gagal simpan', 'error'); }
-        }
-
-        window.deleteMenu = async function(docId) {
-            if(confirm('Hapus menu ini permanen?')) {
-                try {
-                    await deleteDoc(doc(db, "menus", String(docId)));
-                    Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false});
-                } catch(e) {
-                    Swal.fire('Error', 'Gagal hapus: ' + e.message, 'error');
-                }
-            }
-        }
-
-        window.deleteTransaction = async function() {
-            if(!currentViewedTrx) return;
-            if(confirm('Hapus transaksi ini permanen?')) {
-                try {
-                    await deleteDoc(doc(db, "transactions", currentViewedTrx.id));
-                    window.closeBillModal();
-                    Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false});
-                } catch(e) {
-                    Swal.fire('Error', 'Gagal hapus transaksi', 'error');
-                }
-            }
-        }
-
-        window.appendCalc = function(val) {
-            if(calcValue === "0") calcValue = val; else calcValue += val;
-            document.getElementById('calc-display').innerText = parseInt(calcValue).toLocaleString('id-ID');
-        }
-        window.clearCalc = function() { calcValue = "0"; document.getElementById('calc-display').innerText = "0"; }
-        window.backspaceCalc = function() {
-            if(calcValue.length > 1) calcValue = calcValue.slice(0, -1); else calcValue = "0";
-            document.getElementById('calc-display').innerText = parseInt(calcValue).toLocaleString('id-ID');
-        }
-        window.addToManualList = function() {
-            const price = parseInt(calcValue);
-            if(price <= 0) return;
-            manualSessionCart.push({ price: price, id: Date.now() });
-            window.clearCalc();
-            renderManualHistory();
-        }
-        function renderManualHistory() {
-            const container = document.getElementById('manual-history-list');
-            const footer = document.getElementById('manual-footer');
-            const totalDisplay = document.getElementById('manual-total-display');
-            if(manualSessionCart.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 text-xs mt-10">Kosong</p>';
-                footer.classList.add('hidden');
-                return;
-            }
-            let html = '';
-            let total = 0;
-            [...manualSessionCart].reverse().forEach((item, index) => {
-                total += item.price;
-                html += `<div class="flex justify-between p-2 border-b"><span class="text-sm">Manual #${manualSessionCart.length - index}</span><span class="font-bold">Rp ${item.price.toLocaleString('id-ID')}</span></div>`;
-            });
-            container.innerHTML = html;
-            totalDisplay.innerText = 'Rp ' + total.toLocaleString('id-ID');
-            footer.classList.remove('hidden');
-        }
-        window.finishManualSession = function() {
-            if(manualSessionCart.length === 0) return;
-            manualSessionCart.forEach(m => {
-                cart.push({ id: 'manual_' + m.id, name: "Item Manual", price: m.price, qty: 1, isManual: true });
-            });
-            manualSessionCart = [];
-            window.navigate('view-cashier');
-            renderCart();
-        }
-
-        // --- ADMIN RENDER ---
         function renderAdminList() {
             const list = document.getElementById('admin-menu-list');
+            const searchVal = document.getElementById('admin-search').value.toLowerCase();
             list.innerHTML = '';
-            const filteredAdminMenus = currentCategory === 'all' ? menus : menus.filter(m => (m.category || '').toLowerCase() === currentCategory);
+            
+            // Filter: Category & Search
+            let filtered = menus.filter(m => {
+                const matchCat = currentCategory === 'all' || (m.category || '').toLowerCase() === currentCategory;
+                const matchSearch = m.name.toLowerCase().includes(searchVal);
+                return matchCat && matchSearch;
+            });
+
+            // Sort
+            if(adminSortMode === 'name_asc') filtered.sort((a,b) => a.name.localeCompare(b.name));
+            if(adminSortMode === 'price_low') filtered.sort((a,b) => a.price - b.price);
+            if(adminSortMode === 'price_high') filtered.sort((a,b) => b.price - a.price);
+
             const label = document.getElementById('admin-filter-label');
             if(label) label.innerText = currentCategory === 'all' ? 'Semua' : currentCategory;
-            filteredAdminMenus.forEach((item) => {
+
+            filtered.forEach((item) => {
                 const row = document.createElement('div');
                 row.className = 'bg-white border rounded p-3 flex justify-between items-center shadow-sm mb-2';
-                row.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100"><i class="fas ${item.icon}"></i></div><div><div class="font-bold text-sm text-gray-800">${item.name}</div><div class="text-xs text-gray-500">${item.category} • Stok: ${item.stock || 0}</div></div></div><button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95"><i class="fas fa-trash"></i></button>`;
+                row.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100"><i class="fas ${item.icon}"></i></div><div><div class="font-bold text-sm text-gray-800">${item.name}</div><div class="text-xs text-gray-500">${item.category} • Stok: ${item.stock || 0} • Rp ${item.price.toLocaleString()}</div></div></div><button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95"><i class="fas fa-trash"></i></button>`;
                 list.appendChild(row);
             });
         }
 
-        // --- LOGIKA FILTER METODE BAYAR ---
-        window.setReportPaymentFilter = function(mode) {
-            reportPaymentFilter = mode;
-            // Update Active UI
-            const btns = document.getElementById('report-payment-filters').querySelectorAll('button');
-            btns.forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
-            btns.forEach(btn => btn.classList.add('text-purple-200', 'bg-purple-700'));
-            
-            // Set active style manually
-            if(mode === 'all') { btns[0].classList.add('active', 'bg-purple-600', 'text-white'); btns[0].classList.remove('text-purple-200', 'bg-purple-700'); }
-            if(mode === 'TUNAI') { btns[1].classList.add('active', 'bg-purple-600', 'text-white'); btns[1].classList.remove('text-purple-200', 'bg-purple-700'); }
-            if(mode === 'HUTANG') { btns[2].classList.add('active', 'bg-purple-600', 'text-white'); btns[2].classList.remove('text-purple-200', 'bg-purple-700'); }
-
-            renderTransactions();
-        }
-
-        // --- TRANSACTIONS & BILL ---
+        // --- TRANSACTIONS & EXPORT ---
         function renderTransactions() {
             const list = document.getElementById('transaction-list');
             const totalEl = document.getElementById('report-grand-total');
@@ -975,7 +648,6 @@
             let filteredTrx = transactions;
             let filterLabel = "Semua";
 
-            // 1. Filter Tanggal
             if (reportFilterMode === 'today') {
                 const todayStr = now.toLocaleDateString('id-ID');
                 filteredTrx = transactions.filter(t => new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr);
@@ -994,11 +666,13 @@
                 filterLabel = selStr;
             }
 
-            // 2. Filter Metode Bayar (FITUR BARU)
             if (reportPaymentFilter !== 'all') {
                 filteredTrx = filteredTrx.filter(t => t.method === reportPaymentFilter);
                 filterLabel += ` (${reportPaymentFilter})`;
             }
+
+            // Simpan hasil filter ke variabel global untuk Export
+            filteredTransactions = filteredTrx;
 
             labelEl.innerText = "Omzet " + filterLabel;
 
@@ -1016,12 +690,54 @@
             totalEl.innerText = 'Rp ' + omzet.toLocaleString('id-ID');
         }
 
+        // FITUR BARU: EXPORT CSV
+        window.exportReportToCSV = function() {
+            if (filteredTransactions.length === 0) {
+                return Swal.fire('Gagal', 'Tidak ada data untuk diexport', 'warning');
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            // Header CSV
+            csvContent += "Tanggal,Jam,Pelanggan,Item Ringkasan,Total,Metode,Status Bayar\n";
+
+            filteredTransactions.forEach(trx => {
+                // Bersihkan data string agar aman di CSV (hapus koma)
+                const date = new Date(trx.timestamp).toLocaleDateString('id-ID');
+                const time = new Date(trx.timestamp).toLocaleTimeString('id-ID');
+                const buyer = (trx.buyer || "").replace(/,/g, " ");
+                const itemSummary = (trx.items || []).map(i => `${i.name}(${i.qty})`).join("; ").replace(/,/g, " ");
+                
+                const row = `${date},${time},${buyer},${itemSummary},${trx.total},${trx.method},Lunas`;
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Laporan_Miekopies_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         window.setReportFilter = function(mode, val) {
             reportFilterMode = mode;
             if(val) reportFilterDate = val;
             const btns = document.getElementById('report-filters').querySelectorAll('.filter-btn');
             btns.forEach(b => b.classList.remove('active'));
-            // Re-active logic simplified for robustness
+            renderTransactions();
+        }
+
+        window.setReportPaymentFilter = function(mode) {
+            reportPaymentFilter = mode;
+            const btns = document.getElementById('report-payment-filters').querySelectorAll('button');
+            btns.forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
+            btns.forEach(btn => btn.classList.add('text-purple-200', 'bg-purple-700'));
+            
+            if(mode === 'all') { btns[0].classList.add('active', 'bg-purple-600', 'text-white'); btns[0].classList.remove('text-purple-200', 'bg-purple-700'); }
+            if(mode === 'TUNAI') { btns[1].classList.add('active', 'bg-purple-600', 'text-white'); btns[1].classList.remove('text-purple-200', 'bg-purple-700'); }
+            if(mode === 'HUTANG') { btns[2].classList.add('active', 'bg-purple-600', 'text-white'); btns[2].classList.remove('text-purple-200', 'bg-purple-700'); }
+
             renderTransactions();
         }
 
@@ -1039,18 +755,141 @@
         
         window.closeBillModal = function() { document.getElementById('bill-modal').classList.add('hidden'); }
 
+        // --- Common Functions (Sama V14/15) ---
+        window.toggleSort = function() {
+            const label = document.getElementById('sort-label');
+            if(sortMode === 'default') { sortMode = 'name_asc'; label.innerText = "Nama A-Z"; }
+            else if(sortMode === 'name_asc') { sortMode = 'price_high'; label.innerText = "Termahal"; }
+            else if(sortMode === 'price_high') { sortMode = 'price_low'; label.innerText = "Termurah"; }
+            else { sortMode = 'default'; label.innerText = "Default"; }
+            renderMenuGrid();
+        }
+
+        function getSortedMenus(menuList) {
+            let sorted = [...menuList];
+            if(sortMode === 'name_asc') sorted.sort((a,b) => a.name.localeCompare(b.name));
+            if(sortMode === 'price_high') sorted.sort((a,b) => b.price - a.price);
+            if(sortMode === 'price_low') sorted.sort((a,b) => a.price - b.price);
+            return sorted;
+        }
+
         function generateReceiptHTML(buyer, items, total, date, method, paid = 0, change = 0) {
             let itemHtml = '';
             (items || []).forEach(i => { itemHtml += `<div class="flex justify-between text-xs mb-1"><span>${i.name} x${i.qty}</span><span>${((parseInt(i.price)||0)*(parseInt(i.qty)||0)).toLocaleString()}</span></div>`; });
-            
             let paymentDetails = '';
-            if (method === 'TUNAI' && paid > 0) {
-                paymentDetails = `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Bayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Kembali:</span><span>${change.toLocaleString()}</span></div>`;
-            }
-
+            if (method === 'TUNAI' && paid > 0) { paymentDetails = `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Bayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Kembali:</span><span>${change.toLocaleString()}</span></div>`; }
             return `<div class="p-2 text-center"><h2 class="font-bold">WARUNG MIEKOPIES</h2><p class="text-xs text-gray-500 mb-2">${date}</p><div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1"><div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>${method || '-'}</span></div>${itemHtml}</div><div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>${paymentDetails}<div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div></div>`;
         }
 
+        // --- Other Window Functions ---
+        window.addToCart = function(itemId) {
+            const item = menus.find(m => m.id === itemId);
+            if(!item) return;
+            if(item.stock !== undefined && item.stock <= 0) { Swal.fire({toast: true, position: 'center', icon: 'warning', title: 'Stok Habis/Minus!', timer: 800, showConfirmButton: false}); }
+            const existing = cart.find(c => c.id === item.id);
+            if(existing) { existing.qty++; } else { cart.push({ id: item.id, name: item.name, price: parseInt(item.price), qty: 1, isManual: false }); }
+            renderCart();
+        }
+        window.updateQty = function(idx, change) { cart[idx].qty += change; if(cart[idx].qty <= 0) cart.splice(idx, 1); renderCart(); }
+        window.clearCart = function() { if(cart.length > 0 && confirm("Hapus semua pesanan?")) { cart = []; document.getElementById('buyer-name').value = ''; renderCart(); } else { cart = []; renderCart(); } }
+        window.addNewMenu = async function() {
+            const name = document.getElementById('new-menu-name').value;
+            const price = document.getElementById('new-menu-price').value;
+            const stock = document.getElementById('new-menu-stock').value;
+            let cat = document.getElementById('selected-admin-cat').value;
+            if(!cat || cat === 'all') cat = 'makanan';
+            if(!name || !price) return Swal.fire('Error', 'Lengkapi data', 'error');
+            let icon = 'fa-utensils'; let color = 'bg-white';
+            if(cat.includes('minum')) { icon = 'fa-glass-water'; color = 'bg-blue-50'; }
+            if(cat.includes('camil')) { icon = 'fa-bread-slice'; color = 'bg-yellow-50'; }
+            Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+            try {
+                await addDoc(collection(db, "menus"), { name: name, price: parseInt(price), category: cat, icon: icon, color: color, stock: parseInt(stock) || 0 });
+                document.getElementById('new-menu-name').value = ''; document.getElementById('new-menu-price').value = '';
+                Swal.fire({icon: 'success', title: 'Tersimpan', timer: 1000, showConfirmButton: false});
+            } catch (e) { Swal.fire('Error', 'Gagal simpan', 'error'); }
+        }
+        window.deleteMenu = async function(docId) { if(confirm('Hapus menu ini permanen?')) { try { await deleteDoc(doc(db, "menus", String(docId))); Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false}); } catch(e) { Swal.fire('Error', 'Gagal hapus: ' + e.message, 'error'); } } }
+        window.deleteTransaction = async function() { if(!currentViewedTrx) return; if(confirm('Hapus transaksi ini permanen?')) { try { await deleteDoc(doc(db, "transactions", currentViewedTrx.id)); window.closeBillModal(); Swal.fire({icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false}); } catch(e) { Swal.fire('Error', 'Gagal hapus transaksi', 'error'); } } }
+        window.appendCalc = function(val) { if(calcValue === "0") calcValue = val; else calcValue += val; document.getElementById('calc-display').innerText = parseInt(calcValue).toLocaleString('id-ID'); }
+        window.clearCalc = function() { calcValue = "0"; document.getElementById('calc-display').innerText = "0"; }
+        window.backspaceCalc = function() { if(calcValue.length > 1) calcValue = calcValue.slice(0, -1); else calcValue = "0"; document.getElementById('calc-display').innerText = parseInt(calcValue).toLocaleString('id-ID'); }
+        window.addToManualList = function() { const price = parseInt(calcValue); if(price <= 0) return; manualSessionCart.push({ price: price, id: Date.now() }); window.clearCalc(); renderManualHistory(); }
+        window.removeManualItem = function(index) { manualSessionCart.splice(index, 1); renderManualHistory(); }
+        window.finishManualSession = function() { if(manualSessionCart.length === 0) return; manualSessionCart.forEach(m => { cart.push({ id: 'manual_' + m.id, name: "Item Manual", price: m.price, qty: 1, isManual: true }); }); manualSessionCart = []; window.navigate('view-cashier'); renderCart(); }
+        window.renderMenuGrid = renderMenuGrid; window.renderCart = renderCart;
+        window.editTransaction = function() {
+            if(!currentViewedTrx) return;
+            editingTransactionId = currentViewedTrx.id;
+            cart = currentViewedTrx.items.map(item => ({ id: item.id || ('manual_' + Date.now()), name: item.name, price: parseInt(item.price), qty: parseInt(item.qty), isManual: item.isManual || false }));
+            document.getElementById('buyer-name').value = currentViewedTrx.buyer;
+            document.getElementById('edit-mode-indicator').classList.remove('hidden');
+            document.getElementById('btn-main-pay').innerHTML = 'Simpan Revisi <i class="fas fa-save ml-1"></i>';
+            document.getElementById('btn-main-pay').classList.replace('bg-green-500', 'bg-yellow-500');
+            document.getElementById('btn-main-pay').classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
+            window.closeBillModal();
+            window.navigate('view-cashier');
+            renderCart();
+            Swal.fire({ title: 'Mode Edit', text: 'Silakan revisi pesanan', icon: 'info', timer: 1500, showConfirmButton: false });
+        }
+        function exitEditMode() {
+            editingTransactionId = null;
+            document.getElementById('edit-mode-indicator').classList.add('hidden');
+            document.getElementById('btn-main-pay').innerHTML = 'Bayar <i class="fas fa-chevron-right text-[10px]"></i>';
+            document.getElementById('btn-main-pay').classList.replace('bg-yellow-500', 'bg-green-500');
+            document.getElementById('btn-main-pay').classList.replace('hover:bg-yellow-600', 'hover:bg-green-600');
+            document.getElementById('buyer-name').value = '';
+            cart = [];
+            renderCart();
+        }
+        window.showBillPreview = function() {
+            if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
+            let total = 0; try { total = cart.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.qty) || 0)), 0); } catch(e) { total = 0; }
+            const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
+            const date = new Date().toLocaleString('id-ID');
+            document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date);
+            if (editingTransactionId) { document.getElementById('bill-modal-title').innerText = "Konfirmasi Revisi"; } else { document.getElementById('bill-modal-title').innerText = "Detail Transaksi"; }
+            document.getElementById('payment-actions').classList.remove('hidden');
+            document.getElementById('payment-actions').classList.add('grid');
+            document.getElementById('view-actions').classList.add('hidden');
+            document.getElementById('view-actions').classList.remove('flex');
+            document.getElementById('bill-modal').classList.remove('hidden');
+        }
+        window.processPayment = async function(method) {
+            const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
+            let total = 0; cart.forEach(i => total += ((parseInt(i.price)||0) * (parseInt(i.qty)||0)));
+            let paidAmount = 0; let changeAmount = 0;
+            if (method === 'TUNAI') {
+                const { value: money } = await Swal.fire({ title: `Total: Rp ${total.toLocaleString('id-ID')}`, input: 'number', inputLabel: 'Masukkan Jumlah Uang Diterima', showCancelButton: true, inputValidator: (value) => { if (!value) return 'Harus diisi!'; if (parseInt(value) < total) return 'Uang kurang!'; } });
+                if (!money) return; paidAmount = parseInt(money); changeAmount = paidAmount - total;
+            }
+            Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
+            try {
+                if (!editingTransactionId) {
+                    for (const item of cart) {
+                        if (!item.isManual && item.id) {
+                            const menuItem = menus.find(m => m.id === item.id);
+                            if (menuItem) {
+                                const newStock = (menuItem.stock || 0) - item.qty;
+                                await setDoc(doc(db, "menus", item.id), { stock: newStock }, { merge: true });
+                            }
+                        }
+                    }
+                }
+                const trxData = { buyer: buyer, items: cart, total: total, method: method, paid: paidAmount, change: changeAmount, timestamp: Date.now(), date: new Date().toLocaleString('id-ID') };
+                if (editingTransactionId) {
+                    delete trxData.timestamp; delete trxData.date; trxData.updatedAt = Date.now();
+                    await setDoc(doc(db, "transactions", editingTransactionId), trxData, { merge: true });
+                    Swal.fire({icon: 'success', title: 'Revisi Disimpan', timer: 1500, showConfirmButton: false});
+                    exitEditMode();
+                } else {
+                    await addDoc(collection(db, "transactions"), trxData);
+                    Swal.fire({ icon: 'success', title: 'Transaksi Berhasil', text: method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : '', timer: 3000, showConfirmButton: true });
+                    cart = []; document.getElementById('buyer-name').value = ''; renderCart();
+                }
+                window.closeBillModal();
+            } catch (e) { console.error(e); Swal.fire('Error', 'Gagal menyimpan: ' + e.message, 'error'); }
+        }
         window.sendToWA = function() {
             if(!currentViewedTrx) return;
             const t = currentViewedTrx;
@@ -1060,14 +899,12 @@
             if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: ${t.paid}\nKembali: ${t.change}`; }
             window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
         }
-        
         window.saveReceiptImage = function() {
             const el = document.getElementById('bill-content');
             html2canvas(el, {scale:2, backgroundColor:'#fff'}).then(c => {
                 const l = document.createElement('a'); l.download = 'struk.png'; l.href = c.toDataURL(); l.click();
             });
         }
-
         window.seedDefaultMenus = async function() { Swal.fire('Info', 'Gunakan menu Tambah Kategori dulu', 'info'); }
     </script>
 </body>
