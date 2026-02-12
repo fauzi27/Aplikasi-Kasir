@@ -990,32 +990,6 @@
             renderCart();
         }
 
-        // --- BILL PREVIEW ---
-        window.showBillPreview = function() {
-            if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
-            
-            let total = 0;
-            try {
-                total = cart.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.qty) || 0)), 0);
-            } catch(e) { total = 0; }
-
-            const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
-            const date = new Date().toLocaleString('id-ID');
-            
-            document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date);
-            
-            if (editingTransactionId) {
-                document.getElementById('bill-modal-title').innerText = "Konfirmasi Revisi";
-            } else {
-                document.getElementById('bill-modal-title').innerText = "Detail Transaksi";
-            }
-            document.getElementById('payment-actions').classList.remove('hidden');
-            document.getElementById('payment-actions').classList.add('grid');
-            document.getElementById('view-actions').classList.add('hidden');
-            document.getElementById('view-actions').classList.remove('flex');
-            document.getElementById('bill-modal').classList.remove('hidden');
-        }
-
         // --- PROCESS PAYMENT ---
         window.processPayment = async function(method) {
             const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
@@ -1571,53 +1545,6 @@
         
         window.closeBillModal = function() { document.getElementById('bill-modal').classList.add('hidden'); }
 
- // Update fungsi generateReceiptHTML (tambah remaining = 0)
-function generateReceiptHTML(buyer, items, total, date, method, paid = 0, change = 0, remaining = 0) {
-    let itemHtml = '';
-    (items || []).forEach(i => { itemHtml += `<div class="flex justify-between text-xs mb-1"><span>${i.name} x${i.qty}</span><span>${((parseInt(i.price)||0)*(parseInt(i.qty)||0)).toLocaleString()}</span></div>`; });
-    
-    let paymentDetails = '';
-    if (method === 'TUNAI' && paid > 0) {
-        paymentDetails = `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Bayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Kembali:</span><span>${change.toLocaleString()}</span></div>`;
-    }
-
-    let hutangDetails = remaining > 0 ? `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Dibayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Sisa Hutang:</span><span>${remaining.toLocaleString()}</span></div>` : '';
-
-    return `<div class="p-2 text-center"><h2 class="font-bold">${businessData.name || 'WARUNG MIEKOPIES'}</h2><p class="text-xs text-gray-500 mb-2">${date}</p><div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1"><div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>${method || '-'}</span></div>${itemHtml}</div><div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>${paymentDetails}${hutangDetails}<div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div></div>`;
-}
-
-// Update viewTransactionDetail (tambah trx.remaining || 0)
-window.viewTransactionDetail = function(id) {
-    const trx = transactions.find(t => t.id === id);
-    if(!trx) return;
-    currentViewedTrx = trx;
-    document.getElementById('bill-content').innerHTML = generateReceiptHTML(trx.buyer, trx.items, trx.total, trx.date, trx.method, trx.paid, trx.change, trx.remaining || 0);
-    document.getElementById('payment-actions').classList.add('hidden');
-    document.getElementById('payment-actions').classList.remove('grid');
-    document.getElementById('view-actions').classList.remove('hidden');
-    document.getElementById('view-actions').classList.add('flex');
-    document.getElementById('bill-modal').classList.remove('hidden');
-}
-
-
-
-        window.sendToWA = function() {
-            if(!currentViewedTrx) return;
-            const t = currentViewedTrx;
-            let text = `*Struk ${businessData.name || 'Miekopies'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n`;
-            t.items.forEach(i => text += `${i.name} (${i.qty}) : ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
-            text += `*Total: ${t.total}*\nMetode: ${t.method}`;
-            if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: ${t.paid}\nKembali: ${t.change}`; }
-            window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        }
-        
-        window.saveReceiptImage = function() {
-            const el = document.getElementById('bill-content');
-            html2canvas(el, {scale:2, backgroundColor:'#fff'}).then(c => {
-                const l = document.createElement('a'); l.download = 'struk.png'; l.href = c.toDataURL(); l.click();
-            });
-        }
-
         window.seedDefaultMenus = async function() { Swal.fire('Info', 'Gunakan menu Tambah Kategori dulu', 'info'); }
 
         window.backupData = async function() {
@@ -1809,6 +1736,89 @@ window.viewTransactionDetail = function(id) {
             });
             localStorage.setItem('onboarded', 'true');
         }
+                // --- KODE PERBAIKAN LENGKAP (Gabungan Part 2) ---
+
+        // 1. Fungsi Pembantu: Membuat HTML Struk (Dipakai oleh showBillPreview & viewTransactionDetail)
+        function generateReceiptHTML(buyer, items, total, date, method, paid = 0, change = 0, remaining = 0) {
+            let itemHtml = '';
+            (items || []).forEach(i => { 
+                itemHtml += `<div class="flex justify-between text-xs mb-1"><span>${i.name} x${i.qty}</span><span>${((parseInt(i.price)||0)*(parseInt(i.qty)||0)).toLocaleString()}</span></div>`; 
+            });
+            
+            let paymentDetails = '';
+            if (method === 'TUNAI' && paid > 0) {
+                paymentDetails = `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Bayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Kembali:</span><span>${change.toLocaleString()}</span></div>`;
+            }
+
+            let hutangDetails = remaining > 0 ? `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Dibayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Sisa Hutang:</span><span>${remaining.toLocaleString()}</span></div>` : '';
+
+            return `<div class="p-2 text-center"><h2 class="font-bold">${businessData.name || 'WARUNG MIEKOPIES'}</h2><p class="text-xs text-gray-500 mb-2">${date}</p><div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1"><div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>${method || '-'}</span></div>${itemHtml}</div><div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>${paymentDetails}${hutangDetails}<div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Matur Suksma</div></div>`;
+        }
+
+        // 2. Fungsi Utama: Menampilkan Preview Tagihan (Tombol Bayar)
+        window.showBillPreview = function() {
+            if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
+            
+            let total = 0;
+            try {
+                total = cart.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.qty) || 0)), 0);
+            } catch(e) { total = 0; }
+
+            const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
+            const date = new Date().toLocaleString('id-ID');
+            
+            // Panggil fungsi generateReceiptHTML di atas
+            document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date);
+            
+            if (editingTransactionId) {
+                document.getElementById('bill-modal-title').innerText = "Konfirmasi Revisi";
+            } else {
+                document.getElementById('bill-modal-title').innerText = "Detail Transaksi";
+            }
+            
+            // Tampilkan tombol aksi pembayaran, sembunyikan aksi view (WA/Download)
+            document.getElementById('payment-actions').classList.remove('hidden');
+            document.getElementById('payment-actions').classList.add('grid');
+            document.getElementById('view-actions').classList.add('hidden');
+            document.getElementById('view-actions').classList.remove('flex');
+            document.getElementById('bill-modal').classList.remove('hidden');
+        }
+
+        // 3. Fungsi Melihat Detail Riwayat Transaksi (Dari Menu Laporan)
+        window.viewTransactionDetail = function(id) {
+            const trx = transactions.find(t => t.id === id);
+            if(!trx) return;
+            currentViewedTrx = trx;
+            
+            // Gunakan format HTML yang sama
+            document.getElementById('bill-content').innerHTML = generateReceiptHTML(trx.buyer, trx.items, trx.total, trx.date, trx.method, trx.paid, trx.change, trx.remaining || 0);
+            
+            // Sembunyikan tombol bayar, tampilkan tombol WA/Download
+            document.getElementById('payment-actions').classList.add('hidden');
+            document.getElementById('payment-actions').classList.remove('grid');
+            document.getElementById('view-actions').classList.remove('hidden');
+            document.getElementById('view-actions').classList.add('flex');
+            document.getElementById('bill-modal').classList.remove('hidden');
+        }
+
+        // 4. Fitur Tambahan (WA & Save Image)
+        window.sendToWA = function() {
+            if(!currentViewedTrx) return;
+            const t = currentViewedTrx;
+            let text = `*Struk ${businessData.name || 'Miekopies'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n`;
+            t.items.forEach(i => text += `${i.name} (${i.qty}) : ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
+            text += `*Total: ${t.total}*\nMetode: ${t.method}`;
+            if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: ${t.paid}\nKembali: ${t.change}`; }
+            window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        }
+        
+        window.saveReceiptImage = function() {
+            const el = document.getElementById('bill-content');
+            html2canvas(el, {scale:2, backgroundColor:'#fff'}).then(c => {
+                const l = document.createElement('a'); l.download = 'struk.png'; l.href = c.toDataURL(); l.click();
+            });
+        }
+
     </script>
 </body>
 </html>
