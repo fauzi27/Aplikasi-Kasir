@@ -1579,8 +1579,6 @@ Pertanyaan Bos/Kasir: ${message}`;
         addChatBubble("Waduh, koneksi ke satelit AI terputus. Pastikan internet lancar ya!", 'bot');
     }
 }
-// ====================================================
-
 // ================= FITUR DRAG (GESER) TOMBOL AI =================
 const aiBtnContainer = document.getElementById('ai-chat-btn');
 const aiBtn = aiBtnContainer.querySelector('button');
