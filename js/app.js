@@ -1412,4 +1412,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const debouncedRenderStockList = debounce(renderStockList, 300);
     const stockSearch = document.getElementById('stock-search');
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
+    // --- FITUR AI CHATBOT ---
+window.toggleChat = function() {
+    const chatWindow = document.getElementById('ai-chat-window');
+    // Jika sedang hidden (tersembunyi), kita hapus class hidden dan tambah flex
+    if (chatWindow.classList.contains('hidden')) {
+        chatWindow.classList.remove('hidden');
+        chatWindow.classList.add('flex');
+    } else {
+        // Sebaliknya, jika sedang terbuka, sembunyikan lagi
+        chatWindow.classList.add('hidden');
+        chatWindow.classList.remove('flex');
+    }
+}
+
+// Fungsi sementara saat tombol kirim ditekan
+window.sendChatMessage = function() {
+    Swal.fire({toast: true, position: 'top', icon: 'info', title: 'Belum disambung ke Gemini!', timer: 1500, showConfirmButton: false});
+}
 });
