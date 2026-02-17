@@ -1409,7 +1409,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminSearch = document.getElementById('admin-search');
     if (adminSearch) adminSearch.addEventListener('keyup', debouncedRenderAdminList);
 
-    // INI YANG TADI TIDAK SENGAJA TERHAPUS
     const debouncedRenderStockList = debounce(renderStockList, 300);
     const stockSearch = document.getElementById('stock-search');
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
@@ -1531,3 +1530,76 @@ Pertanyaan Kasir: ${message}`;
     }
 }
 // ====================================================
+// ================= FITUR DRAG (GESER) TOMBOL AI =================
+const aiBtnContainer = document.getElementById('ai-chat-btn');
+const aiBtn = aiBtnContainer.querySelector('button');
+
+let isDragging = false;
+let startX, startY, initialX, initialY;
+let hasMoved = false;
+
+const dragStart = (e) => {
+    isDragging = true;
+    hasMoved = false; // Reset status geser
+    const touch = e.type.includes('mouse') ? e : e.touches[0];
+    
+    startX = touch.clientX;
+    startY = touch.clientY;
+    
+    // Simpan posisi awal tombol
+    const rect = aiBtnContainer.getBoundingClientRect();
+    initialX = rect.left;
+    initialY = rect.top;
+};
+
+const drag = (e) => {
+    if (!isDragging) return;
+    
+    const touch = e.type.includes('mouse') ? e : e.touches[0];
+    const diffX = touch.clientX - startX;
+    const diffY = touch.clientY - startY;
+
+    // Jika jari bergeser lebih dari 5 pixel, anggap sedang "menggeser" (bukan mengklik)
+    if (Math.abs(diffX) > 5 || Math.abs(diffY) > 5) {
+        hasMoved = true;
+        e.preventDefault(); // Cegah layar web ikut tergulung (scroll)
+    }
+
+    if (hasMoved) {
+        let newX = initialX + diffX;
+        let newY = initialY + diffY;
+
+        // Cegah tombol keluar dari batas layar HP
+        const maxX = window.innerWidth - aiBtnContainer.offsetWidth;
+        const maxY = window.innerHeight - aiBtnContainer.offsetHeight;
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        // Lepaskan kuncian posisi awal, lalu pindahkan tombol mengikuti jari
+        aiBtnContainer.style.bottom = 'auto';
+        aiBtnContainer.style.right = 'auto';
+        aiBtnContainer.style.left = `${newX}px`;
+        aiBtnContainer.style.top = `${newY}px`;
+    }
+};
+
+const dragEnd = () => {
+    isDragging = false;
+};
+
+// Pasang sensor sentuhan layar (Touch) dan Mouse
+aiBtnContainer.addEventListener('touchstart', dragStart, { passive: false });
+document.addEventListener('touchmove', drag, { passive: false });
+document.addEventListener('touchend', dragEnd);
+aiBtnContainer.addEventListener('mousedown', dragStart);
+document.addEventListener('mousemove', drag);
+document.addEventListener('mouseup', dragEnd);
+
+// Modifikasi fungsi Klik: 
+// Chat HANYA terbuka jika tombol DIKLIK (tidak terbuka saat selesai digeser)
+aiBtn.addEventListener('click', (e) => {
+    if (!hasMoved) {
+        window.toggleChat();
+    }
+});
+// ================================================================
