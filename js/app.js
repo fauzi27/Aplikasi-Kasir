@@ -1531,3 +1531,4 @@ Pertanyaan Kasir: ${message}`;
         addChatBubble("Waduh, koneksi ke satelit AI terputus. Pastikan internet lancar ya!", 'bot');
     }
 }
+// ====================================================
