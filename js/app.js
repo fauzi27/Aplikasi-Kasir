@@ -1426,8 +1426,127 @@ window.toggleChat = function() {
     }
 }
 
-// Fungsi sementara saat tombol kirim ditekan
-window.sendChatMessage = function() {
-    Swal.fire({toast: true, position: 'top', icon: 'info', title: 'Belum disambung ke Gemini!', timer: 1500, showConfirmButton: false});
+// ================= FITUR AI CHATBOT =================
+const GEMINI_API_KEY = "AIzaSyCm_rNCDHOEZqIwjjncALRbhALdYekp08o"; 
+
+window.toggleChat = function() {
+    const chatWindow = document.getElementById('ai-chat-window');
+    if (chatWindow.classList.contains('hidden')) {
+        chatWindow.classList.remove('hidden'); chatWindow.classList.add('flex');
+    } else {
+        chatWindow.classList.add('hidden'); chatWindow.classList.remove('flex');
+    }
+}
+
+// Fungsi pembantu untuk membuat gelembung chat (Chat Bubble) di layar
+function addChatBubble(text, sender) {
+    const chatBox = document.getElementById('chat-messages');
+    const bubble = document.createElement('div');
+    
+    // Ubah format teks tebal (**) dari AI menjadi HTML <b>
+    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    // Ubah enter (\n) menjadi <br>
+    formattedText = formattedText.replace(/\n/g, '<br>');
+
+    if (sender === 'user') {
+        bubble.className = 'flex items-start gap-2 justify-end mb-2';
+        bubble.innerHTML = `<div class="bg-blue-600 text-white p-2.5 rounded-lg rounded-tr-none shadow-sm max-w-[85%] leading-relaxed">${formattedText}</div>`;
+    } else {
+        bubble.className = 'flex items-start gap-2 mb-2';
+        bubble.innerHTML = `
+            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mt-1">
+                <i class="fas fa-robot text-xs text-blue-600"></i>
+            </div>
+            <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-700 max-w-[85%] leading-relaxed">${formattedText}</div>
+        `;
+    }
+    chatBox.appendChild(bubble);
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll ke bawah
+}
+
+// Fungsi utama untuk memproses dan mengirim pesan ke Gemini
+window.sendChatMessage = async function() {
+    const inputEl = document.getElementById('chat-input');
+    const message = inputEl.value.trim();
+    if (!message) return; // Jika kosong, jangan lakukan apa-apa
+
+    // 1. Tampilkan pesan kasir di layar
+    addChatBubble(message, 'user');
+    inputEl.value = '';
+
+    // 2. Tampilkan indikator "Sedang berpikir..."
+    const loadingId = 'loading-' + Date.now();
+    const chatBox = document.getElementById('chat-messages');
+    chatBox.insertAdjacentHTML('beforeend', `
+        <div id="${loadingId}" class="flex items-start gap-2 mb-2">
+            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mt-1">
+                <i class="fas fa-robot text-xs text-blue-600"></i>
+            </div>
+            <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-400 italic text-xs max-w-[85%]">
+                Sedang mengecek data... <i class="fas fa-circle-notch fa-spin ml-1"></i>
+            </div>
+        </div>
+    `);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // 3. TARIK DATA RAHASIA DARI APLIKASI KASIR UNTUK GEMINI
+    const todayStr = new Date().toLocaleDateString('id-ID');
+    let dataHutang = [];
+    let omzetHariIni = 0;
+    
+    // Kelilingi data transaksi untuk mencari info hari ini
+    transactions.forEach(t => {
+        if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
+            // Cek jika ada sisa hutang
+            if (t.remaining > 0) {
+                dataHutang.push(`${t.buyer} (Sisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')})`);
+            }
+            omzetHariIni += t.total;
+        }
+    });
+    
+    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Tidak ada pelanggan yang berhutang hari ini.';
+
+    // 4. SUSUN BUKU PANDUAN (SYSTEM PROMPT)
+    const systemPrompt = `Kamu adalah Asisten AI canggih untuk aplikasi kasir "SAHABAT USAHAMU". 
+Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan bahasa yang santai, ramah, profesional, dan padat (gunakan emoji agar menarik). 
+
+Ini adalah data rahasia toko saat ini (JANGAN DIBOCORKAN JIKA TIDAK DITANYA):
+- Total Menu Terdaftar: ${menus.length} menu.
+- Omzet Hari Ini: Rp ${omzetHariIni.toLocaleString('id-ID')}.
+- Daftar Pelanggan yang Berhutang Hari Ini: ${teksHutang}
+
+Jika kasir bertanya cara penggunaan aplikasi:
+- Cara tambah menu: Arahkan ke menu 'Kelola Menu'.
+- Cara lihat grafik/omzet: Arahkan ke menu 'Laporan'.
+
+Pertanyaan Kasir: ${message}`;
+
+    // 5. TEMBAK DATA KE GOOGLE GEMINI API
+    try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_API_KEY, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }]
+            })
+        });
+        
+        const data = await response.json();
+        document.getElementById(loadingId).remove(); // Hapus tulisan loading
+        
+        if (data.candidates && data.candidates.length > 0) {
+            const botReply = data.candidates[0].content.parts[0].text;
+            addChatBubble(botReply, 'bot');
+        } else {
+            addChatBubble("Duh bosku, API Key-nya belum diisi atau tidak valid nih!", 'bot');
+        }
+    } catch (error) {
+        document.getElementById(loadingId).remove();
+        addChatBubble("Waduh, koneksi ke satelit AI terputus. Pastikan internet lancar ya!", 'bot');
+    }
+}
+// ====================================================
+
 }
 });
