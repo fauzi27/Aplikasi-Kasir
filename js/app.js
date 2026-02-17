@@ -1409,7 +1409,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminSearch = document.getElementById('admin-search');
     if (adminSearch) adminSearch.addEventListener('keyup', debouncedRenderAdminList);
 
-}); // <-- INI PENUTUP DOMContentLoaded YANG BENAR (JANGAN DIHAPUS)
+    // INI YANG TADI TIDAK SENGAJA TERHAPUS
+    const debouncedRenderStockList = debounce(renderStockList, 300);
+    const stockSearch = document.getElementById('stock-search');
+    if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
+}); // <-- PENUTUP DOMContentLoaded
 
 // ================= FITUR AI CHATBOT =================
 const GEMINI_API_KEY = "AIzaSyCm_rNCDHOEZqIwjjncALRbhALdYekp08o"; 
@@ -1423,14 +1427,12 @@ window.toggleChat = function() {
     }
 }
 
-// Fungsi pembantu untuk membuat gelembung chat (Chat Bubble) di layar
+// Fungsi pembantu untuk membuat gelembung chat
 function addChatBubble(text, sender) {
     const chatBox = document.getElementById('chat-messages');
     const bubble = document.createElement('div');
     
-    // Ubah format teks tebal (**) dari AI menjadi HTML <b>
     let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    // Ubah enter (\n) menjadi <br>
     formattedText = formattedText.replace(/\n/g, '<br>');
 
     if (sender === 'user') {
@@ -1446,20 +1448,18 @@ function addChatBubble(text, sender) {
         `;
     }
     chatBox.appendChild(bubble);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll ke bawah
+    chatBox.scrollTop = chatBox.scrollHeight; 
 }
 
-// Fungsi utama untuk memproses dan mengirim pesan ke Gemini
+// Fungsi utama Chatbot
 window.sendChatMessage = async function() {
     const inputEl = document.getElementById('chat-input');
     const message = inputEl.value.trim();
-    if (!message) return; // Jika kosong, jangan lakukan apa-apa
+    if (!message) return; 
 
-    // 1. Tampilkan pesan kasir di layar
     addChatBubble(message, 'user');
     inputEl.value = '';
 
-    // 2. Tampilkan indikator "Sedang berpikir..."
     const loadingId = 'loading-' + Date.now();
     const chatBox = document.getElementById('chat-messages');
     chatBox.insertAdjacentHTML('beforeend', `
@@ -1474,15 +1474,13 @@ window.sendChatMessage = async function() {
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 3. TARIK DATA RAHASIA DARI APLIKASI KASIR UNTUK GEMINI
+    // Tarik data asli toko (Sisa hutang dan omzet)
     const todayStr = new Date().toLocaleDateString('id-ID');
     let dataHutang = [];
     let omzetHariIni = 0;
     
-    // Kelilingi data transaksi untuk mencari info hari ini
     transactions.forEach(t => {
         if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
-            // Cek jika ada sisa hutang
             if (t.remaining > 0) {
                 dataHutang.push(`${t.buyer} (Sisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')})`);
             }
@@ -1492,7 +1490,7 @@ window.sendChatMessage = async function() {
     
     let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Tidak ada pelanggan yang berhutang hari ini.';
 
-    // 4. SUSUN BUKU PANDUAN (SYSTEM PROMPT)
+    // Prompt sistem
     const systemPrompt = `Kamu adalah Asisten AI canggih untuk aplikasi kasir "SAHABAT USAHAMU". 
 Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan bahasa yang santai, ramah, profesional, dan padat (gunakan emoji agar menarik). 
 
@@ -1507,7 +1505,6 @@ Jika kasir bertanya cara penggunaan aplikasi:
 
 Pertanyaan Kasir: ${message}`;
 
-    // 5. TEMBAK DATA KE GOOGLE GEMINI API
     try {
         const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_API_KEY, {
             method: 'POST',
@@ -1518,13 +1515,15 @@ Pertanyaan Kasir: ${message}`;
         });
         
         const data = await response.json();
-        document.getElementById(loadingId).remove(); // Hapus tulisan loading
+        document.getElementById(loadingId).remove(); 
         
-        if (data.candidates && data.candidates.length > 0) {
+        // Cek Keberhasilan
+        if (response.ok && data.candidates && data.candidates.length > 0) {
             const botReply = data.candidates[0].content.parts[0].text;
             addChatBubble(botReply, 'bot');
         } else {
-            addChatBubble("Duh bosku, API Key-nya belum diisi atau tidak valid nih!", 'bot');
+            const errorMsg = data.error ? data.error.message : "Error tidak diketahui";
+            addChatBubble("Gagal memanggil AI. Pesan dari server Google: <b>" + errorMsg + "</b>", 'bot');
         }
     } catch (error) {
         document.getElementById(loadingId).remove();
