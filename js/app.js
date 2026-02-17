@@ -1456,9 +1456,11 @@ window.sendChatMessage = async function() {
     const message = inputEl.value.trim();
     if (!message) return; 
 
+    // 1. Tampilkan pesan kasir di layar
     addChatBubble(message, 'user');
     inputEl.value = '';
 
+    // 2. Tampilkan indikator loading
     const loadingId = 'loading-' + Date.now();
     const chatBox = document.getElementById('chat-messages');
     chatBox.insertAdjacentHTML('beforeend', `
@@ -1467,45 +1469,93 @@ window.sendChatMessage = async function() {
                 <i class="fas fa-robot text-xs text-blue-600"></i>
             </div>
             <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-400 italic text-xs max-w-[85%]">
-                Sedang mengecek data... <i class="fas fa-circle-notch fa-spin ml-1"></i>
+                Menganalisa data warung... <i class="fas fa-circle-notch fa-spin ml-1"></i>
             </div>
         </div>
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Tarik data asli toko (Sisa hutang dan omzet)
+    // 3. TARIK & ANALISA DATA RAHASIA DARI APLIKASI KASIR
     const todayStr = new Date().toLocaleDateString('id-ID');
     let dataHutang = [];
     let omzetHariIni = 0;
     
+    // Variabel baru untuk Kecerdasan Tambahan
+    let paymentTunai = 0;
+    let paymentQris = 0;
+    let paymentHutang = 0;
+    let itemSalesCount = {};
+
     transactions.forEach(t => {
         if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
+            // Catat Hutang
             if (t.remaining > 0) {
                 dataHutang.push(`${t.buyer} (Sisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')})`);
             }
+            
+            // Hitung Omzet Keseluruhan
             omzetHariIni += t.total;
+            
+            // Rekap Metode Pembayaran
+            if (t.method === 'TUNAI') paymentTunai += (t.paid >= t.total ? t.total : t.paid);
+            if (t.method === 'QRIS') paymentQris += t.total;
+            if (t.method === 'HUTANG') paymentHutang += t.remaining;
+
+            // Hitung Menu Terlaris
+            if (t.items) {
+                t.items.forEach(item => {
+                    if (!itemSalesCount[item.name]) itemSalesCount[item.name] = 0;
+                    itemSalesCount[item.name] += item.qty;
+                });
+            }
         }
     });
     
-    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Tidak ada pelanggan yang berhutang hari ini.';
+    // Format Teks Hutang
+    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Alhamdulillah, tidak ada yang hutang hari ini.';
 
-    // Prompt sistem
-    const systemPrompt = `Kamu adalah Asisten AI canggih untuk aplikasi kasir "SAHABAT USAHAMU". 
-Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan bahasa yang santai, ramah, profesional, dan padat (gunakan emoji agar menarik). 
+    // Format Teks Menu Terlaris (Top 3)
+    let bestSellers = Object.entries(itemSalesCount)
+        .sort((a, b) => b[1] - a[1]) // Urutkan dari yang paling banyak dibeli
+        .slice(0, 3) // Ambil 3 teratas
+        .map(item => `${item[0]} (${item[1]} porsi)`)
+        .join(', ');
+    if (!bestSellers) bestSellers = 'Belum ada menu yang terjual hari ini.';
 
-Ini adalah data rahasia toko saat ini (JANGAN DIBOCORKAN JIKA TIDAK DITANYA):
+    // Format Teks Stok Menipis (Sisa di bawah atau sama dengan 5)
+    let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5)
+        .map(m => `${m.name} (Sisa: ${m.stock})`)
+        .join(', ');
+    if (!lowStockMenus) lowStockMenus = 'Semua stok menu masih aman (di atas 5).';
+
+
+    // 4. BUKU PANDUAN & INSTRUKSI AI (SYSTEM PROMPT)
+    const systemPrompt = `Kamu adalah "Sahabat AI", asisten pintar untuk aplikasi kasir "SAHABAT USAHAMU". 
+Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan bahasa yang santai, ramah, layaknya partner bisnis yang pro (gunakan emoji agar menarik). 
+
+Ini adalah data *REAL-TIME* toko hari ini (JANGAN DIBOCORKAN JIKA TIDAK DITANYA):
 - Total Menu Terdaftar: ${menus.length} menu.
-- Omzet Hari Ini: Rp ${omzetHariIni.toLocaleString('id-ID')}.
-- Daftar Pelanggan yang Berhutang Hari Ini: ${teksHutang}
+- Peringatan Stok Menipis (<=5): ${lowStockMenus}
+- Menu Terlaris Hari Ini: ${bestSellers}
+- Total Omzet Hari Ini: Rp ${omzetHariIni.toLocaleString('id-ID')}
+- Rincian Pemasukan: Tunai (Rp ${paymentTunai.toLocaleString('id-ID')}), QRIS (Rp ${paymentQris.toLocaleString('id-ID')}), Masuk Buku Bon/Hutang (Rp ${paymentHutang.toLocaleString('id-ID')})
+- Daftar Pelanggan Berhutang Hari Ini: ${teksHutang}
 
-Jika kasir bertanya cara penggunaan aplikasi:
-- Cara tambah menu: Arahkan ke menu 'Kelola Menu'.
-- Cara lihat grafik/omzet: Arahkan ke menu 'Laporan'.
+INSTRUKSI KHUSUS UNTUKMU:
+1. Jika ditanya soal data di atas, jawab dengan natural, beri semangat atau pujian jika omzet bagus. Jika ada stok menipis, ingatkan bos untuk segera kulakan.
+2. JIKA DIMINTA BIKIN TEKS PROMO WA (Copywriting): Buatkan kalimat yang memikat pelanggan, gunakan trik psikologi marketing (FOMO/diskon/bundling), berikan emoji yang meriah, dan akhiri dengan ajakan datang ke warung atau membalas pesan.
+3. Jika kasir bertanya cara pakai aplikasi:
+   - Cara tambah/edit/hapus menu: Arahkan ke halaman 'Kelola Menu'.
+   - Cara lihat laporan/omzet/grafik: Arahkan ke halaman 'Laporan'.
+   - Cara Kasir Manual (Kalkulator): Arahkan ke ikon Kalkulator warna hijau tosca di pojok kanan atas halaman kasir.
+   - Cara Download Laporan PDF/Excel: Arahkan ke halaman 'Laporan' lalu klik tombol Export di kanan atas.
+   - Cara Edit/Revisi transaksi yang salah: Buka halaman 'Laporan', klik nota yang salah, lalu tekan tombol kuning 'Edit / Revisi'.
 
-Pertanyaan Kasir: ${message}`;
+Pertanyaan Bos/Kasir: ${message}`;
 
+    // 5. TEMBAK DATA KE GOOGLE GEMINI API (Generasi 2.0)
     try {
-                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEMINI_API_KEY, {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_API_KEY, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1530,6 +1580,7 @@ Pertanyaan Kasir: ${message}`;
     }
 }
 // ====================================================
+
 // ================= FITUR DRAG (GESER) TOMBOL AI =================
 const aiBtnContainer = document.getElementById('ai-chat-btn');
 const aiBtn = aiBtnContainer.querySelector('button');
