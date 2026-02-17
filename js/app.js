@@ -1409,22 +1409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminSearch = document.getElementById('admin-search');
     if (adminSearch) adminSearch.addEventListener('keyup', debouncedRenderAdminList);
 
-    const debouncedRenderStockList = debounce(renderStockList, 300);
-    const stockSearch = document.getElementById('stock-search');
-    if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
-    // --- FITUR AI CHATBOT ---
-window.toggleChat = function() {
-    const chatWindow = document.getElementById('ai-chat-window');
-    // Jika sedang hidden (tersembunyi), kita hapus class hidden dan tambah flex
-    if (chatWindow.classList.contains('hidden')) {
-        chatWindow.classList.remove('hidden');
-        chatWindow.classList.add('flex');
-    } else {
-        // Sebaliknya, jika sedang terbuka, sembunyikan lagi
-        chatWindow.classList.add('hidden');
-        chatWindow.classList.remove('flex');
-    }
-}
+}); // <-- INI PENUTUP DOMContentLoaded YANG BENAR (JANGAN DIHAPUS)
 
 // ================= FITUR AI CHATBOT =================
 const GEMINI_API_KEY = "AIzaSyCm_rNCDHOEZqIwjjncALRbhALdYekp08o"; 
@@ -1546,7 +1531,3 @@ Pertanyaan Kasir: ${message}`;
         addChatBubble("Waduh, koneksi ke satelit AI terputus. Pastikan internet lancar ya!", 'bot');
     }
 }
-// ====================================================
-
-}
-});
