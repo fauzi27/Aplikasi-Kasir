@@ -1159,11 +1159,42 @@ window.showBillPreview = function() {
 window.sendToWA = function() {
     if(!currentViewedTrx) return;
     const t = currentViewedTrx;
-    let text = `*Struk ${businessData.name || 'Miekopies'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n`;
-    t.items.forEach(i => text += `${i.name} (${i.qty}) : ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
-    text += `*Total: ${t.total}*\nMetode: ${t.method}`;
-    if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: ${t.paid}\nKembali: ${t.change}`; }
-    window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    
+    // 1. Ambil nomor WA dari input HTML yang baru kita buat
+    let noWA = document.getElementById('modal-buyer-wa').value.trim();
+    
+    // 2. Format nomor WA (ubah awalan 0 menjadi 62 standar internasional)
+    if (noWA.startsWith('0')) {
+        noWA = '62' + noWA.substring(1);
+    }
+    
+    // 3. Siapkan teks struk sebagai cadangan
+    let text = `*Struk ${window.shopNameAsli || businessData.name || 'SAHABAT USAHAMU'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n\n`;
+    t.items.forEach(i => text += `${i.name} (${i.qty}) : Rp ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
+    text += `\n*Total: Rp ${t.total.toLocaleString('id-ID')}*\nMetode: ${t.method}`;
+    if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: Rp ${t.paid.toLocaleString('id-ID')}\nKembali: Rp ${t.change.toLocaleString('id-ID')}`; }
+    if(t.remaining > 0) { text += `\nSisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')}`; }
+    text += `\n\n_Terima kasih telah berbelanja!_`;
+
+    // 4. Tentukan link tujuan (jika nomor kosong, WA akan minta pilih kontak manual)
+    let waLink = noWA ? `https://wa.me/${noWA}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+    // 5. Trik Hybrid: Download Gambar Struk dulu, baru buka WA
+    Swal.fire({title: 'Menyiapkan Struk...', text: 'Gambar struk akan di-download otomatis', timer: 1500, showConfirmButton: false});
+    
+    const el = document.getElementById('bill-content');
+    html2canvas(el, {scale:2, backgroundColor:'#fff'}).then(c => {
+        // Proses Download PNG
+        const l = document.createElement('a'); 
+        l.download = `Struk_${t.buyer}_${Date.now()}.png`; 
+        l.href = c.toDataURL(); 
+        l.click();
+        
+        // Jeda setengah detik lalu Buka WhatsApp
+        setTimeout(() => {
+            window.open(waLink, '_blank');
+        }, 500);
+    });
 }
 
 window.saveReceiptImage = function() {
