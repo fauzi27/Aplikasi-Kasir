@@ -7,7 +7,7 @@
   "theme_color": "#111827",
   "icons": [
     {
-      "src": "logokasir.png", 
+      "src": "asset/logokasir.png", 
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
