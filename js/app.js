@@ -1415,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 }); // <-- PENUTUP DOMContentLoaded
 
 // ================= FITUR AI CHATBOT =================
-const GEMINI_API_KEY = "AIzaSyAz84PxGLGenidaMzrQjK8egkE97Ahk4h4"; 
+const GEMINI_API_KEY = "AIzaSyCm_rNCDHOEZqIwjjncALRbhALdYekp08o"; 
 
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
