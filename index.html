@@ -394,6 +394,68 @@
             </div>
         </div>
     </div>
+        <div id="ai-chat-btn" class="fixed bottom-6 right-6 z-[100]">
+        <button onclick="window.toggleChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-105 transition active:scale-95">
+            <i class="fas fa-robot text-2xl"></i>
+        </button>
+    </div>
+
+    <div id="ai-chat-window" class="fixed bottom-24 right-6 w-80 max-w-[85vw] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[100] hidden flex-col overflow-hidden transition-all duration-300">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 flex justify-between items-center text-white">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-robot text-xl"></i>
+                <h3 class="font-bold text-sm">Asisten Pintar AI</h3>
+            </div>
+            <button onclick="window.toggleChat()" class="text-white hover:text-gray-200 active:scale-90"><i class="fas fa-times text-lg"></i></button>
+        </div>
+        
+        <div id="chat-messages" class="h-72 overflow-y-auto p-3 bg-gray-50 flex flex-col gap-3 text-sm">
+            <div class="flex items-start gap-2">
+                <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mt-1">
+                    <i class="fas fa-robot text-xs text-blue-600"></i>
+                </div>
+                <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-100 text-gray-700 max-w-[85%] leading-relaxed">
+                    Halo bosku! Saya asisten AI SAHABAT USAHAMU. Ada yang bisa saya bantu tentang aplikasi ini atau data penjualan hari ini?
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-2 border-t bg-white flex items-center gap-2">
+            <input type="text" id="chat-input" placeholder="Tanya sesuatu..." class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
+            <button onclick="window.sendChatMessage()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 active:scale-95 transition flex-none">
+                <i class="fas fa-paper-plane text-xs -ml-0.5 mt-0.5"></i>
+            </button>
+        </div>
+    </div>
+    ```
+
+---
+
+### Langkah 2: Buat Tombolnya Bisa Diklik Buka/Tutup
+Sekarang kita tambahkan sedikit kode JavaScript agar tombol robotnya berfungsi memunculkan dan menyembunyikan jendela chat tadi.
+
+Buka file **`js/app.js`**, scroll ke bagian paling bawah, dan **tambahkan kode ini di baris paling akhir:**
+
+```javascript
+// --- FITUR AI CHATBOT ---
+window.toggleChat = function() {
+    const chatWindow = document.getElementById('ai-chat-window');
+    // Jika sedang hidden (tersembunyi), kita hapus class hidden dan tambah flex
+    if (chatWindow.classList.contains('hidden')) {
+        chatWindow.classList.remove('hidden');
+        chatWindow.classList.add('flex');
+    } else {
+        // Sebaliknya, jika sedang terbuka, sembunyikan lagi
+        chatWindow.classList.add('hidden');
+        chatWindow.classList.remove('flex');
+    }
+}
+
+// Fungsi sementara saat tombol kirim ditekan
+window.sendChatMessage = function() {
+    Swal.fire({toast: true, position: 'top', icon: 'info', title: 'Belum disambung ke Gemini!', timer: 1500, showConfirmButton: false});
+}
+
 
     <script type="module" src="js/app.js"></script>
 
