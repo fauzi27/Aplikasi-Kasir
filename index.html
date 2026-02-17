@@ -353,7 +353,7 @@
         </div>
     </div>
 
-    <div id="bill-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+       <div id="bill-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-gray-100 p-3 flex justify-between items-center border-b">
                 <h3 class="font-bold text-gray-700" id="bill-modal-title">Detail Transaksi</h3>
@@ -373,7 +373,7 @@
                 </button>
             </div>
             
-              <div id="view-actions" class="p-4 bg-gray-50 border-t hidden flex flex-col gap-2">
+             <div id="view-actions" class="p-4 bg-gray-50 border-t hidden flex flex-col gap-2">
                 <input type="tel" id="modal-buyer-wa" placeholder="No. WA Pelanggan (Cth: 0812...)" class="w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-green-500 mb-1">
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="window.sendToWA()" class="bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
@@ -394,8 +394,9 @@
             </div>
         </div>
     </div>
-        <div id="ai-chat-btn" class="fixed bottom-6 right-6 z-[100]">
-        <button onclick="window.toggleChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-105 transition active:scale-95">
+
+    <div id="ai-chat-btn" class="fixed bottom-6 right-6 z-[100] cursor-move touch-none">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-105 transition active:scale-95">
             <i class="fas fa-robot text-2xl"></i>
         </button>
     </div>
@@ -427,26 +428,6 @@
             </button>
         </div>
     </div>
-// --- FITUR AI CHATBOT ---
-window.toggleChat = function() {
-    const chatWindow = document.getElementById('ai-chat-window');
-    // Jika sedang hidden (tersembunyi), kita hapus class hidden dan tambah flex
-    if (chatWindow.classList.contains('hidden')) {
-        chatWindow.classList.remove('hidden');
-        chatWindow.classList.add('flex');
-    } else {
-        // Sebaliknya, jika sedang terbuka, sembunyikan lagi
-        chatWindow.classList.add('hidden');
-        chatWindow.classList.remove('flex');
-    }
-}
-
-// Fungsi sementara saat tombol kirim ditekan
-window.sendChatMessage = function() {
-    Swal.fire({toast: true, position: 'top', icon: 'info', title: 'Belum disambung ke Gemini!', timer: 1500, showConfirmButton: false});
-}
-
-
     <script type="module" src="js/app.js"></script>
 
 </body>
