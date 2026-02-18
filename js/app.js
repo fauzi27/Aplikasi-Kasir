@@ -1421,6 +1421,18 @@ window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     if (chatWindow.classList.contains('hidden')) {
         chatWindow.classList.remove('hidden'); chatWindow.classList.add('flex');
+        
+        // FIX: Mencegah bentrok tombol "Enter" di keyboard dengan tombol kasir
+        const chatInput = document.getElementById('chat-input');
+        if(chatInput && !chatInput.hasAttribute('data-enter-bound')) {
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    window.sendChatMessage(); // Langsung kirim saat tekan enter
+                }
+            });
+            chatInput.setAttribute('data-enter-bound', 'true');
+        }
     } else {
         chatWindow.classList.add('hidden'); chatWindow.classList.remove('flex');
     }
@@ -1480,22 +1492,16 @@ window.sendChatMessage = async function() {
     let dataHutang = [];
     let omzetHariIni = 0;
     
-    let paymentTunai = 0;
-    let paymentQris = 0;
-    let paymentHutang = 0;
+    let paymentTunai = 0, paymentQris = 0, paymentHutang = 0;
     let itemSalesCount = {};
 
     transactions.forEach(t => {
         if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
-            if (t.remaining > 0) {
-                dataHutang.push(`${t.buyer} (Sisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')})`);
-            }
+            if (t.remaining > 0) dataHutang.push(`${t.buyer} (Sisa: Rp ${t.remaining.toLocaleString('id-ID')})`);
             omzetHariIni += t.total;
-            
             if (t.method === 'TUNAI') paymentTunai += (t.paid >= t.total ? t.total : t.paid);
             if (t.method === 'QRIS') paymentQris += t.total;
             if (t.method === 'HUTANG') paymentHutang += t.remaining;
-
             if (t.items) {
                 t.items.forEach(item => {
                     if (!itemSalesCount[item.name]) itemSalesCount[item.name] = 0;
@@ -1505,41 +1511,21 @@ window.sendChatMessage = async function() {
         }
     });
     
-    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Alhamdulillah, tidak ada yang hutang hari ini.';
-
-    let bestSellers = Object.entries(itemSalesCount)
-        .sort((a, b) => b[1] - a[1]) 
-        .slice(0, 3) 
-        .map(item => `${item[0]} (${item[1]} porsi)`)
-        .join(', ');
-    if (!bestSellers) bestSellers = 'Belum ada menu yang terjual hari ini.';
-
-    let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5)
-        .map(m => `${m.name} (Sisa: ${m.stock})`)
-        .join(', ');
-    if (!lowStockMenus) lowStockMenus = 'Semua stok menu masih aman (di atas 5).';
+    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Tidak ada yang hutang hari ini.';
+    let bestSellers = Object.entries(itemSalesCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(i => `${i[0]} (${i[1]}x)`).join(', ') || 'Belum ada menu terjual.';
+    let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5).map(m => `${m.name} (Sisa: ${m.stock})`).join(', ') || 'Semua stok aman.';
 
     // 4. BUKU PANDUAN & INSTRUKSI AI (SYSTEM PROMPT)
     const systemPrompt = `Kamu adalah "Sahabat AI", asisten pintar untuk aplikasi kasir "SAHABAT USAHAMU". 
-Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan bahasa yang santai, ramah, layaknya partner bisnis yang pro (gunakan emoji agar menarik). 
+Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan ramah dan santai (gunakan emoji). 
 
-Ini adalah data *REAL-TIME* toko hari ini (JANGAN DIBOCORKAN JIKA TIDAK DITANYA):
-- Total Menu Terdaftar: ${menus.length} menu.
+Data REAL-TIME toko hari ini:
+- Total Menu: ${menus.length} menu.
 - Peringatan Stok Menipis (<=5): ${lowStockMenus}
-- Menu Terlaris Hari Ini: ${bestSellers}
-- Total Omzet Hari Ini: Rp ${omzetHariIni.toLocaleString('id-ID')}
-- Rincian Pemasukan: Tunai (Rp ${paymentTunai.toLocaleString('id-ID')}), QRIS (Rp ${paymentQris.toLocaleString('id-ID')}), Masuk Buku Bon/Hutang (Rp ${paymentHutang.toLocaleString('id-ID')})
-- Daftar Pelanggan Berhutang Hari Ini: ${teksHutang}
-
-INSTRUKSI KHUSUS UNTUKMU:
-1. Jika ditanya soal data di atas, jawab dengan natural, beri semangat atau pujian jika omzet bagus. Jika ada stok menipis, ingatkan bos untuk segera kulakan.
-2. JIKA DIMINTA BIKIN TEKS PROMO WA (Copywriting): Buatkan kalimat yang memikat pelanggan, gunakan trik psikologi marketing (FOMO/diskon/bundling), berikan emoji yang meriah, dan akhiri dengan ajakan datang ke warung atau membalas pesan.
-3. Jika kasir bertanya cara pakai aplikasi:
-   - Cara tambah/edit/hapus menu: Arahkan ke halaman 'Kelola Menu'.
-   - Cara lihat laporan/omzet/grafik: Arahkan ke halaman 'Laporan'.
-   - Cara Kasir Manual (Kalkulator): Arahkan ke ikon Kalkulator warna hijau tosca di pojok kanan atas halaman kasir.
-   - Cara Download Laporan PDF/Excel: Arahkan ke halaman 'Laporan' lalu klik tombol Export di kanan atas.
-   - Cara Edit/Revisi transaksi yang salah: Buka halaman 'Laporan', klik nota yang salah, lalu tekan tombol kuning 'Edit / Revisi'.`;
+- Menu Terlaris: ${bestSellers}
+- Total Omzet: Rp ${omzetHariIni.toLocaleString('id-ID')}
+- Pemasukan: Tunai (Rp ${paymentTunai.toLocaleString('id-ID')}), QRIS (Rp ${paymentQris.toLocaleString('id-ID')}), Hutang (Rp ${paymentHutang.toLocaleString('id-ID')})
+- Daftar Hutang: ${teksHutang}`;
 
     // 5. TEMBAK DATA KE GROQ API (Mesin Llama 3)
     try {
@@ -1550,7 +1536,7 @@ INSTRUKSI KHUSUS UNTUKMU:
                 'Content-Type': 'application/json' 
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile", // Mesin super pintar & cepat dari Meta
+                model: "llama-3.3-70b-versatile",
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: message }
@@ -1563,9 +1549,7 @@ INSTRUKSI KHUSUS UNTUKMU:
         document.getElementById(loadingId).remove(); 
         
         if (response.ok && data.choices && data.choices.length > 0) {
-            // Cara mengambil pesan balasan di Groq sedikit berbeda dari Gemini
-            const botReply = data.choices[0].message.content;
-            addChatBubble(botReply, 'bot');
+            addChatBubble(data.choices[0].message.content, 'bot');
         } else {
             const errorMsg = data.error ? data.error.message : "Error tidak diketahui";
             addChatBubble("Gagal memanggil AI Groq. Pesan: <b>" + errorMsg + "</b>", 'bot');
