@@ -1415,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 }); // <-- PENUTUP DOMContentLoaded
 
 // ================= FITUR AI CHATBOT =================
-const GROQ_API_KEY = "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; 
+const GROQ_API_KEY = "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"; 
 
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
