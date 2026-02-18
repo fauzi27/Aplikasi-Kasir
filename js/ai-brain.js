@@ -1,29 +1,25 @@
 // ============================================================
-// 🧠 OTAK KECERDASAN BUATAN (AI BRAIN)
+// 🧠 OTAK KECERDASAN BUATAN (AI BRAIN - MODE BEBAS)
 // ============================================================
-// Di sini tempat kamu "melatih" AI dengan mengubah System Prompt.
 
 const GROQ_API_KEY = "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"; 
 
-// 1. KEPRIBADIAN & ATURAN (TRAINING DATA)
+// 1. KEPRIBADIAN & ATURAN (HYBRID MODE)
 const AI_PERSONALITY = `
-Kamu adalah "Sahabat AI", asisten bisnis digital untuk aplikasi kasir "SAHABAT USAHAMU".
-Gaya bicaramu: Santai, ramah, profesional, dan menggunakan emoji yang relevan.
-Bahasa: Bahasa Indonesia gaul tapi sopan (seperti partner bisnis).
+Kamu adalah "Sahabat AI", asisten cerdas untuk aplikasi kasir "SAHABAT USAHAMU".
+Kamu memiliki dua mode kepribadian:
 
-TUGAS UTAMA:
-1. Menganalisa penjualan dan stok berdasarkan data yang diberikan.
-2. Memberikan saran marketing (copywriting WA) jika diminta.
-3. Memberi semangat kepada pemilik toko.
+1. **MODE KASIR (PRIORITAS UTAMA):**
+   Jika pengguna bertanya soal data penjualan, stok, omzet, atau laporan toko, JAWABLAH BERDASARKAN DATA REAL-TIME yang diberikan di bawah. Jangan mengarang angka!
 
-PANTANGAN:
-- JANGAN mengarang data penjualan. Gunakan hanya data yang disuplai di bawah.
-- Jika data kosong, katakan "Belum ada data".
-- JANGAN menjawab pertanyaan di luar konteks bisnis/warung (misal: jangan jawab soal politik).
+2. **MODE SAHABAT (BEBAS):**
+   Jika pengguna bertanya hal umum (seperti puisi, resep masakan, tips bisnis, curhat, lelucon, atau info umum), JAWABLAH DENGAN BEBAS, KREATIF, DAN CERDAS. Kamu boleh membahas apa saja di luar konteks warung.
+
+Gaya Bicara: Santai, gaul, akrab, suportif, dan suka pakai emoji yang asik. 
+Jangan kaku seperti robot bank. Anggap pengguna adalah teman nongkrongmu.
 `;
 
-// 2. FUNGSI PENYUSUN MEMORI (MENGGABUNGKAN DATA REAL-TIME)
-// Fungsi ini mengubah data mentah kasir menjadi teks yang bisa dibaca AI
+// 2. FUNGSI PENYUSUN MEMORI (MENGGABUNGKAN DATA)
 export function generateContext(transactions, menus) {
     const todayStr = new Date().toLocaleDateString('id-ID');
     let omzet = 0;
@@ -31,24 +27,15 @@ export function generateContext(transactions, menus) {
     let hutangList = [];
     let methodStats = { TUNAI: 0, QRIS: 0, HUTANG: 0 };
 
-    // Analisa Transaksi Hari Ini
+    // Analisa Transaksi
     transactions.forEach(t => {
         if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
             omzet += t.total;
-            // Hitung Metode Bayar
             if(methodStats[t.method] !== undefined) methodStats[t.method] += t.total;
             else if(t.method === 'HUTANG') methodStats.HUTANG += t.remaining;
             
-            // Hitung Item Terlaris
-            if (t.items) {
-                t.items.forEach(i => {
-                    itemsSold[i.name] = (itemsSold[i.name] || 0) + i.qty;
-                });
-            }
-            // Catat Hutang
-            if (t.remaining > 0) {
-                hutangList.push(`- ${t.buyer}: Rp ${t.remaining.toLocaleString('id-ID')}`);
-            }
+            if (t.items) t.items.forEach(i => itemsSold[i.name] = (itemsSold[i.name] || 0) + i.qty);
+            if (t.remaining > 0) hutangList.push(`- ${t.buyer}: Rp ${t.remaining.toLocaleString('id-ID')}`);
         }
     });
 
@@ -65,18 +52,20 @@ export function generateContext(transactions, menus) {
         .map(i => `${i[0]} (${i[1]} pcs)`)
         .join(', ');
 
-    // RAKIT PROMPT AKHIR
+    // RAKIT DATA (Ini adalah "Contekan" bagi AI jika ditanya soal toko)
     return `
 ${AI_PERSONALITY}
 
-DATA REAL-TIME TOKO HARI INI (${todayStr}):
-💰 Total Omzet: Rp ${omzet.toLocaleString('id-ID')}
-📊 Rincian Bayar: Tunai (Rp ${methodStats.TUNAI.toLocaleString()}), QRIS (Rp ${methodStats.QRIS.toLocaleString()}), Hutang (Rp ${methodStats.HUTANG.toLocaleString()})
-🏆 Menu Terlaris: ${bestSeller || "Belum ada penjualan"}
-⚠️ Stok Menipis (Wajib Restock):
-${lowStock || "Aman, tidak ada yang menipis."}
-📒 Daftar Pelanggan Berhutang Hari Ini:
-${hutangList.join('\n') || "Tidak ada hutang hari ini."}
+=== DATA RAHASIA TOKO HARI INI (${todayStr}) ===
+(Gunakan data ini HANYA jika user bertanya soal toko/jualan)
+💰 Omzet: Rp ${omzet.toLocaleString('id-ID')}
+📊 Rincian: Tunai (Rp ${methodStats.TUNAI.toLocaleString()}), QRIS (Rp ${methodStats.QRIS.toLocaleString()}), Hutang (Rp ${methodStats.HUTANG.toLocaleString()})
+🏆 Terlaris: ${bestSeller || "Belum ada"}
+⚠️ Stok Tipis:
+${lowStock || "Aman"}
+📒 Daftar Hutang:
+${hutangList.join('\n') || "Nihil"}
+==================================================
 `;
 }
 
@@ -90,13 +79,13 @@ export async function askGroqAI(userMessage, systemPrompt) {
                 'Content-Type': 'application/json' 
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile", // Model Llama 3 yang Cepat & Pintar
+                model: "llama-3.3-70b-versatile",
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: userMessage }
                 ],
-                temperature: 0.7, // Tingkat kreativitas (0.7 = seimbang)
-                max_tokens: 600
+                temperature: 0.8, // Kita naikkan jadi 0.8 biar lebih kreatif bikin puisinya
+                max_tokens: 1000
             })
         });
 
@@ -104,10 +93,10 @@ export async function askGroqAI(userMessage, systemPrompt) {
         if (data.choices && data.choices.length > 0) {
             return data.choices[0].message.content;
         } else {
-            throw new Error(data.error?.message || "Respon kosong dari AI");
+            throw new Error("AI membisu...");
         }
     } catch (error) {
         console.error("AI Error:", error);
-        return "Maaf bosku, koneksi ke otak AI terputus. Coba cek internetnya ya! 🤕";
+        return "Waduh, sinyal ke otak saya putus bosku! Coba lagi ya.";
     }
 }
