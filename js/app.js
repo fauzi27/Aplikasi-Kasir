@@ -1543,3 +1543,59 @@ window.sendChatMessage = async function() {
         console.error(e);
     }
 }
+// ================= FITUR VOICE COMMAND (SPEECH TO TEXT) =================
+
+window.startVoiceInput = function() {
+    // Cek dukungan browser
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        return Swal.fire('Maaf', 'Browser HP ini tidak mendukung fitur suara. Gunakan Google Chrome.', 'warning');
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'id-ID'; // Bahasa Indonesia
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    // Efek Visual saat merekam
+    const btnMic = document.getElementById('btn-mic');
+    const originalHtml = btnMic.innerHTML;
+    const originalClass = btnMic.className;
+    
+    btnMic.className = "bg-red-500 text-white w-9 h-9 rounded-full flex items-center justify-center animate-pulse flex-none";
+    btnMic.innerHTML = '<i class="fas fa-stop"></i>';
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        const inputEl = document.getElementById('chat-input');
+        inputEl.value = text;
+        
+        // Kembalikan tombol ke semula
+        stopMicVisual();
+        
+        // Opsional: Langsung kirim setelah ngomong
+        // window.sendChatMessage(); 
+        // Saya sarankan jangan auto-kirim dulu, biar user bisa cek teksnya benar/salah
+    };
+
+    recognition.onspeechend = () => {
+        recognition.stop();
+        stopMicVisual();
+    };
+
+    recognition.onerror = (event) => {
+        console.error("Voice Error:", event.error);
+        stopMicVisual();
+        // Jangan alert error kalau cuma "no-speech" (diam)
+        if(event.error !== 'no-speech') {
+            Swal.fire('Gagal', 'Suara tidak terdengar jelas.', 'info');
+        }
+    };
+
+    function stopMicVisual() {
+        btnMic.className = originalClass;
+        btnMic.innerHTML = originalHtml;
+    }
+}
