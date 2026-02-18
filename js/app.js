@@ -26,53 +26,98 @@ let queryFilterMode = 'none';
 let currentUserRole = 'admin'; 
 let shopOwnerId = null; 
 
-// --- AUTH LISTENERS ---
+// --- AUTH LISTENERS (VERSI ANTI-MACET SAAT OFFLINE) ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
+        
+        // 1. SIAPKAN WADAH DATA
+        let loadedFrom = "server"; // Debugging flag
+        businessData = {}; // Reset dulu
+
+        // 2. LOGIKA CERDAS: AMBIL DATA PROFIL
+        try {
+            if (navigator.onLine) {
+                // A. JIKA ONLINE: Ambil data segar dari Server
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    businessData = docSnap.data();
+                    // PENTING: Simpan salinan ke memori HP untuk jaga-jaga kalau offline nanti
+                    localStorage.setItem('cached_user_profile', JSON.stringify(businessData));
+                    
+                    // Cek Owner jika user adalah kasir
+                    shopOwnerId = businessData.ownerId || user.uid; 
+                    if (businessData.role === 'kasir') {
+                        // Ambil data owner juga
+                        const ownerSnap = await getDoc(doc(db, "users", shopOwnerId));
+                        if(ownerSnap.exists()) {
+                            const ownerData = ownerSnap.data();
+                            // Gabungkan data toko owner ke cache
+                            businessData.shopName = ownerData.name;
+                            businessData.shopAddress = ownerData.address;
+                            localStorage.setItem('cached_user_profile', JSON.stringify(businessData));
+                        }
+                    }
+                }
+            } else {
+                // B. JIKA OFFLINE: Ambil dari saku (LocalStorage)
+                // Jangan panggil getDoc() karena pasti error/stuck tanpa persistence
+                loadedFrom = "cache";
+                const cached = localStorage.getItem('cached_user_profile');
+                if (cached) {
+                    businessData = JSON.parse(cached);
+                    console.log("Offline Mode: Menggunakan profil tersimpan.");
+                } else {
+                    // Kalau offline DAN tidak ada cache (kasus langka: baru install langsung offline)
+                    Swal.fire("Offline", "Anda butuh internet untuk login pertama kali.", "warning");
+                    return; 
+                }
+            }
+        } catch (e) {
+            console.error("Gagal load profil:", e);
+            // Fallback terakhir: Coba baca cache kalau server error
+            const cached = localStorage.getItem('cached_user_profile');
+            if (cached) businessData = JSON.parse(cached);
+        }
+
+        // 3. SETTING VARIABEL GLOBAL
+        currentUserRole = businessData.role || 'admin';
+        shopOwnerId = businessData.ownerId || user.uid; 
+        
+        // 4. ATUR TAMPILAN (UI)
+        // Gunakan data dari businessData (entah dari server atau cache)
+        if (currentUserRole === 'kasir') {
+            window.shopNameAsli = businessData.shopName || 'SAHABAT USAHAMU';
+            window.shopAddressAsli = businessData.shopAddress || 'Nusadua Bali';
+        } else {
+            window.shopNameAsli = businessData.name || 'SAHABAT USAHAMU';
+            window.shopAddressAsli = businessData.address || 'Nusadua Bali';
+        }
+        
+        updateBusinessNameUI();
+
+        // Atur menu navigasi sesuai Role
+        const navDisplay = currentUserRole === 'kasir' ? 'none' : 'flex';
+        ['view-admin', 'view-database', 'view-settings'].forEach(id => {
+            const el = document.querySelector(`[onclick="navigate('${id}')"]`);
+            if(el) el.style.display = navDisplay;
+        });
+
+        // 5. BUKA PINTU LOBI (PENTING: Ini yang bikin stuck kalau code di atas error)
         document.getElementById('view-auth').classList.remove('show'); 
         document.getElementById('view-auth').classList.add('hide');
         document.getElementById('view-lobby').classList.remove('hide'); 
         document.getElementById('view-lobby').classList.add('show');
         
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-            businessData = docSnap.data();
-            currentUserRole = businessData.role || 'admin';
-            shopOwnerId = businessData.ownerId || user.uid; 
-            
-            if (currentUserRole === 'kasir') {
-                const ownerSnap = await getDoc(doc(db, "users", shopOwnerId));
-                if (ownerSnap.exists()) {
-                    window.shopNameAsli = ownerSnap.data().name || 'SAHABAT USAHAMU';
-                    window.shopAddressAsli = ownerSnap.data().address || 'Nusadua Bali';
-                }
-            } else {
-                window.shopNameAsli = businessData.name || 'SAHABAT USAHAMU';
-                window.shopAddressAsli = businessData.address || 'Nusadua Bali';
-            }
-            
-            updateBusinessNameUI();
-
-            if (currentUserRole === 'kasir') {
-                document.querySelector('[onclick="navigate(\'view-admin\')"]').style.display = 'none';
-                document.querySelector('[onclick="navigate(\'view-database\')"]').style.display = 'none';
-                document.querySelector('[onclick="navigate(\'view-settings\')"]').style.display = 'none';
-            } else {
-                document.querySelector('[onclick="navigate(\'view-admin\')"]').style.display = 'flex';
-                document.querySelector('[onclick="navigate(\'view-database\')"]').style.display = 'flex';
-                document.querySelector('[onclick="navigate(\'view-settings\')"]').style.display = 'flex';
-            }
-        } else {
-            shopOwnerId = user.uid; 
-            window.shopNameAsli = 'SAHABAT USAHAMU';
-        }
-        
+        // 6. LOAD DATA LAIN (Menu & Transaksi)
+        // initUserData sudah kita modifikasi sebelumnya untuk handle local storage
         initUserData(shopOwnerId); 
         if (localStorage.getItem('darkMode') === 'true') toggleDarkMode();
+
     } else {
+        // BELUM LOGIN
         currentUser = null;
         shopOwnerId = null;
         window.shopNameAsli = null;
@@ -81,6 +126,7 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('view-lobby').classList.add('hide');
     }
 });
+
 
 // --- DATA INIT ---
 function initUserData(uid) {
