@@ -1415,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 }); // <-- PENUTUP DOMContentLoaded
 
 // ================= FITUR AI CHATBOT =================
-const GEMINI_API_KEY = "AIzaSyD6mCHclm2_1S-4Q4NRdAKAgHHXsIMTQoo"; 
+const GROQ_API_KEY = "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; 
 
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
@@ -1469,7 +1469,7 @@ window.sendChatMessage = async function() {
                 <i class="fas fa-robot text-xs text-blue-600"></i>
             </div>
             <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-400 italic text-xs max-w-[85%]">
-                Menganalisa data warung... <i class="fas fa-circle-notch fa-spin ml-1"></i>
+                Menganalisa data dengan cepat... <i class="fas fa-circle-notch fa-spin ml-1"></i>
             </div>
         </div>
     `);
@@ -1480,7 +1480,6 @@ window.sendChatMessage = async function() {
     let dataHutang = [];
     let omzetHariIni = 0;
     
-    // Variabel baru untuk Kecerdasan Tambahan
     let paymentTunai = 0;
     let paymentQris = 0;
     let paymentHutang = 0;
@@ -1488,20 +1487,15 @@ window.sendChatMessage = async function() {
 
     transactions.forEach(t => {
         if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
-            // Catat Hutang
             if (t.remaining > 0) {
                 dataHutang.push(`${t.buyer} (Sisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')})`);
             }
-            
-            // Hitung Omzet Keseluruhan
             omzetHariIni += t.total;
             
-            // Rekap Metode Pembayaran
             if (t.method === 'TUNAI') paymentTunai += (t.paid >= t.total ? t.total : t.paid);
             if (t.method === 'QRIS') paymentQris += t.total;
             if (t.method === 'HUTANG') paymentHutang += t.remaining;
 
-            // Hitung Menu Terlaris
             if (t.items) {
                 t.items.forEach(item => {
                     if (!itemSalesCount[item.name]) itemSalesCount[item.name] = 0;
@@ -1511,23 +1505,19 @@ window.sendChatMessage = async function() {
         }
     });
     
-    // Format Teks Hutang
     let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Alhamdulillah, tidak ada yang hutang hari ini.';
 
-    // Format Teks Menu Terlaris (Top 3)
     let bestSellers = Object.entries(itemSalesCount)
-        .sort((a, b) => b[1] - a[1]) // Urutkan dari yang paling banyak dibeli
-        .slice(0, 3) // Ambil 3 teratas
+        .sort((a, b) => b[1] - a[1]) 
+        .slice(0, 3) 
         .map(item => `${item[0]} (${item[1]} porsi)`)
         .join(', ');
     if (!bestSellers) bestSellers = 'Belum ada menu yang terjual hari ini.';
 
-    // Format Teks Stok Menipis (Sisa di bawah atau sama dengan 5)
     let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5)
         .map(m => `${m.name} (Sisa: ${m.stock})`)
         .join(', ');
     if (!lowStockMenus) lowStockMenus = 'Semua stok menu masih aman (di atas 5).';
-
 
     // 4. BUKU PANDUAN & INSTRUKSI AI (SYSTEM PROMPT)
     const systemPrompt = `Kamu adalah "Sahabat AI", asisten pintar untuk aplikasi kasir "SAHABAT USAHAMU". 
@@ -1549,106 +1539,39 @@ INSTRUKSI KHUSUS UNTUKMU:
    - Cara lihat laporan/omzet/grafik: Arahkan ke halaman 'Laporan'.
    - Cara Kasir Manual (Kalkulator): Arahkan ke ikon Kalkulator warna hijau tosca di pojok kanan atas halaman kasir.
    - Cara Download Laporan PDF/Excel: Arahkan ke halaman 'Laporan' lalu klik tombol Export di kanan atas.
-   - Cara Edit/Revisi transaksi yang salah: Buka halaman 'Laporan', klik nota yang salah, lalu tekan tombol kuning 'Edit / Revisi'.
+   - Cara Edit/Revisi transaksi yang salah: Buka halaman 'Laporan', klik nota yang salah, lalu tekan tombol kuning 'Edit / Revisi'.`;
 
-Pertanyaan Bos/Kasir: ${message}`;
-
-    // 5. TEMBAK DATA KE GOOGLE GEMINI API (Generasi 2.0)
+    // 5. TEMBAK DATA KE GROQ API (Mesin Llama 3)
     try {
-        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_API_KEY, {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }]
+                model: "llama-3.3-70b-versatile", // Mesin super pintar & cepat dari Meta
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: message }
+                ],
+                temperature: 0.7
             })
         });
         
         const data = await response.json();
         document.getElementById(loadingId).remove(); 
         
-        // Cek Keberhasilan
-        if (response.ok && data.candidates && data.candidates.length > 0) {
-            const botReply = data.candidates[0].content.parts[0].text;
+        if (response.ok && data.choices && data.choices.length > 0) {
+            // Cara mengambil pesan balasan di Groq sedikit berbeda dari Gemini
+            const botReply = data.choices[0].message.content;
             addChatBubble(botReply, 'bot');
         } else {
             const errorMsg = data.error ? data.error.message : "Error tidak diketahui";
-            addChatBubble("Gagal memanggil AI. Pesan dari server Google: <b>" + errorMsg + "</b>", 'bot');
+            addChatBubble("Gagal memanggil AI Groq. Pesan: <b>" + errorMsg + "</b>", 'bot');
         }
     } catch (error) {
         document.getElementById(loadingId).remove();
-        addChatBubble("Waduh, koneksi ke satelit AI terputus. Pastikan internet lancar ya!", 'bot');
+        addChatBubble("Waduh, koneksi ke server AI terputus. Pastikan internet lancar ya!", 'bot');
     }
 }
-// ================= FITUR DRAG (GESER) TOMBOL AI =================
-const aiBtnContainer = document.getElementById('ai-chat-btn');
-const aiBtn = aiBtnContainer.querySelector('button');
-
-let isDragging = false;
-let startX, startY, initialX, initialY;
-let hasMoved = false;
-
-const dragStart = (e) => {
-    isDragging = true;
-    hasMoved = false; // Reset status geser
-    const touch = e.type.includes('mouse') ? e : e.touches[0];
-    
-    startX = touch.clientX;
-    startY = touch.clientY;
-    
-    // Simpan posisi awal tombol
-    const rect = aiBtnContainer.getBoundingClientRect();
-    initialX = rect.left;
-    initialY = rect.top;
-};
-
-const drag = (e) => {
-    if (!isDragging) return;
-    
-    const touch = e.type.includes('mouse') ? e : e.touches[0];
-    const diffX = touch.clientX - startX;
-    const diffY = touch.clientY - startY;
-
-    // Jika jari bergeser lebih dari 5 pixel, anggap sedang "menggeser" (bukan mengklik)
-    if (Math.abs(diffX) > 5 || Math.abs(diffY) > 5) {
-        hasMoved = true;
-        e.preventDefault(); // Cegah layar web ikut tergulung (scroll)
-    }
-
-    if (hasMoved) {
-        let newX = initialX + diffX;
-        let newY = initialY + diffY;
-
-        // Cegah tombol keluar dari batas layar HP
-        const maxX = window.innerWidth - aiBtnContainer.offsetWidth;
-        const maxY = window.innerHeight - aiBtnContainer.offsetHeight;
-        newX = Math.max(0, Math.min(newX, maxX));
-        newY = Math.max(0, Math.min(newY, maxY));
-
-        // Lepaskan kuncian posisi awal, lalu pindahkan tombol mengikuti jari
-        aiBtnContainer.style.bottom = 'auto';
-        aiBtnContainer.style.right = 'auto';
-        aiBtnContainer.style.left = `${newX}px`;
-        aiBtnContainer.style.top = `${newY}px`;
-    }
-};
-
-const dragEnd = () => {
-    isDragging = false;
-};
-
-// Pasang sensor sentuhan layar (Touch) dan Mouse
-aiBtnContainer.addEventListener('touchstart', dragStart, { passive: false });
-document.addEventListener('touchmove', drag, { passive: false });
-document.addEventListener('touchend', dragEnd);
-aiBtnContainer.addEventListener('mousedown', dragStart);
-document.addEventListener('mousemove', drag);
-document.addEventListener('mouseup', dragEnd);
-
-// Modifikasi fungsi Klik: 
-// Chat HANYA terbuka jika tombol DIKLIK (tidak terbuka saat selesai digeser)
-aiBtn.addEventListener('click', (e) => {
-    if (!hasMoved) {
-        window.toggleChat();
-    }
-});
-// ================================================================
