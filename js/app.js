@@ -578,21 +578,33 @@ window.processPayment = async function(method) {
         remaining = total;
     }
 
+    // ... (Bagian atas processPayment biarkan sama) ...
+
     Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
     try {
+        // 1. UPDATE STOK (Local Logic)
         if (!editingTransactionId) {
             for (const item of cart) {
                 if (!item.isManual && item.id) {
                     const menuItem = menus.find(m => m.id === item.id);
                     if (menuItem) {
-                        const newStock = (menuItem.stock || 0) - item.qty;
-                        await setDoc(doc(db, "users", shopOwnerId, "menus", item.id), { stock: newStock }, { merge: true });
+                        // Update stok di memori lokal dulu biar UI stok langsung berkurang
+                        menuItem.stock = (menuItem.stock || 0) - item.qty;
+                        
+                        // Kirim update ke Firebase (Jangan di-await kalau offline)
+                        const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
+                        if (navigator.onLine) {
+                            await setDoc(stockRef, { stock: menuItem.stock }, { merge: true });
+                        } else {
+                            setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); // Fire & Forget
+                        }
                     }
                 }
             }
         }
 
+        // 2. SIAPKAN DATA TRANSAKSI
         const trxData = {
             buyer: buyer,
             items: cart,
@@ -609,19 +621,45 @@ window.processPayment = async function(method) {
             operatorRole: currentUserRole
         };
 
+        // 3. KIRIM KE DATABASE (LOGIKA PINTAR: ONLINE vs OFFLINE)
         if (editingTransactionId) {
+            // --- MODE EDIT ---
             delete trxData.timestamp; 
             delete trxData.date;
             trxData.updatedAt = Date.now();
-            await setDoc(doc(db, "users", shopOwnerId, "transactions", editingTransactionId), trxData, { merge: true });
-            Swal.fire({icon: 'success', title: 'Revisi Disimpan', timer: 1500, showConfirmButton: false});
+            
+            const docRef = doc(db, "users", shopOwnerId, "transactions", editingTransactionId);
+            
+            if (navigator.onLine) {
+                await setDoc(docRef, trxData, { merge: true }); // Tunggu server
+            } else {
+                setDoc(docRef, trxData, { merge: true }); // Jangan tunggu
+            }
+            
+            Swal.fire({icon: 'success', title: 'Revisi Disimpan (Offline/Online)', timer: 1500, showConfirmButton: false});
             exitEditMode();
+
         } else {
-            await addDoc(collection(db, "users", shopOwnerId, "transactions"), trxData);
+            // --- MODE TRANSAKSI BARU ---
+            const colRef = collection(db, "users", shopOwnerId, "transactions");
+            
+            if (navigator.onLine) {
+                await addDoc(colRef, trxData); // Tunggu server confirm
+            } else {
+                addDoc(colRef, trxData); // Langsung lanjut, biarkan antre di background
+                // Kita masukkan manual ke array transactions lokal biar tampil di riwayat tanpa refresh
+                const offlineTrx = { id: 'offline_' + Date.now(), ...trxData };
+                transactions.unshift(offlineTrx); 
+                renderTransactions(); // Refresh tampilan riwayat
+            }
+
+            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
+            if (!navigator.onLine) msg += ' (Mode Offline)';
+
             Swal.fire({
                 icon: 'success', 
                 title: 'Transaksi Berhasil', 
-                text: method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : '',
+                text: msg,
                 timer: 3000, 
                 showConfirmButton: true
             });
@@ -635,9 +673,15 @@ window.processPayment = async function(method) {
         
     } catch (e) {
         console.error(e);
+        // Kalau errornya cuma koneksi, abaikan saja
+        if (!navigator.onLine) {
+             window.closeBillModal();
+             cart = [];
+             renderCart();
+             return;
+        }
         Swal.fire('Error', 'Terjadi kesalahan: ' + (e.message || 'Unknown'), 'error');
     }
-}
 
 // --- HELPER FUNCTIONS ---
 window.updateQty = function(idx, change) {
