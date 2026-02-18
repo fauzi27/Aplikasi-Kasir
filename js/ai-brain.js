@@ -1,71 +1,147 @@
 // ============================================================
-// 🧠 OTAK KECERDASAN BUATAN (AI BRAIN - MODE BEBAS)
+// 🧠 OTAK KECERDASAN BUATAN (AI BRAIN - LEVEL ANALIS DATA)
 // ============================================================
 
 const GROQ_API_KEY = "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"; 
 
-// 1. KEPRIBADIAN & ATURAN (HYBRID MODE)
+// 1. KEPRIBADIAN & ATURAN
 const AI_PERSONALITY = `
-Kamu adalah "Sahabat AI", asisten cerdas untuk aplikasi kasir "SAHABAT USAHAMU".
-Kamu memiliki dua mode kepribadian:
+Kamu adalah "Sahabat AI", ANALIS BISNIS & KONSULTAN KEUANGAN untuk aplikasi kasir "SAHABAT USAHAMU".
 
-1. **MODE KASIR (PRIORITAS UTAMA):**
-   Jika pengguna bertanya soal data penjualan, stok, omzet, atau laporan toko, JAWABLAH BERDASARKAN DATA REAL-TIME yang diberikan di bawah. Jangan mengarang angka!
+KEMAMPUAN BARUMU:
+Kamu sekarang memiliki akses ke Laporan Harian, Mingguan, Bulanan, dan Tahunan.
+Tugasmu:
+1. Menjawab pertanyaan tentang performa bisnis (Omzet naik/turun).
+2. Memberikan saran strategi jika penjualan bulan ini lebih rendah dari bulan lalu.
+3. Memprediksi stok yang harus dibeli berdasarkan tren mingguan.
+4. Tetap santai, gunakan emoji, dan suportif kepada Bos Pemilik Toko.
 
-2. **MODE SAHABAT (BEBAS):**
-   Jika pengguna bertanya hal umum (seperti puisi, resep masakan, tips bisnis, curhat, lelucon, atau info umum), JAWABLAH DENGAN BEBAS, KREATIF, DAN CERDAS. Kamu boleh membahas apa saja di luar konteks warung.
-
-Gaya Bicara: Santai, gaul, akrab, suportif, dan suka pakai emoji yang asik. 
-Jangan kaku seperti robot bank. Anggap pengguna adalah teman nongkrongmu.
+JANGAN MENGARANG ANGKA. Gunakan data RANGKUMAN BISNIS di bawah ini.
 `;
 
-// 2. FUNGSI PENYUSUN MEMORI (MENGGABUNGKAN DATA)
+// 2. FUNGSI PENGOLAH DATA (THE CALCULATOR ENGINE)
 export function generateContext(transactions, menus) {
-    const todayStr = new Date().toLocaleDateString('id-ID');
-    let omzet = 0;
-    let itemsSold = {};
-    let hutangList = [];
-    let methodStats = { TUNAI: 0, QRIS: 0, HUTANG: 0 };
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('id-ID');
+    const currentMonth = now.getMonth(); // 0-11
+    const currentYear = now.getFullYear();
+    
+    // Inisialisasi Wadah Data
+    let stats = {
+        today: { omzet: 0, trx: 0, items: {} },
+        thisWeek: { omzet: 0, trx: 0 },
+        thisMonth: { omzet: 0, trx: 0, items: {} },
+        lastMonth: { omzet: 0, trx: 0 }, // Untuk perbandingan
+        thisYear: { omzet: 0, trx: 0 },
+        hutang: []
+    };
 
-    // Analisa Transaksi
+    // --- LOOPING UTAMA (Menganalisa Setiap Transaksi) ---
     transactions.forEach(t => {
-        if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
-            omzet += t.total;
-            if(methodStats[t.method] !== undefined) methodStats[t.method] += t.total;
-            else if(t.method === 'HUTANG') methodStats.HUTANG += t.remaining;
+        const tDate = new Date(t.timestamp);
+        const tDateStr = tDate.toLocaleDateString('id-ID');
+        
+        // 1. DATA HARI INI
+        if (tDateStr === todayStr) {
+            stats.today.omzet += t.total;
+            stats.today.trx += 1;
+            if (t.remaining > 0) stats.hutang.push(`${t.buyer} (Rp ${t.remaining.toLocaleString()})`);
             
-            if (t.items) t.items.forEach(i => itemsSold[i.name] = (itemsSold[i.name] || 0) + i.qty);
-            if (t.remaining > 0) hutangList.push(`- ${t.buyer}: Rp ${t.remaining.toLocaleString('id-ID')}`);
+            // Item Harian
+            if(t.items) t.items.forEach(i => {
+                stats.today.items[i.name] = (stats.today.items[i.name] || 0) + i.qty;
+            });
+        }
+
+        // 2. DATA MINGGU INI (7 Hari Terakhir)
+        const diffTime = Math.abs(now - tDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        if (diffDays <= 7) {
+            stats.thisWeek.omzet += t.total;
+            stats.thisWeek.trx += 1;
+        }
+
+        // 3. DATA BULAN INI
+        if (tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+            stats.thisMonth.omzet += t.total;
+            stats.thisMonth.trx += 1;
+            // Item Bulanan (Untuk cari Best Seller Bulanan)
+            if(t.items) t.items.forEach(i => {
+                stats.thisMonth.items[i.name] = (stats.thisMonth.items[i.name] || 0) + i.qty;
+            });
+        }
+
+        // 4. DATA BULAN LALU (Untuk Komparasi)
+        // Logika sederhana: Jika bulan sekarang 0 (Jan), bulan lalu 11 (Des) tahun sebelumnya
+        let prevMonth = currentMonth - 1;
+        let prevYear = currentYear;
+        if (prevMonth < 0) { prevMonth = 11; prevYear = currentYear - 1; }
+        
+        if (tDate.getMonth() === prevMonth && tDate.getFullYear() === prevYear) {
+            stats.lastMonth.omzet += t.total;
+            stats.lastMonth.trx += 1;
+        }
+
+        // 5. DATA TAHUN INI
+        if (tDate.getFullYear() === currentYear) {
+            stats.thisYear.omzet += t.total;
+            stats.thisYear.trx += 1;
         }
     });
 
-    // Cari Stok Menipis
+    // --- ANALISA LANJUTAN ---
+
+    // Cari Menu Terlaris Harian
+    let bestSellerToday = Object.entries(stats.today.items)
+        .sort((a, b) => b[1] - a[1]).slice(0, 3)
+        .map(i => `${i[0]} (${i[1]})`).join(', ');
+
+    // Cari Menu Terlaris Bulanan
+    let bestSellerMonth = Object.entries(stats.thisMonth.items)
+        .sort((a, b) => b[1] - a[1]).slice(0, 3)
+        .map(i => `${i[0]} (${i[1]} pcs)`).join(', ');
+
+    // Cek Stok Menipis
     let lowStock = menus
         .filter(m => (m.stock || 0) <= 5)
-        .map(m => `- ${m.name} (Sisa: ${m.stock})`)
-        .join('\n');
+        .map(m => `${m.name} (Sisa: ${m.stock})`).join(', ');
 
-    // Cari Best Seller
-    let bestSeller = Object.entries(itemsSold)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(i => `${i[0]} (${i[1]} pcs)`)
-        .join(', ');
+    // Analisa Pertumbuhan (Month over Month)
+    let growthText = "";
+    if (stats.lastMonth.omzet > 0) {
+        let percent = ((stats.thisMonth.omzet - stats.lastMonth.omzet) / stats.lastMonth.omzet) * 100;
+        growthText = percent > 0 
+            ? `📈 NAIK ${percent.toFixed(1)}% dibanding bulan lalu.` 
+            : `📉 TURUN ${Math.abs(percent).toFixed(1)}% dibanding bulan lalu.`;
+    }
 
-    // RAKIT DATA (Ini adalah "Contekan" bagi AI jika ditanya soal toko)
+    // --- RAKIT DATA UNTUK DIKIRIM KE AI ---
     return `
 ${AI_PERSONALITY}
 
-=== DATA RAHASIA TOKO HARI INI (${todayStr}) ===
-(Gunakan data ini HANYA jika user bertanya soal toko/jualan)
-💰 Omzet: Rp ${omzet.toLocaleString('id-ID')}
-📊 Rincian: Tunai (Rp ${methodStats.TUNAI.toLocaleString()}), QRIS (Rp ${methodStats.QRIS.toLocaleString()}), Hutang (Rp ${methodStats.HUTANG.toLocaleString()})
-🏆 Terlaris: ${bestSeller || "Belum ada"}
-⚠️ Stok Tipis:
-${lowStock || "Aman"}
-📒 Daftar Hutang:
-${hutangList.join('\n') || "Nihil"}
-==================================================
+=== 📊 RANGKUMAN BISNIS REAL-TIME ===
+
+1. PERFORMA HARI INI (${todayStr}):
+   - Omzet: Rp ${stats.today.omzet.toLocaleString('id-ID')} (${stats.today.trx} transaksi)
+   - Terlaris: ${bestSellerToday || "-"}
+   - Hutang Baru: ${stats.hutang.join(', ') || "Nihil"}
+
+2. PERFORMA MINGGU INI (7 Hari Terakhir):
+   - Total Omzet: Rp ${stats.thisWeek.omzet.toLocaleString('id-ID')}
+
+3. PERFORMA BULAN INI:
+   - Total Omzet: Rp ${stats.thisMonth.omzet.toLocaleString('id-ID')}
+   - Menu Jagoan Bulan Ini: ${bestSellerMonth || "-"}
+   - Perbandingan: ${growthText} (Bulan lalu: Rp ${stats.lastMonth.omzet.toLocaleString()})
+
+4. PERFORMA TAHUN INI (${currentYear}):
+   - Total Akumulasi: Rp ${stats.thisYear.omzet.toLocaleString('id-ID')}
+
+5. STATUS GUDANG:
+   - Stok Kritis: ${lowStock || "Semua Aman"}
+   - Total Varian Menu: ${menus.length} Item
+
+(Gunakan data di atas untuk menjawab pertanyaan user. Jika user bertanya "Gimana performa warung?", berikan analisa mendalam dari data bulanan dan mingguan.)
 `;
 }
 
@@ -84,8 +160,8 @@ export async function askGroqAI(userMessage, systemPrompt) {
                     { role: "system", content: systemPrompt },
                     { role: "user", content: userMessage }
                 ],
-                temperature: 0.8, // Kita naikkan jadi 0.8 biar lebih kreatif bikin puisinya
-                max_tokens: 1000
+                temperature: 0.7, 
+                max_tokens: 1200 // Token diperbanyak agar jawabannya bisa panjang lebar
             })
         });
 
@@ -93,10 +169,10 @@ export async function askGroqAI(userMessage, systemPrompt) {
         if (data.choices && data.choices.length > 0) {
             return data.choices[0].message.content;
         } else {
-            throw new Error("AI membisu...");
+            throw new Error("AI tidak merespon.");
         }
     } catch (error) {
         console.error("AI Error:", error);
-        return "Waduh, sinyal ke otak saya putus bosku! Coba lagi ya.";
+        return "Maaf bos, sinyal ke server AI putus. Coba cek koneksi internet.";
     }
 }
