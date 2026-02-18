@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// Tambahkan 'enableIndexedDbPersistence' di import ini
-import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
 const firebaseConfig = {
     apiKey: "AIzaSyAWi2L7bJewUmTeR_SwGM0sdwjFLdOisCs",
     authDomain: "kasir-128a2.firebaseapp.com",
@@ -12,27 +12,11 @@ const firebaseConfig = {
     measurementId: "G-NM9MSXY677"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-// secondaryAuth dihapus dulu disini kalau tidak dipakai, atau sesuaikan jika ada
+// Inisialisasi Firebase & Export agar bisa dipakai di file app.js nanti
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 
-// ============================================================
-// 🔥 AKTIFKAN MODE OFFLINE (PERSISTENCE)
-// ============================================================
-enableIndexedDbPersistence(db)
-  .then(() => {
-      console.log("🔥 Database Offline Mode: AKTIF");
-  })
-  .catch((err) => {
-      if (err.code == 'failed-precondition') {
-          // Biasanya terjadi jika membuka banyak tab aplikasi sekaligus
-          console.warn('Mode offline gagal: Terlalu banyak tab terbuka.');
-      } else if (err.code == 'unimplemented') {
-          // Browser jadul tidak mendukung
-          console.warn('Browser ini tidak mendukung mode offline.');
-      }
-  });
-
-export { auth, db, app };
+// Untuk fitur tambah karyawan oleh Admin tanpa me-logout akun Admin
+export const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+export const secondaryAuth = getAuth(secondaryApp);
