@@ -1414,3 +1414,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const stockSearch = document.getElementById('stock-search');
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
 }); // <-- PENUTUP DOMContentLoaded
+// ================= FITUR AI CHATBOT (VERSI BERSIH & MODULAR) =================
+
+// ... (Kode Logika Tombol Geser/Draggable BIARKAN SAJA, JANGAN DIHAPUS) ...
+// ... (Kode window.toggleChat BIARKAN SAJA, JANGAN DIHAPUS) ...
+
+// FUNGSI UTAMA KIRIM PESAN (Sekarang memanggil ai-brain.js)
+window.sendChatMessage = async function() {
+    const inputEl = document.getElementById('chat-input');
+    const message = inputEl.value.trim();
+    if (!message) return;
+
+    // 1. Tampilkan Chat User
+    addChatBubble(message, 'user');
+    inputEl.value = '';
+
+    // 2. Tampilkan Loading
+    const loadingId = 'loading-' + Date.now();
+    const chatBox = document.getElementById('chat-messages');
+    chatBox.insertAdjacentHTML('beforeend', `
+        <div id="${loadingId}" class="flex justify-start mb-2">
+            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mr-2 mt-1"><i class="fas fa-robot text-xs text-blue-600"></i></div>
+            <div class="bg-white p-2.5 rounded-lg border border-gray-200 text-gray-400 italic text-xs shadow-sm">
+                Sedang berpikir... <i class="fas fa-circle-notch fa-spin"></i>
+            </div>
+        </div>
+    `);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // 3. PROSES DATA DI "BRAIN"
+    // Kita kirim data mentah (transactions & menus) ke Brain untuk diolah
+    const contextPrompt = generateContext(transactions, menus);
+
+    // 4. PANGGIL AI
+    const reply = await askGroqAI(message, contextPrompt);
+
+    // 5. TAMPILKAN JAWABAN
+    document.getElementById(loadingId).remove();
+    addChatBubble(reply, 'bot');
+}
