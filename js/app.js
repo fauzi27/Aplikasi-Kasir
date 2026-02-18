@@ -537,8 +537,9 @@ function exitEditMode() {
     renderCart();
 }
 
-// --- PROCESS PAYMENT ---
+// --- PROCESS PAYMENT (FULL CODE: SEMI-OFFLINE READY) ---
 window.processPayment = async function(method) {
+    // 1. SIAPKAN DATA AWAL (JANGAN DIHAPUS)
     const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
     let total = 0;
     cart.forEach(i => total += ((parseInt(i.price)||0) * (parseInt(i.qty)||0)));
@@ -547,6 +548,7 @@ window.processPayment = async function(method) {
     let changeAmount = 0;
     let remaining = 0;
 
+    // 2. INPUT JUMLAH UANG (LOGIKA PEMBAYARAN)
     if (method === 'TUNAI') {
         const { value: money } = await Swal.fire({
             title: `Total: Rp ${total.toLocaleString('id-ID')}`,
@@ -560,10 +562,14 @@ window.processPayment = async function(method) {
         });
 
         if (money === false) { 
+            // Uang Pas (Deny Button)
             paidAmount = total;
         } else if (money) {
+            // Input Manual
             paidAmount = parseInt(money);
-        } else return;
+        } else {
+            return; // Cancel
+        }
 
         if (paidAmount > total) {
             changeAmount = paidAmount - total;
@@ -578,12 +584,11 @@ window.processPayment = async function(method) {
         remaining = total;
     }
 
-    // ... (Bagian atas processPayment biarkan sama) ...
-
+    // 3. EKSEKUSI PENYIMPANAN (LOGIKA FIRE & FORGET)
     Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
     try {
-        // 1. UPDATE STOK (Local Logic)
+        // A. UPDATE STOK (Local Logic)
         if (!editingTransactionId) {
             for (const item of cart) {
                 if (!item.isManual && item.id) {
@@ -592,19 +597,20 @@ window.processPayment = async function(method) {
                         // Update stok di memori lokal dulu biar UI stok langsung berkurang
                         menuItem.stock = (menuItem.stock || 0) - item.qty;
                         
-                        // Kirim update ke Firebase (Jangan di-await kalau offline)
+                        // Kirim update ke Firebase
                         const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
                         if (navigator.onLine) {
                             await setDoc(stockRef, { stock: menuItem.stock }, { merge: true });
                         } else {
-                            setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); // Fire & Forget
+                            // Jika Offline: Kirim tanpa await (Fire & Forget)
+                            setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); 
                         }
                     }
                 }
             }
         }
 
-        // 2. SIAPKAN DATA TRANSAKSI
+        // B. SIAPKAN DATA TRANSAKSI
         const trxData = {
             buyer: buyer,
             items: cart,
@@ -621,7 +627,7 @@ window.processPayment = async function(method) {
             operatorRole: currentUserRole
         };
 
-        // 3. KIRIM KE DATABASE (LOGIKA PINTAR: ONLINE vs OFFLINE)
+        // C. KIRIM KE DATABASE (LOGIKA PINTAR: ONLINE vs OFFLINE)
         if (editingTransactionId) {
             // --- MODE EDIT ---
             delete trxData.timestamp; 
@@ -631,12 +637,12 @@ window.processPayment = async function(method) {
             const docRef = doc(db, "users", shopOwnerId, "transactions", editingTransactionId);
             
             if (navigator.onLine) {
-                await setDoc(docRef, trxData, { merge: true }); // Tunggu server
+                await setDoc(docRef, trxData, { merge: true }); // Tunggu server jika Online
             } else {
-                setDoc(docRef, trxData, { merge: true }); // Jangan tunggu
+                setDoc(docRef, trxData, { merge: true }); // Jangan tunggu jika Offline
             }
             
-            Swal.fire({icon: 'success', title: 'Revisi Disimpan (Offline/Online)', timer: 1500, showConfirmButton: false});
+            Swal.fire({icon: 'success', title: 'Revisi Disimpan', text: navigator.onLine ? '' : '(Mode Offline)', timer: 1500, showConfirmButton: false});
             exitEditMode();
 
         } else {
@@ -647,14 +653,15 @@ window.processPayment = async function(method) {
                 await addDoc(colRef, trxData); // Tunggu server confirm
             } else {
                 addDoc(colRef, trxData); // Langsung lanjut, biarkan antre di background
-                // Kita masukkan manual ke array transactions lokal biar tampil di riwayat tanpa refresh
+                
+                // PENTING: Masukkan manual ke array lokal biar tampil di riwayat tanpa refresh
                 const offlineTrx = { id: 'offline_' + Date.now(), ...trxData };
                 transactions.unshift(offlineTrx); 
                 renderTransactions(); // Refresh tampilan riwayat
             }
 
             let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
-            if (!navigator.onLine) msg += ' (Mode Offline)';
+            if (!navigator.onLine) msg += ' (Disimpan di HP)';
 
             Swal.fire({
                 icon: 'success', 
@@ -664,6 +671,7 @@ window.processPayment = async function(method) {
                 showConfirmButton: true
             });
             
+            // Reset Cart setelah berhasil
             cart = [];
             document.getElementById('buyer-name').value = '';
             renderCart();
@@ -673,7 +681,7 @@ window.processPayment = async function(method) {
         
     } catch (e) {
         console.error(e);
-        // Kalau errornya cuma koneksi, abaikan saja
+        // Kalau errornya cuma koneksi saat offline, abaikan saja dan anggap sukses
         if (!navigator.onLine) {
              window.closeBillModal();
              cart = [];
@@ -682,6 +690,7 @@ window.processPayment = async function(method) {
         }
         Swal.fire('Error', 'Terjadi kesalahan: ' + (e.message || 'Unknown'), 'error');
     }
+}
 
 // --- HELPER FUNCTIONS ---
 window.updateQty = function(idx, change) {
