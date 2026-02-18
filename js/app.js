@@ -1414,6 +1414,59 @@ document.addEventListener('DOMContentLoaded', () => {
     const stockSearch = document.getElementById('stock-search');
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
 }); // <-- PENUTUP DOMContentLoaded
+// ============================================================
+// 📶 DETEKSI KONEKSI INTERNET (AUTO SYNC MONITOR)
+// ============================================================
+
+function updateConnectionStatus() {
+    const statusLabel = document.querySelector('#business-address-lobby span.text-green-400'); // Label ONLINE di Lobby
+    const statusText = document.querySelector('#business-address-lobby'); // Text Container
+    
+    if (navigator.onLine) {
+        // JIKA ONLINE
+        if(statusLabel) {
+            statusLabel.innerText = "ONLINE";
+            statusLabel.className = "text-green-400 font-bold blink-slow"; // Tambah efek kedip pelan
+        }
+        Swal.close(); // Tutup peringatan offline jika ada
+        
+        // Cek jika baru saja kembali online dari offline
+        if (window.wasOffline) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Kembali Online!',
+                text: 'Data transaksi offline sedang di-upload otomatis ke server.',
+                toast: true, position: 'top', timer: 3000, showConfirmButton: false
+            });
+            window.wasOffline = false;
+        }
+    } else {
+        // JIKA OFFLINE
+        if(statusLabel) {
+            statusLabel.innerText = "OFFLINE (Data Tersimpan di HP)";
+            statusLabel.className = "text-red-500 font-bold blink";
+        }
+        window.wasOffline = true;
+        
+        // Beri notifikasi kecil (Toast)
+        Swal.fire({
+            icon: 'warning',
+            title: 'Mode Offline',
+            text: 'Internet terputus. Transaksi tetap bisa dilakukan & akan di-sync nanti.',
+            toast: true, position: 'bottom', showConfirmButton: false, timer: 3000
+        });
+    }
+}
+
+// Pasang "Telinga" untuk mendengar perubahan sinyal
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+
+// Cek saat pertama kali load
+document.addEventListener('DOMContentLoaded', () => {
+    updateConnectionStatus();
+});
+
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
 // 1. LOGIKA TOMBOL GESER & KLIK
