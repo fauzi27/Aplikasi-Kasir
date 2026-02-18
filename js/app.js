@@ -1414,65 +1414,112 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
 }); // <-- PENUTUP DOMContentLoaded
 
-// ================= FITUR AI CHATBOT =================
-const GROQ_API_KEY = "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"; 
+// ================= FITUR AI CHATBOT (LENGKAP: GROQ + UI GESER) =================
+const GROQ_API_KEY = "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"; // Pastikan kutipnya lengkap
 
+// 1. LOGIKA TOMBOL GESER (DRAGGABLE) & KLIK
+document.addEventListener("DOMContentLoaded", () => {
+    // Cari tombol yang punya fungsi toggleChat
+    const fab = document.querySelector('[onclick="window.toggleChat()"]');
+    
+    if (fab) {
+        let isDragging = false;
+        let startY, startBottom;
+
+        // Saat mulai disentuh
+        fab.addEventListener('touchstart', (e) => {
+            isDragging = false;
+            startY = e.touches[0].clientY;
+            const style = window.getComputedStyle(fab);
+            startBottom = parseInt(style.bottom) || 20; // Default 20px jika null
+        }, {passive: false});
+
+        // Saat jari bergerak (Menggeser)
+        fab.addEventListener('touchmove', (e) => {
+            const deltaY = startY - e.touches[0].clientY;
+            
+            // Jika bergerak lebih dari 5 pixel, anggap sebagai "Menggeser" (bukan klik)
+            if (Math.abs(deltaY) > 5) {
+                isDragging = true;
+                e.preventDefault(); // Cegah layar ikut scroll
+                let newBottom = startBottom + deltaY;
+                // Batasi agar tidak hilang dari layar
+                if(newBottom < 10) newBottom = 10;
+                if(newBottom > window.innerHeight - 100) newBottom = window.innerHeight - 100;
+                
+                fab.style.bottom = newBottom + 'px';
+            }
+        }, {passive: false});
+
+        // Saat jari dilepas
+        fab.addEventListener('touchend', (e) => {
+            if (isDragging) {
+                e.preventDefault(); // Jangan klik jika habis digeser
+            }
+            // Jika tidak isDragging, biarkan event onClick bawaan HTML berjalan (membuka chat)
+        });
+    }
+    
+    // Fix: Tombol Enter di Keyboard HP
+    const chatInput = document.getElementById('chat-input');
+    if(chatInput) {
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                window.sendChatMessage();
+            }
+        });
+    }
+});
+
+// 2. FUNGSI BUKA/TUTUP JENDELA CHAT
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     if (chatWindow.classList.contains('hidden')) {
-        chatWindow.classList.remove('hidden'); chatWindow.classList.add('flex');
-        
-        // FIX: Mencegah bentrok tombol "Enter" di keyboard dengan tombol kasir
-        const chatInput = document.getElementById('chat-input');
-        if(chatInput && !chatInput.hasAttribute('data-enter-bound')) {
-            chatInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault(); 
-                    window.sendChatMessage(); // Langsung kirim saat tekan enter
-                }
-            });
-            chatInput.setAttribute('data-enter-bound', 'true');
-        }
+        chatWindow.classList.remove('hidden'); 
+        chatWindow.classList.add('flex');
+        // Scroll ke bawah saat dibuka
+        const chatBox = document.getElementById('chat-messages');
+        if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     } else {
-        chatWindow.classList.add('hidden'); chatWindow.classList.remove('flex');
+        chatWindow.classList.add('hidden'); 
+        chatWindow.classList.remove('flex');
     }
 }
 
-// Fungsi pembantu untuk membuat gelembung chat
+// 3. FUNGSI RENDER GELEMBUNG CHAT
 function addChatBubble(text, sender) {
     const chatBox = document.getElementById('chat-messages');
+    if(!chatBox) return; // Cegah error jika elemen belum dimuat
+
     const bubble = document.createElement('div');
-    
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    formattedText = formattedText.replace(/\n/g, '<br>');
+    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
 
     if (sender === 'user') {
         bubble.className = 'flex items-start gap-2 justify-end mb-2';
-        bubble.innerHTML = `<div class="bg-blue-600 text-white p-2.5 rounded-lg rounded-tr-none shadow-sm max-w-[85%] leading-relaxed">${formattedText}</div>`;
+        bubble.innerHTML = `<div class="bg-blue-600 text-white p-2.5 rounded-lg rounded-tr-none shadow-sm max-w-[85%] leading-relaxed text-sm">${formattedText}</div>`;
     } else {
         bubble.className = 'flex items-start gap-2 mb-2';
         bubble.innerHTML = `
             <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mt-1">
                 <i class="fas fa-robot text-xs text-blue-600"></i>
             </div>
-            <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-700 max-w-[85%] leading-relaxed">${formattedText}</div>
+            <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-700 max-w-[85%] leading-relaxed text-sm">${formattedText}</div>
         `;
     }
     chatBox.appendChild(bubble);
     chatBox.scrollTop = chatBox.scrollHeight; 
 }
 
-// Fungsi utama Chatbot
+// 4. FUNGSI UTAMA KIRIM PESAN KE GROQ AI
 window.sendChatMessage = async function() {
     const inputEl = document.getElementById('chat-input');
     const message = inputEl.value.trim();
     if (!message) return; 
 
-    // 1. Tampilkan pesan kasir di layar
     addChatBubble(message, 'user');
     inputEl.value = '';
 
-    // 2. Tampilkan indikator loading
     const loadingId = 'loading-' + Date.now();
     const chatBox = document.getElementById('chat-messages');
     chatBox.insertAdjacentHTML('beforeend', `
@@ -1481,18 +1528,16 @@ window.sendChatMessage = async function() {
                 <i class="fas fa-robot text-xs text-blue-600"></i>
             </div>
             <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-400 italic text-xs max-w-[85%]">
-                Menganalisa data dengan cepat... <i class="fas fa-circle-notch fa-spin ml-1"></i>
+                Menganalisa data warung... <i class="fas fa-circle-notch fa-spin ml-1"></i>
             </div>
         </div>
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 3. TARIK & ANALISA DATA RAHASIA DARI APLIKASI KASIR
+    // --- LOGIKA TARIK DATA TRANSAKSI ---
     const todayStr = new Date().toLocaleDateString('id-ID');
     let dataHutang = [];
-    let omzetHariIni = 0;
-    
-    let paymentTunai = 0, paymentQris = 0, paymentHutang = 0;
+    let omzetHariIni = 0, paymentTunai = 0, paymentQris = 0, paymentHutang = 0;
     let itemSalesCount = {};
 
     transactions.forEach(t => {
@@ -1511,36 +1556,24 @@ window.sendChatMessage = async function() {
         }
     });
     
-    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Tidak ada yang hutang hari ini.';
-    let bestSellers = Object.entries(itemSalesCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(i => `${i[0]} (${i[1]}x)`).join(', ') || 'Belum ada menu terjual.';
-    let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5).map(m => `${m.name} (Sisa: ${m.stock})`).join(', ') || 'Semua stok aman.';
+    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Nihil';
+    let bestSellers = Object.entries(itemSalesCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(i => `${i[0]} (${i[1]}x)`).join(', ') || 'Belum ada';
+    let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5).map(m => `${m.name} (Sisa: ${m.stock})`).join(', ') || 'Aman';
 
-    // 4. BUKU PANDUAN & INSTRUKSI AI (SYSTEM PROMPT)
-    const systemPrompt = `Kamu adalah "Sahabat AI", asisten pintar untuk aplikasi kasir "SAHABAT USAHAMU". 
-Tugasmu adalah menjawab pertanyaan kasir/pemilik toko dengan ramah dan santai (gunakan emoji). 
+    const systemPrompt = `Kamu adalah "Sahabat AI" aplikasi kasir. Jawab singkat, padat, ramah & pakai emoji.
+Data Toko Hari Ini:
+- Omzet: Rp ${omzetHariIni.toLocaleString('id-ID')} (Tunai: ${paymentTunai}, QRIS: ${paymentQris}, Bon: ${paymentHutang})
+- Terlaris: ${bestSellers}
+- Stok Menipis: ${lowStockMenus}
+- Yang Hutang: ${teksHutang}`;
 
-Data REAL-TIME toko hari ini:
-- Total Menu: ${menus.length} menu.
-- Peringatan Stok Menipis (<=5): ${lowStockMenus}
-- Menu Terlaris: ${bestSellers}
-- Total Omzet: Rp ${omzetHariIni.toLocaleString('id-ID')}
-- Pemasukan: Tunai (Rp ${paymentTunai.toLocaleString('id-ID')}), QRIS (Rp ${paymentQris.toLocaleString('id-ID')}), Hutang (Rp ${paymentHutang.toLocaleString('id-ID')})
-- Daftar Hutang: ${teksHutang}`;
-
-    // 5. TEMBAK DATA KE GROQ API (Mesin Llama 3)
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
-                'Content-Type': 'application/json' 
-            },
+            headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: message }
-                ],
+                messages: [{ role: "system", content: systemPrompt }, { role: "user", content: message }],
                 temperature: 0.7
             })
         });
@@ -1551,11 +1584,11 @@ Data REAL-TIME toko hari ini:
         if (response.ok && data.choices && data.choices.length > 0) {
             addChatBubble(data.choices[0].message.content, 'bot');
         } else {
-            const errorMsg = data.error ? data.error.message : "Error tidak diketahui";
-            addChatBubble("Gagal memanggil AI Groq. Pesan: <b>" + errorMsg + "</b>", 'bot');
+            addChatBubble("Gagal: " + (data.error?.message || "Unknown Error"), 'bot');
         }
     } catch (error) {
-        document.getElementById(loadingId).remove();
-        addChatBubble("Waduh, koneksi ke server AI terputus. Pastikan internet lancar ya!", 'bot');
+        const loader = document.getElementById(loadingId);
+        if(loader) loader.remove();
+        addChatBubble("Koneksi bermasalah. Cek internet bosku!", 'bot');
     }
 }
