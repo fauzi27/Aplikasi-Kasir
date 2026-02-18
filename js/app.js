@@ -1414,22 +1414,104 @@ document.addEventListener('DOMContentLoaded', () => {
     const stockSearch = document.getElementById('stock-search');
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
 }); // <-- PENUTUP DOMContentLoaded
-// ================= FITUR AI CHATBOT (VERSI BERSIH & MODULAR) =================
+// ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
-// ... (Kode Logika Tombol Geser/Draggable BIARKAN SAJA, JANGAN DIHAPUS) ...
-// ... (Kode window.toggleChat BIARKAN SAJA, JANGAN DIHAPUS) ...
+// 1. LOGIKA TOMBOL GESER & KLIK
+(function initFloatingButton() {
+    const fab = document.getElementById('tombol-jelajah-ai');
+    if (!fab) return;
 
-// FUNGSI UTAMA KIRIM PESAN (Sekarang memanggil ai-brain.js)
+    let isDragging = false;
+    let startY, startBottom;
+
+    fab.addEventListener('touchstart', (e) => {
+        isDragging = false;
+        startY = e.touches[0].clientY;
+        const style = window.getComputedStyle(fab);
+        startBottom = parseInt(style.bottom) || 20;
+        fab.style.opacity = "0.8";
+    }, {passive: false});
+
+    fab.addEventListener('touchmove', (e) => {
+        const deltaY = startY - e.touches[0].clientY;
+        if (Math.abs(deltaY) > 5) {
+            isDragging = true;
+            e.preventDefault(); 
+            let newBottom = startBottom + deltaY;
+            if (newBottom < 10) newBottom = 10;
+            if (newBottom > window.innerHeight - 80) newBottom = window.innerHeight - 80;
+            fab.style.bottom = `${newBottom}px`;
+        }
+    }, {passive: false});
+
+    fab.addEventListener('touchend', (e) => {
+        fab.style.opacity = "1";
+        if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        isDragging = false;
+    });
+})();
+
+// FIX TOMBOL ENTER
+setTimeout(() => {
+    const chatInput = document.getElementById('chat-input');
+    if(chatInput) {
+        const newInput = chatInput.cloneNode(true);
+        chatInput.parentNode.replaceChild(newInput, chatInput);
+        newInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); window.sendChatMessage(); }
+        });
+        newInput.id = 'chat-input';
+    }
+}, 1500);
+
+// 2. FUNGSI BUKA TUTUP CHAT (INI YANG TADI HILANG)
+window.toggleChat = function() {
+    const chatWindow = document.getElementById('ai-chat-window');
+    if (!chatWindow) return;
+    
+    if (chatWindow.classList.contains('hidden')) {
+        chatWindow.classList.remove('hidden');
+        chatWindow.classList.add('flex');
+        const chatBox = document.getElementById('chat-messages');
+        if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+    } else {
+        chatWindow.classList.add('hidden');
+        chatWindow.classList.remove('flex');
+    }
+}
+
+// 3. HELPER BUBBLE CHAT
+function addChatBubble(text, sender) {
+    const chatBox = document.getElementById('chat-messages');
+    if(!chatBox) return;
+
+    const div = document.createElement('div');
+    const isUser = sender === 'user';
+    div.className = isUser ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
+    const bgClass = isUser ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-200';
+    const iconHtml = isUser ? '' : `<div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mr-2 mt-1"><i class="fas fa-robot text-xs text-blue-600"></i></div>`;
+    
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+
+    div.innerHTML = `${iconHtml}<div class="${bgClass} p-2.5 rounded-lg max-w-[85%] text-sm shadow-sm leading-relaxed">${formatted}</div>`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// 4. FUNGSI UTAMA (MENGGUNAKAN OTAK BARU / AI-BRAIN.JS)
 window.sendChatMessage = async function() {
     const inputEl = document.getElementById('chat-input');
     const message = inputEl.value.trim();
     if (!message) return;
 
-    // 1. Tampilkan Chat User
+    // Tampilkan Chat User
     addChatBubble(message, 'user');
     inputEl.value = '';
 
-    // 2. Tampilkan Loading
+    // Tampilkan Loading
     const loadingId = 'loading-' + Date.now();
     const chatBox = document.getElementById('chat-messages');
     chatBox.insertAdjacentHTML('beforeend', `
@@ -1442,14 +1524,22 @@ window.sendChatMessage = async function() {
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 3. PROSES DATA DI "BRAIN"
-    // Kita kirim data mentah (transactions & menus) ke Brain untuk diolah
-    const contextPrompt = generateContext(transactions, menus);
+    // --- PANGGIL OTAK AI ---
+    try {
+        // 1. Susun data (Context) menggunakan fungsi dari brain
+        // Pastikan variabel 'transactions' dan 'menus' sudah ada di app.js
+        const contextPrompt = generateContext(transactions, menus);
 
-    // 4. PANGGIL AI
-    const reply = await askGroqAI(message, contextPrompt);
+        // 2. Tanya ke Groq
+        const reply = await askGroqAI(message, contextPrompt);
 
-    // 5. TAMPILKAN JAWABAN
-    document.getElementById(loadingId).remove();
-    addChatBubble(reply, 'bot');
+        // 3. Tampilkan Jawaban
+        document.getElementById(loadingId).remove();
+        addChatBubble(reply, 'bot');
+
+    } catch (e) {
+        if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+        addChatBubble("Otak AI sedang gangguan bosku. Cek file brain-nya ya! 😅", 'bot');
+        console.error(e);
+    }
 }
