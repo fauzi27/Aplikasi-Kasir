@@ -1414,181 +1414,224 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
 }); // <-- PENUTUP DOMContentLoaded
 
-// ================= FITUR AI CHATBOT (LENGKAP: GROQ + UI GESER) =================
-const GROQ_API_KEY = "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"; // Pastikan kutipnya lengkap
+// ================= FITUR AI CHATBOT (FIXED ID MATCHING) =================
+const GROQ_API_KEY = "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";
 
-// 1. LOGIKA TOMBOL GESER (DRAGGABLE) & KLIK
-document.addEventListener("DOMContentLoaded", () => {
-    // Cari tombol yang punya fungsi toggleChat
-    const fab = document.querySelector('[onclick="window.toggleChat()"]');
+// 1. LOGIKA UI (GESER & KLIK)
+// Menggunakan IIFE agar variabel tidak bentrok dan langsung jalan
+(function initFloatingButton() {
+    const fab = document.getElementById('tombol-jelajah-ai');
     
-    if (fab) {
-        let isDragging = false;
-        let startY, startBottom;
-
-        // Saat mulai disentuh
-        fab.addEventListener('touchstart', (e) => {
-            isDragging = false;
-            startY = e.touches[0].clientY;
-            const style = window.getComputedStyle(fab);
-            startBottom = parseInt(style.bottom) || 20; // Default 20px jika null
-        }, {passive: false});
-
-        // Saat jari bergerak (Menggeser)
-        fab.addEventListener('touchmove', (e) => {
-            const deltaY = startY - e.touches[0].clientY;
-            
-            // Jika bergerak lebih dari 5 pixel, anggap sebagai "Menggeser" (bukan klik)
-            if (Math.abs(deltaY) > 5) {
-                isDragging = true;
-                e.preventDefault(); // Cegah layar ikut scroll
-                let newBottom = startBottom + deltaY;
-                // Batasi agar tidak hilang dari layar
-                if(newBottom < 10) newBottom = 10;
-                if(newBottom > window.innerHeight - 100) newBottom = window.innerHeight - 100;
-                
-                fab.style.bottom = newBottom + 'px';
-            }
-        }, {passive: false});
-
-        // Saat jari dilepas
-        fab.addEventListener('touchend', (e) => {
-            if (isDragging) {
-                e.preventDefault(); // Jangan klik jika habis digeser
-            }
-            // Jika tidak isDragging, biarkan event onClick bawaan HTML berjalan (membuka chat)
-        });
+    // Debugging: Cek di console browser jika tombol tidak ketemu
+    if (!fab) {
+        console.error("TOMBOL AI TIDAK KETEMU! Pastikan ID di HTML adalah 'tombol-jelajah-ai'");
+        return;
     }
-    
-    // Fix: Tombol Enter di Keyboard HP
+
+    let isDragging = false;
+    let startY, startBottom;
+
+    // Saat disentuh (Mulai)
+    fab.addEventListener('touchstart', (e) => {
+        isDragging = false;
+        startY = e.touches[0].clientY;
+        
+        // Ambil posisi bottom saat ini dari CSS
+        const style = window.getComputedStyle(fab);
+        startBottom = parseInt(style.bottom) || 20; 
+        
+        // Efek visual tekan
+        fab.style.opacity = "0.8";
+        fab.style.transform = "scale(0.95)";
+    }, {passive: false});
+
+    // Saat digeser (Gerak)
+    fab.addEventListener('touchmove', (e) => {
+        const currentY = e.touches[0].clientY;
+        const deltaY = startY - currentY; // Geser ke atas = positif
+
+        // Jika jari bergerak lebih dari 5px, anggap sedang menggeser (bukan klik)
+        if (Math.abs(deltaY) > 5) {
+            isDragging = true;
+            e.preventDefault(); // Matikan scroll layar HP
+            
+            let newBottom = startBottom + deltaY;
+            
+            // Batas atas dan bawah layar agar tombol tidak hilang
+            if (newBottom < 10) newBottom = 10;
+            if (newBottom > window.innerHeight - 80) newBottom = window.innerHeight - 80;
+
+            fab.style.bottom = `${newBottom}px`;
+        }
+    }, {passive: false});
+
+    // Saat jari dilepas (Selesai)
+    fab.addEventListener('touchend', (e) => {
+        fab.style.opacity = "1"; 
+        fab.style.transform = "scale(1)";
+        
+        if (isDragging) {
+            // Jika tadi habis digeser, STOP aksi klik (jangan buka chat)
+            e.preventDefault();
+            e.stopPropagation();
+        } 
+        // Jika tidak isDragging, biarkan event onclick="window.toggleChat()" di HTML berjalan alami
+        
+        isDragging = false;
+    });
+})();
+
+// FIX: Tombol Enter di Keyboard HP untuk Input Chat
+// Kita beri delay sedikit agar elemen HTML termuat sempurna
+setTimeout(() => {
     const chatInput = document.getElementById('chat-input');
     if(chatInput) {
-        chatInput.addEventListener('keydown', function(e) {
+        // Hapus listener lama jika ada (biar gak double)
+        const newInput = chatInput.cloneNode(true);
+        chatInput.parentNode.replaceChild(newInput, chatInput);
+        
+        newInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); 
+                e.preventDefault();
                 window.sendChatMessage();
             }
         });
+        // Pasang ulang ID biar fungsi lain tetap jalan
+        newInput.id = 'chat-input';
     }
-});
+}, 1500);
 
-// 2. FUNGSI BUKA/TUTUP JENDELA CHAT
+// 2. FUNGSI BUKA TUTUP CHAT
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
+    if (!chatWindow) return console.error("Jendela chat tidak ditemukan!");
+    
     if (chatWindow.classList.contains('hidden')) {
-        chatWindow.classList.remove('hidden'); 
+        chatWindow.classList.remove('hidden');
         chatWindow.classList.add('flex');
-        // Scroll ke bawah saat dibuka
+        
+        // Auto scroll ke bawah
         const chatBox = document.getElementById('chat-messages');
         if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Auto fokus ke input (opsional)
+        setTimeout(() => {
+            const input = document.getElementById('chat-input');
+            if(input) input.focus();
+        }, 300);
     } else {
-        chatWindow.classList.add('hidden'); 
+        chatWindow.classList.add('hidden');
         chatWindow.classList.remove('flex');
     }
 }
 
-// 3. FUNGSI RENDER GELEMBUNG CHAT
+// 3. FUNGSI RENDER PESAN
 function addChatBubble(text, sender) {
     const chatBox = document.getElementById('chat-messages');
-    if(!chatBox) return; // Cegah error jika elemen belum dimuat
+    if(!chatBox) return;
 
-    const bubble = document.createElement('div');
-    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    const div = document.createElement('div');
+    const isUser = sender === 'user';
+    
+    div.className = isUser ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
+    
+    const bgClass = isUser ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-200';
+    const iconHtml = isUser ? '' : `<div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mr-2 mt-1"><i class="fas fa-robot text-xs text-blue-600"></i></div>`;
+    
+    // Format teks: Bold (**teks**) dan Newline
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
 
-    if (sender === 'user') {
-        bubble.className = 'flex items-start gap-2 justify-end mb-2';
-        bubble.innerHTML = `<div class="bg-blue-600 text-white p-2.5 rounded-lg rounded-tr-none shadow-sm max-w-[85%] leading-relaxed text-sm">${formattedText}</div>`;
-    } else {
-        bubble.className = 'flex items-start gap-2 mb-2';
-        bubble.innerHTML = `
-            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mt-1">
-                <i class="fas fa-robot text-xs text-blue-600"></i>
-            </div>
-            <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-700 max-w-[85%] leading-relaxed text-sm">${formattedText}</div>
-        `;
-    }
-    chatBox.appendChild(bubble);
-    chatBox.scrollTop = chatBox.scrollHeight; 
+    div.innerHTML = `
+        ${iconHtml}
+        <div class="${bgClass} p-2.5 rounded-lg max-w-[85%] text-sm shadow-sm leading-relaxed">
+            ${formatted}
+        </div>
+    `;
+    
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// 4. FUNGSI UTAMA KIRIM PESAN KE GROQ AI
+// 4. FUNGSI UTAMA KIRIM PESAN (GROQ AI)
 window.sendChatMessage = async function() {
     const inputEl = document.getElementById('chat-input');
     const message = inputEl.value.trim();
-    if (!message) return; 
+    if (!message) return;
 
+    // Tampilkan pesan user
     addChatBubble(message, 'user');
     inputEl.value = '';
 
+    // Loading indicator
     const loadingId = 'loading-' + Date.now();
     const chatBox = document.getElementById('chat-messages');
     chatBox.insertAdjacentHTML('beforeend', `
-        <div id="${loadingId}" class="flex items-start gap-2 mb-2">
-            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mt-1">
-                <i class="fas fa-robot text-xs text-blue-600"></i>
-            </div>
-            <div class="bg-white p-2.5 rounded-lg rounded-tl-none shadow-sm border border-gray-200 text-gray-400 italic text-xs max-w-[85%]">
-                Menganalisa data warung... <i class="fas fa-circle-notch fa-spin ml-1"></i>
+        <div id="${loadingId}" class="flex justify-start mb-2">
+            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-none mr-2 mt-1"><i class="fas fa-robot text-xs text-blue-600"></i></div>
+            <div class="bg-white p-2.5 rounded-lg border border-gray-200 text-gray-400 italic text-xs shadow-sm">
+                Sedang mengetik... <i class="fas fa-circle-notch fa-spin"></i>
             </div>
         </div>
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // --- LOGIKA TARIK DATA TRANSAKSI ---
+    // --- LOGIKA TARIK DATA WARUNG ---
     const todayStr = new Date().toLocaleDateString('id-ID');
-    let dataHutang = [];
-    let omzetHariIni = 0, paymentTunai = 0, paymentQris = 0, paymentHutang = 0;
-    let itemSalesCount = {};
-
+    let omzet = 0, items = {};
+    let hutangList = [];
+    
     transactions.forEach(t => {
-        if (new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
-            if (t.remaining > 0) dataHutang.push(`${t.buyer} (Sisa: Rp ${t.remaining.toLocaleString('id-ID')})`);
-            omzetHariIni += t.total;
-            if (t.method === 'TUNAI') paymentTunai += (t.paid >= t.total ? t.total : t.paid);
-            if (t.method === 'QRIS') paymentQris += t.total;
-            if (t.method === 'HUTANG') paymentHutang += t.remaining;
-            if (t.items) {
-                t.items.forEach(item => {
-                    if (!itemSalesCount[item.name]) itemSalesCount[item.name] = 0;
-                    itemSalesCount[item.name] += item.qty;
-                });
-            }
+        if(new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr) {
+            omzet += t.total;
+            if(t.items) t.items.forEach(i => items[i.name] = (items[i.name] || 0) + i.qty);
+            if(t.remaining > 0) hutangList.push(`${t.buyer} (${t.remaining.toLocaleString()})`);
         }
     });
-    
-    let teksHutang = dataHutang.length > 0 ? dataHutang.join(', ') : 'Nihil';
-    let bestSellers = Object.entries(itemSalesCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(i => `${i[0]} (${i[1]}x)`).join(', ') || 'Belum ada';
-    let lowStockMenus = menus.filter(m => m.stock !== undefined && m.stock <= 5).map(m => `${m.name} (Sisa: ${m.stock})`).join(', ') || 'Aman';
 
-    const systemPrompt = `Kamu adalah "Sahabat AI" aplikasi kasir. Jawab singkat, padat, ramah & pakai emoji.
-Data Toko Hari Ini:
-- Omzet: Rp ${omzetHariIni.toLocaleString('id-ID')} (Tunai: ${paymentTunai}, QRIS: ${paymentQris}, Bon: ${paymentHutang})
-- Terlaris: ${bestSellers}
-- Stok Menipis: ${lowStockMenus}
-- Yang Hutang: ${teksHutang}`;
+    const bestSeller = Object.entries(items).sort((a,b)=>b[1]-a[1]).slice(0,3).map(i=>`${i[0]}(${i[1]})`).join(', ') || '-';
+    const hutangText = hutangList.length ? hutangList.join(', ') : 'Nihil';
+
+    // System Prompt (Instruksi Otak AI)
+    const prompt = `Kamu adalah asisten kasir "Sahabat Usaha".
+Data Toko Hari Ini (${todayStr}):
+- Omzet: Rp ${omzet.toLocaleString('id-ID')}
+- Terlaris: ${bestSeller}
+- Yang Hutang: ${hutangText}
+
+Jawablah pertanyaan user dengan singkat, ramah, dan gunakan emoji. Jika diminta saran, berikan saran bisnis sederhana.`;
 
     try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `Bearer ${GROQ_API_KEY}`, 
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({
                 model: "llama-3.3-70b-versatile",
-                messages: [{ role: "system", content: systemPrompt }, { role: "user", content: message }],
-                temperature: 0.7
+                messages: [
+                    { role: "system", content: prompt },
+                    { role: "user", content: message }
+                ],
+                temperature: 0.7,
+                max_tokens: 500
             })
         });
-        
-        const data = await response.json();
-        document.getElementById(loadingId).remove(); 
-        
-        if (response.ok && data.choices && data.choices.length > 0) {
-            addChatBubble(data.choices[0].message.content, 'bot');
-        } else {
-            addChatBubble("Gagal: " + (data.error?.message || "Unknown Error"), 'bot');
-        }
-    } catch (error) {
+
+        const json = await res.json();
         const loader = document.getElementById(loadingId);
         if(loader) loader.remove();
-        addChatBubble("Koneksi bermasalah. Cek internet bosku!", 'bot');
+
+        if (json.choices && json.choices.length > 0) {
+            addChatBubble(json.choices[0].message.content, 'bot');
+        } else {
+            addChatBubble("Maaf, AI sedang sibuk. Coba lagi ya!", 'bot');
+            console.error("AI Error:", json);
+        }
+    } catch (e) {
+        const loader = document.getElementById(loadingId);
+        if(loader) loader.remove();
+        addChatBubble("Gagal terhubung ke internet. Periksa koneksi.", 'bot');
+        console.error("Network Error:", e);
     }
 }
