@@ -419,13 +419,18 @@
             </div>
         </div>
         
-        <div class="p-2 border-t bg-white flex items-center gap-2">
-            <input type="text" id="chat-input" placeholder="Tanya sesuatu..." class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
-            <button onclick="window.sendChatMessage()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 active:scale-95 transition flex-none">
-                <i class="fas fa-paper-plane text-xs -ml-0.5 mt-0.5"></i>
-            </button>
-        </div>
-    </div>
+<div class="p-2 border-t bg-white flex items-center gap-2">
+    <input type="text" id="chat-input" placeholder="Ketik atau tekan mic..." class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
+    
+    <button onclick="window.startVoiceInput()" id="btn-mic" class="bg-gray-200 text-gray-600 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-300 active:scale-95 transition flex-none">
+        <i class="fas fa-microphone text-xs"></i>
+    </button>
+
+    <button onclick="window.sendChatMessage()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 active:scale-95 transition flex-none">
+        <i class="fas fa-paper-plane text-xs -ml-0.5 mt-0.5"></i>
+    </button>
+</div>
+
     <script type="module" src="js/app.js"></script>
 
 </body>
