@@ -1415,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 }); // <-- PENUTUP DOMContentLoaded
 
 // ================= FITUR AI CHATBOT =================
-const GEMINI_API_KEY = "AIzaSyCDSQ_mL-jymGdIAAFU2NTc49tv-jkUdlA"; 
+const GEMINI_API_KEY = "AIzaSyD6mCHclm2_1S-4Q4NRdAKAgHHXsIMTQoo"; 
 
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
@@ -1555,7 +1555,7 @@ Pertanyaan Bos/Kasir: ${message}`;
 
     // 5. TEMBAK DATA KE GOOGLE GEMINI API (Generasi 2.0)
     try {
-        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=' + GEMINI_API_KEY, {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_API_KEY, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
