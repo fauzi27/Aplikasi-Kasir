@@ -157,3 +157,11 @@ html, body {
     border: 1px solid #ddd; border-radius: 8px; outline: none; 
 }
 .auth-input:focus { border-color: #2563eb; }
+/* Efek Kedip untuk Status Offline */
+@keyframes blinker {
+  50% { opacity: 0.5; }
+}
+
+.blink {
+  animation: blinker 1s linear infinite;
+}
