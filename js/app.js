@@ -1600,7 +1600,6 @@ async function syncOfflineData() {
     if (failedList.length === 0) {
         localStorage.removeItem('offline_transactions');
         Toast.fire({icon: 'success', title: 'Sinkronisasi Selesai!'});
-        initUserData(shopOwnerId); // Refresh data
     } else {
         localStorage.setItem('offline_transactions', JSON.stringify(failedList));
     }
