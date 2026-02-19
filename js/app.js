@@ -984,10 +984,14 @@ function renderAdminList() {
     const list = document.getElementById('admin-menu-list');
     list.innerHTML = '';
     const searchVal = document.getElementById('admin-search') ? document.getElementById('admin-search').value.toLowerCase() : '';
+    
     let filteredAdminMenus = menus.filter(m => m.name.toLowerCase().includes(searchVal));
     filteredAdminMenus = currentCategory === 'all' ? filteredAdminMenus : filteredAdminMenus.filter(m => (m.category || '').toLowerCase() === currentCategory);
+    
     const label = document.getElementById('admin-filter-label');
     if(label) label.innerText = currentCategory === 'all' ? 'Semua' : currentCategory;
+    
+    // Logika sorting bawaan tetap dipertahankan
     let favorites = filteredAdminMenus.filter(m => m.favorite);
     let others = filteredAdminMenus.filter(m => !m.favorite);
     if(adminSortMode === 'name_asc') {
@@ -1001,12 +1005,118 @@ function renderAdminList() {
         others.sort((a,b) => a.price - b.price);
     }
     filteredAdminMenus = favorites.concat(others);
+    
     filteredAdminMenus.forEach((item) => {
         const row = document.createElement('div');
         row.className = 'bg-white border rounded p-3 flex justify-between items-center shadow-sm mb-2';
-        row.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100"><i class="fas ${item.icon}"></i></div><div><div class="font-bold text-sm text-gray-800">${item.name}</div><div class="text-xs text-gray-500">${item.category} • Stok: ${item.stock || 0}</div></div></div><div class="flex gap-2"><button onclick="window.toggleFavorite('${item.id}')" class="text-${item.favorite ? 'red' : 'gray'}-500 text-xl">${item.favorite ? '❤️' : '♡'}</button><button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95"><i class="fas fa-trash"></i></button></div>`;
+        
+        // Tampilan diubah: Menambahkan Harga (warna biru) dan Tombol Edit
+        row.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100">
+                    <i class="fas ${item.icon}"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-sm text-gray-800">${item.name}</div>
+                    <div class="text-xs text-blue-600 font-bold">Rp ${(item.price || 0).toLocaleString('id-ID')}</div>
+                    <div class="text-xs text-gray-500">${item.category} • Stok: ${item.stock || 0}</div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.toggleFavorite('${item.id}')" class="text-${item.favorite ? 'red' : 'gray'}-500 text-xl">
+                    ${item.favorite ? '❤️' : '♡'}
+                </button>
+                <button onclick="window.editMenuPrompt('${item.id}')" class="text-blue-500 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition active:scale-95">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="window.deleteMenu('${item.id}')" class="text-red-500 px-3 py-2 bg-red-50 rounded-lg hover:bg-red-100 transition active:scale-95">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>`;
         list.appendChild(row);
     });
+}
+
+// --- FUNGSI EDIT MENU (POPUP MODAL) ---
+window.editMenuPrompt = async function(docId) {
+    const item = menus.find(m => m.id === docId);
+    if (!item) return;
+
+    // 1. Ambil list kategori dari database untuk opsi dropdown
+    let catOptions = `<option value="makanan">makanan</option>
+                      <option value="minuman">minuman</option>
+                      <option value="camilan">camilan</option>`;
+                      
+    categories.forEach(c => {
+        const catName = c.name.toLowerCase();
+        if(!['makanan', 'minuman', 'camilan'].includes(catName)) {
+            catOptions += `<option value="${catName}">${c.name}</option>`;
+        }
+    });
+
+    // Sesuaikan pilihan dropdown dengan kategori item saat ini
+    catOptions = catOptions.replace(`value="${item.category}"`, `value="${item.category}" selected`);
+
+    // 2. Munculkan Popup SweetAlert
+    const { value: formValues } = await Swal.fire({
+        title: 'Edit Item',
+        html: `
+            <div class="text-left mb-1 mt-2 text-xs font-bold text-gray-700">Nama Menu</div>
+            <input id="edit-name" class="swal2-input !m-0 !w-full" placeholder="Nama Menu" value="${item.name}">
+            
+            <div class="text-left mb-1 mt-3 text-xs font-bold text-gray-700">Harga (Rp)</div>
+            <input id="edit-price" type="number" class="swal2-input !m-0 !w-full" placeholder="Harga" value="${item.price}">
+            
+            <div class="text-left mb-1 mt-3 text-xs font-bold text-gray-700">Stok Menu</div>
+            <input id="edit-stock" type="number" class="swal2-input !m-0 !w-full" placeholder="Stok" value="${item.stock || 0}">
+            
+            <div class="text-left mb-1 mt-3 text-xs font-bold text-gray-700">Kategori</div>
+            <select id="edit-category" class="swal2-input !m-0 !w-full h-[54px]">${catOptions}</select>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+        cancelButtonText: 'Batal',
+        preConfirm: () => {
+            return {
+                name: document.getElementById('edit-name').value,
+                price: parseInt(document.getElementById('edit-price').value),
+                stock: parseInt(document.getElementById('edit-stock').value),
+                category: document.getElementById('edit-category').value
+            }
+        }
+    });
+
+    // 3. Eksekusi Penyimpanan ke Firebase
+    if (formValues) {
+        if (!formValues.name || isNaN(formValues.price)) {
+            return Swal.fire('Error', 'Nama dan Harga harus diisi dengan angka yang valid!', 'error');
+        }
+
+        // Auto-update icon/warna jika kategorinya berubah (minuman/makanan)
+        let newIcon = item.icon || 'fa-utensils';
+        let newColor = item.color || 'bg-white';
+        if(formValues.category.includes('minum')) { newIcon = 'fa-glass-water'; newColor = 'bg-blue-50'; }
+        else if(formValues.category.includes('camil')) { newIcon = 'fa-bread-slice'; newColor = 'bg-yellow-50'; }
+        else { newIcon = 'fa-utensils'; newColor = 'bg-white'; }
+
+        Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+        try {
+            await setDoc(doc(db, "users", shopOwnerId, "menus", docId), {
+                name: formValues.name,
+                price: formValues.price,
+                stock: formValues.stock,
+                category: formValues.category,
+                icon: newIcon,
+                color: newColor
+            }, { merge: true });
+            
+            Swal.fire({icon: 'success', title: 'Berhasil Diupdate', timer: 1200, showConfirmButton: false});
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Gagal update: ' + (e.message || 'Unknown'), 'error');
+        }
+    }
 }
 
 // --- LOGIKA FILTER METODE BAYAR ---
