@@ -1003,7 +1003,7 @@ function renderAdminList() {
 }
 
 // --- LOGIKA FILTER METODE BAYAR ---
-window.setcategoryReportPaymentFilter = function(mode) {
+window.setReportPaymentFilter = function(mode) {
     reportPaymentFilter = mode;
     const btns = document.getElementById('report-payment-filters').querySelectorAll('button');
     btns.forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
