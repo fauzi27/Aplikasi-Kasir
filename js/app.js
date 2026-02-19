@@ -1530,25 +1530,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 function updateConnectionStatus() {
-    const statusLabel = document.querySelector('#business-address-lobby span.text-green-400'); // Label ONLINE di Lobby
-    const statusText = document.querySelector('#business-address-lobby'); // Text Container
+    const statusLabel = document.querySelector('#business-address-lobby span.text-green-400');
     
     if (navigator.onLine) {
         // JIKA ONLINE
         if(statusLabel) {
             statusLabel.innerText = "ONLINE";
-            statusLabel.className = "text-green-400 font-bold blink-slow"; // Tambah efek kedip pelan
+            statusLabel.className = "text-green-400 font-bold blink-slow"; 
         }
-        Swal.close(); // Tutup peringatan offline jika ada
+        Swal.close(); 
         
-        // Cek jika baru saja kembali online dari offline
+        // 🔥 TAMBAHKAN BARIS INI (Wajib!)
+        // Agar begitu sinyal nyala, data offline langsung terbang ke server
+        syncOfflineData(); 
+        
         if (window.wasOffline) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Kembali Online!',
-                text: 'Data transaksi offline sedang di-upload otomatis ke server.',
-                toast: true, position: 'top', timer: 3000, showConfirmButton: false
-            });
+            // ... (kode notifikasi existing)
             window.wasOffline = false;
         }
     } else {
