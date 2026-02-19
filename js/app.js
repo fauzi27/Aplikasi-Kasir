@@ -130,20 +130,14 @@ onAuthStateChanged(auth, async (user) => {
 // --- DATA INIT ---
 function initUserData(uid) {
     const catCol = collection(db, "users", uid, "categories");
-    onSnapshot(catCol, async (snapshot) => {
-        if (snapshot.empty) {
-            const defaultCats = ["Makanan", "Minuman", "Camilan", "Tambahan"];
-            for (const c of defaultCats) {
-                await addDoc(catCol, { name: c, id: c.toLowerCase() });
-            }
-        } else {
-            categories = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-            renderCategoryTiles(); 
-        }
+    onSnapshot(catCol, (snapshot) => {
+        // 🔥 Langsung ambil data, JANGAN buat kategori default otomatis
+        categories = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+        renderCategoryTiles(); 
     });
 
     const menuCol = collection(db, "users", uid, "menus");
-    onSnapshot(menuCol, (snapshot) => {
+        onSnapshot(menuCol, (snapshot) => {
         menus = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
         if(!document.getElementById('view-admin').classList.contains('hide')) renderAdminList();
