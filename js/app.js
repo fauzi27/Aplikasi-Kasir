@@ -130,48 +130,74 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- DATA INIT (HYBRID: CLOUD + LOCAL CACHE) ---
+// --- DATA INIT (VERSI FINAL: ANTI-DOUBLE & PERSISTENT) ---
 function initUserData(uid) {
-    // 1. KATEGORI (Load Server -> Simpan Cache -> Load Cache jika Offline)
+    // 🛑 STEP 1: MATIKAN LISTENER LAMA (JIKA ADA) BIAR GAK DOUBLE
+    if (catListener) { catListener(); catListener = null; }
+    if (menuListener) { menuListener(); menuListener = null; }
+    if (trxListener) { trxListener(); trxListener = null; }
+
+    // 🔄 STEP 2: LOAD KATEGORI
     const catCol = collection(db, "users", uid, "categories");
-    onSnapshot(catCol, async (snapshot) => {
+    catListener = onSnapshot(catCol, async (snapshot) => {
         if (!snapshot.empty) {
-            categories = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-            localStorage.setItem('cached_categories', JSON.stringify(categories)); // Simpan
+            // Mapping data
+            let loadedCats = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+            
+            // 🔥 TRIK UI: Hapus duplikat berdasarkan nama (jika database kotor)
+            const uniqueCats = [];
+            const seen = new Set();
+            for (const cat of loadedCats) {
+                const lowerName = cat.name.toLowerCase();
+                if (!seen.has(lowerName)) {
+                    seen.add(lowerName);
+                    uniqueCats.push(cat);
+                }
+            }
+            categories = uniqueCats;
+            
+            localStorage.setItem('cached_categories', JSON.stringify(categories));
             renderCategoryTiles(); 
         }
     }, (error) => {
-        console.log("Offline: Load Kategori dari HP...");
+        // Fallback Offline
         const cached = localStorage.getItem('cached_categories');
         if(cached) { categories = JSON.parse(cached); renderCategoryTiles(); }
     });
 
-    // 2. MENU (Load Server -> Simpan Cache -> Load Cache jika Offline)
+    // 🔄 STEP 3: LOAD MENU
     const menuCol = collection(db, "users", uid, "menus");
-    onSnapshot(menuCol, (snapshot) => {
+    menuListener = onSnapshot(menuCol, (snapshot) => {
         menus = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        localStorage.setItem('cached_menus', JSON.stringify(menus)); // Simpan
+        localStorage.setItem('cached_menus', JSON.stringify(menus));
         refreshAllViews();
         document.getElementById('loading-menu').classList.add('hidden');
     }, (error) => {
-        console.log("Offline: Load Menu dari HP...");
         const cached = localStorage.getItem('cached_menus');
         if(cached) { menus = JSON.parse(cached); refreshAllViews(); }
         document.getElementById('loading-menu').classList.add('hidden');
     });
 
-    // 3. TRANSAKSI (Gabung Data Server + Data Pending di HP)
+    // 🔄 STEP 4: LOAD TRANSAKSI (GABUNGAN SERVER + HP)
     const trxCol = collection(db, "users", uid, "transactions");
     const qTrx = query(trxCol, orderBy("timestamp", "desc"));
-    onSnapshot(qTrx, (snapshot) => {
+    
+    trxListener = onSnapshot(qTrx, (snapshot) => {
+        // Ambil Data Server
         let serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const pendingData = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
-        transactions = [...pendingData, ...serverData]; // Gabung
         
-        // Simpan cache riwayat biar pas buka offline ada datanya
+        // Ambil Data HP (Yang belum terupload)
+        const pendingData = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
+        
+        // Gabung: Pending di atas, Server di bawah
+        transactions = [...pendingData, ...serverData];
+        
+        // Simpan Cache Server (50 terakhir)
         localStorage.setItem('cached_transactions', JSON.stringify(serverData.slice(0, 50))); 
+
         if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
     }, (error) => {
+        // Mode Offline Total
         console.log("Offline: Load Riwayat dari HP...");
         const cached = localStorage.getItem('cached_transactions');
         const pending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
@@ -180,6 +206,7 @@ function initUserData(uid) {
         if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
     });
 }
+
 
 function refreshAllViews() {
     if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
@@ -686,41 +713,45 @@ window.processPayment = async function(method) {
             operatorRole: currentUserRole
         };
 
-        // --- 4. SIMPAN TRANSAKSI (LOGIKA ONLINE vs OFFLINE) ---
+        // --- 4. SIMPAN TRANSAKSI (LOGIKA PENYELAMAT DATA) ---
         if (editingTransactionId) {
-            // MODE EDIT (Lewati dulu untuk offline simpel)
-            delete trxData.timestamp; 
-            delete trxData.date;
-            trxData.updatedAt = Date.now();
+            // MODE EDIT (Server Only untuk sementara)
+            delete trxData.timestamp; delete trxData.date; trxData.updatedAt = Date.now();
             await setDoc(doc(db, "users", shopOwnerId, "transactions", editingTransactionId), trxData, { merge: true });
             Swal.fire('Sukses', 'Revisi Disimpan', 'success');
             exitEditMode();
-
         } else {
             // MODE TRANSAKSI BARU
             const colRef = collection(db, "users", shopOwnerId, "transactions");
             
-            if (navigator.onLine) {
-                // A. JIKA ONLINE: Kirim langsung ke server
-                await addDoc(colRef, trxData);
+            try {
+                // COBA KIRIM ONLINE DULU
+                if (navigator.onLine) {
+                    await addDoc(colRef, trxData); // Ini bisa error kalau sinyal kedip
+                    
+                    let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
+                    Swal.fire({icon: 'success', title: 'Transaksi Berhasil', text: msg, timer: 3000, showConfirmButton: true});
+                } else {
+                    // JIKA OFFLINE DARI AWAL
+                    throw new Error("OFFLINE_MODE"); // Lempar ke catch untuk disimpan lokal
+                }
+            } catch (err) {
+                // 🔥 JARING PENGAMAN: JIKA ERROR APAPUN (Offline / Sinyal Putus / Server Error)
+                // MAKA DATA WAJIB DISIMPAN DI HP!
                 
-                let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
-                Swal.fire({icon: 'success', title: 'Transaksi Berhasil', text: msg, timer: 3000, showConfirmButton: true});
+                console.log("Menyimpan ke LocalStorage karena:", err.message);
 
-            } else {
-                // B. JIKA OFFLINE: Simpan ke HP (LocalStorage)
-                // Ini logika yang BENAR (di luar loop item)
                 const offlineTrx = { 
                     id: 'offline_' + Date.now(),
                     ...trxData,
                     isPending: true 
                 };
 
-                // Tampil di Layar
+                // 1. Tampil di Layar
                 transactions.unshift(offlineTrx); 
                 renderTransactions(); 
 
-                // Simpan Permanen di HP
+                // 2. SIMPAN PERMANEN DI HP
                 let currentPending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
                 currentPending.push(offlineTrx); 
                 localStorage.setItem('offline_transactions', JSON.stringify(currentPending));
@@ -728,7 +759,7 @@ window.processPayment = async function(method) {
                 Swal.fire({
                     icon: 'success', 
                     title: 'Disimpan Offline', 
-                    text: 'Internet mati. Data aman di HP & akan diupload otomatis nanti.',
+                    text: 'Data aman di HP. Akan diupload saat Online.',
                     timer: 3000, 
                     showConfirmButton: true
                 });
@@ -743,13 +774,9 @@ window.processPayment = async function(method) {
         window.closeBillModal();
         
     } catch (e) {
+        // Catch terluar (hanya untuk error fatal kodingan, bukan koneksi)
         console.error(e);
-        // Jika error terjadi karena koneksi putus mendadak saat proses
-        if (!navigator.onLine) {
-             Swal.fire('Info', 'Koneksi terputus, coba simpan lagi.', 'warning');
-        } else {
-             Swal.fire('Error', e.message, 'error');
-        }
+        if(e.message !== "OFFLINE_MODE") Swal.fire('Error Fatal', e.message, 'error');
     }
 }
 
