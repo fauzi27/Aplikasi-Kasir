@@ -325,7 +325,7 @@ function renderCategoryTiles() {
         // 1. Tambah ke Tombol Kasir/Stok (Biasa)
         normalHtml += `<button onclick="window.setCategory('${cat.name.toLowerCase()}')" class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">${cat.name}</button>`;
         
-        // 2. Tambah ke Tombol Admin (Spesial: Ada fungsi sentuh untuk Long Press)
+        // 2. 🔥 INI YANG KURANG: Tambah ke Tombol Admin (Ada fungsi sentuh untuk Long Press)
         adminHtml += `<button 
             onclick="window.setCategory('${cat.name.toLowerCase()}')" 
             onmousedown="window.handleCatTouchStart('${cat.uid}', '${cat.name}')" 
@@ -344,6 +344,8 @@ function renderCategoryTiles() {
 
     if(cashierTabs) cashierTabs.innerHTML = normalHtml;
     if(stockTabs) stockTabs.innerHTML = normalHtml; 
+    
+    // Pastikan adminTabs diisi dengan adminHtml, bukan normalHtml
     if(adminTabs) adminTabs.innerHTML = adminHtml;
 }
 
@@ -421,11 +423,6 @@ window.promptDeleteCategory = async function(uid, name) {
     
     // Reset status dengan jeda sebentar
     setTimeout(() => { isLongPress = false; }, 300);
-};
-
-// --- RENDER MENU GRID ---
-
-
 // --- RENDER MENU GRID ---
 function renderMenuGrid() {
     const container = document.getElementById('menu-grid-container');
