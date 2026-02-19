@@ -607,9 +607,8 @@ function exitEditMode() {
     renderCart();
 }
 
-// --- PROCESS PAYMENT (FULL CODE: SEMI-OFFLINE READY) ---
+// --- PROCESS PAYMENT (PERBAIKAN LOGIKA OFFLINE) ---
 window.processPayment = async function(method) {
-    // 1. SIAPKAN DATA AWAL (JANGAN DIHAPUS)
     const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
     let total = 0;
     cart.forEach(i => total += ((parseInt(i.price)||0) * (parseInt(i.qty)||0)));
@@ -618,12 +617,12 @@ window.processPayment = async function(method) {
     let changeAmount = 0;
     let remaining = 0;
 
-    // 2. INPUT JUMLAH UANG (LOGIKA PEMBAYARAN)
+    // --- 1. LOGIKA INPUT UANG ---
     if (method === 'TUNAI') {
         const { value: money } = await Swal.fire({
             title: `Total: Rp ${total.toLocaleString('id-ID')}`,
             input: 'number',
-            inputLabel: 'Masukkan Jumlah Uang Diterima (atau klik Uang Pas)',
+            inputLabel: 'Uang Diterima',
             showCancelButton: true,
             confirmButtonText: 'Proses',
             showDenyButton: true,
@@ -631,84 +630,43 @@ window.processPayment = async function(method) {
             inputValidator: (value) => { if (!value) return 'Harus diisi!'; }
         });
 
-        if (money === false) { 
-            // Uang Pas (Deny Button)
-            paidAmount = total;
-        } else if (money) {
-            // Input Manual
-            paidAmount = parseInt(money);
-        } else {
-            return; // Cancel
-        }
+        if (money === false) paidAmount = total;
+        else if (money) paidAmount = parseInt(money);
+        else return;
 
-        if (paidAmount > total) {
-            changeAmount = paidAmount - total;
-        } else if (paidAmount < total) {
+        if (paidAmount > total) changeAmount = paidAmount - total;
+        else if (paidAmount < total) {
             method = 'HUTANG'; 
             remaining = total - paidAmount;
-            Swal.fire('Info', `Uang kurang, transaksi dicatat sebagai Hutang dengan sisa Rp ${remaining.toLocaleString()}`, 'info');
+            Swal.fire('Info', `Sisa Hutang Rp ${remaining.toLocaleString()}`, 'info');
         }
-    } else if (method === 'QRIS') {
-        paidAmount = total;
-    } else if (method === 'HUTANG') {
-        remaining = total;
-    }
+    } else if (method === 'QRIS') paidAmount = total;
+    else if (method === 'HUTANG') remaining = total;
 
-    // 3. EKSEKUSI PENYIMPANAN (LOGIKA FIRE & FORGET)
     Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
     try {
-        // A. UPDATE STOK (Local Logic)
+        // --- 2. UPDATE STOK (LOOPING ITEM) ---
         if (!editingTransactionId) {
             for (const item of cart) {
                 if (!item.isManual && item.id) {
                     const menuItem = menus.find(m => m.id === item.id);
                     if (menuItem) {
-                        // Update stok di memori lokal dulu biar UI stok langsung berkurang
+                        // Kurangi stok di tampilan HP (Biar instan)
                         menuItem.stock = (menuItem.stock || 0) - item.qty;
                         
-                        // Kirim update ke Firebase
-                        const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
+                        // Update stok di Server (Hanya jika Online)
+                        // Jika offline, stok server akan disinkronkan nanti saat upload transaksi
                         if (navigator.onLine) {
+                            const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
                             await setDoc(stockRef, { stock: menuItem.stock }, { merge: true });
-        } else {
-            // --- LOGIKA OFFLINE (SIMPAN PERMANEN DI HP) ---
-            const offlineTrx = { 
-                id: 'offline_' + Date.now(),
-                ...trxData,
-                isPending: true 
-            };
-
-            // 1. Tampil di Layar (Sementara)
-            transactions.unshift(offlineTrx); 
-            renderTransactions(); 
-
-            // 2. SIMPAN KE MEMORI HP (PENTING BIAR GAK HILANG SAAT KILL APP)
-            let currentPending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
-            currentPending.push(offlineTrx); 
-            localStorage.setItem('offline_transactions', JSON.stringify(currentPending));
-            
-            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
-            Swal.fire({
-                icon: 'success', 
-                title: 'Disimpan Offline', 
-                text: 'Data aman di HP. Akan diupload saat Online.',
-                timer: 3000, 
-                showConfirmButton: true
-            });
-            
-            // Reset Cart
-            cart = [];
-            document.getElementById('buyer-name').value = '';
-            renderCart();
-        }
-
+                        }
                     }
                 }
             }
         }
 
-        // B. SIAPKAN DATA TRANSAKSI
+        // --- 3. SIAPKAN DATA TRANSAKSI ---
         const trxData = {
             buyer: buyer,
             items: cart,
@@ -725,51 +683,55 @@ window.processPayment = async function(method) {
             operatorRole: currentUserRole
         };
 
-        // C. KIRIM KE DATABASE (LOGIKA PINTAR: ONLINE vs OFFLINE)
+        // --- 4. SIMPAN TRANSAKSI (LOGIKA ONLINE vs OFFLINE) ---
         if (editingTransactionId) {
-            // --- MODE EDIT ---
+            // MODE EDIT (Lewati dulu untuk offline simpel)
             delete trxData.timestamp; 
             delete trxData.date;
             trxData.updatedAt = Date.now();
-            
-            const docRef = doc(db, "users", shopOwnerId, "transactions", editingTransactionId);
-            
-            if (navigator.onLine) {
-                await setDoc(docRef, trxData, { merge: true }); // Tunggu server jika Online
-            } else {
-                setDoc(docRef, trxData, { merge: true }); // Jangan tunggu jika Offline
-            }
-            
-            Swal.fire({icon: 'success', title: 'Revisi Disimpan', text: navigator.onLine ? '' : '(Mode Offline)', timer: 1500, showConfirmButton: false});
+            await setDoc(doc(db, "users", shopOwnerId, "transactions", editingTransactionId), trxData, { merge: true });
+            Swal.fire('Sukses', 'Revisi Disimpan', 'success');
             exitEditMode();
 
         } else {
-            // --- MODE TRANSAKSI BARU ---
+            // MODE TRANSAKSI BARU
             const colRef = collection(db, "users", shopOwnerId, "transactions");
             
             if (navigator.onLine) {
-                await addDoc(colRef, trxData); // Tunggu server confirm
-            } else {
-                addDoc(colRef, trxData); // Langsung lanjut, biarkan antre di background
+                // A. JIKA ONLINE: Kirim langsung ke server
+                await addDoc(colRef, trxData);
                 
-                // PENTING: Masukkan manual ke array lokal biar tampil di riwayat tanpa refresh
-                const offlineTrx = { id: 'offline_' + Date.now(), ...trxData };
+                let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
+                Swal.fire({icon: 'success', title: 'Transaksi Berhasil', text: msg, timer: 3000, showConfirmButton: true});
+
+            } else {
+                // B. JIKA OFFLINE: Simpan ke HP (LocalStorage)
+                // Ini logika yang BENAR (di luar loop item)
+                const offlineTrx = { 
+                    id: 'offline_' + Date.now(),
+                    ...trxData,
+                    isPending: true 
+                };
+
+                // Tampil di Layar
                 transactions.unshift(offlineTrx); 
-                renderTransactions(); // Refresh tampilan riwayat
+                renderTransactions(); 
+
+                // Simpan Permanen di HP
+                let currentPending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
+                currentPending.push(offlineTrx); 
+                localStorage.setItem('offline_transactions', JSON.stringify(currentPending));
+                
+                Swal.fire({
+                    icon: 'success', 
+                    title: 'Disimpan Offline', 
+                    text: 'Internet mati. Data aman di HP & akan diupload otomatis nanti.',
+                    timer: 3000, 
+                    showConfirmButton: true
+                });
             }
-
-            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
-            if (!navigator.onLine) msg += ' (Disimpan di HP)';
-
-            Swal.fire({
-                icon: 'success', 
-                title: 'Transaksi Berhasil', 
-                text: msg,
-                timer: 3000, 
-                showConfirmButton: true
-            });
             
-            // Reset Cart setelah berhasil
+            // Reset Cart
             cart = [];
             document.getElementById('buyer-name').value = '';
             renderCart();
@@ -779,14 +741,12 @@ window.processPayment = async function(method) {
         
     } catch (e) {
         console.error(e);
-        // Kalau errornya cuma koneksi saat offline, abaikan saja dan anggap sukses
+        // Jika error terjadi karena koneksi putus mendadak saat proses
         if (!navigator.onLine) {
-             window.closeBillModal();
-             cart = [];
-             renderCart();
-             return;
+             Swal.fire('Info', 'Koneksi terputus, coba simpan lagi.', 'warning');
+        } else {
+             Swal.fire('Error', e.message, 'error');
         }
-        Swal.fire('Error', 'Terjadi kesalahan: ' + (e.message || 'Unknown'), 'error');
     }
 }
 
