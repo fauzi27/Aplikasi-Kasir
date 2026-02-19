@@ -127,36 +127,61 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- DATA INIT ---
+// --- DATA INIT (HYBRID: CLOUD + LOCAL CACHE) ---
 function initUserData(uid) {
+    // 1. KATEGORI (Load Server -> Simpan Cache -> Load Cache jika Offline)
     const catCol = collection(db, "users", uid, "categories");
     onSnapshot(catCol, async (snapshot) => {
-        if (snapshot.empty) {
-            const defaultCats = ["Makanan", "Minuman", "Camilan", "Tambahan"];
-            for (const c of defaultCats) {
-                await addDoc(catCol, { name: c, id: c.toLowerCase() });
-            }
-        } else {
+        if (!snapshot.empty) {
             categories = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+            localStorage.setItem('cached_categories', JSON.stringify(categories)); // Simpan
             renderCategoryTiles(); 
         }
+    }, (error) => {
+        console.log("Offline: Load Kategori dari HP...");
+        const cached = localStorage.getItem('cached_categories');
+        if(cached) { categories = JSON.parse(cached); renderCategoryTiles(); }
     });
 
+    // 2. MENU (Load Server -> Simpan Cache -> Load Cache jika Offline)
     const menuCol = collection(db, "users", uid, "menus");
     onSnapshot(menuCol, (snapshot) => {
         menus = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
-        if(!document.getElementById('view-admin').classList.contains('hide')) renderAdminList();
-        if(!document.getElementById('view-stock').classList.contains('hide')) renderStockList();
+        localStorage.setItem('cached_menus', JSON.stringify(menus)); // Simpan
+        refreshAllViews();
+        document.getElementById('loading-menu').classList.add('hidden');
+    }, (error) => {
+        console.log("Offline: Load Menu dari HP...");
+        const cached = localStorage.getItem('cached_menus');
+        if(cached) { menus = JSON.parse(cached); refreshAllViews(); }
         document.getElementById('loading-menu').classList.add('hidden');
     });
 
+    // 3. TRANSAKSI (Gabung Data Server + Data Pending di HP)
     const trxCol = collection(db, "users", uid, "transactions");
     const qTrx = query(trxCol, orderBy("timestamp", "desc"));
     onSnapshot(qTrx, (snapshot) => {
-        transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const pendingData = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
+        transactions = [...pendingData, ...serverData]; // Gabung
+        
+        // Simpan cache riwayat biar pas buka offline ada datanya
+        localStorage.setItem('cached_transactions', JSON.stringify(serverData.slice(0, 50))); 
+        if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
+    }, (error) => {
+        console.log("Offline: Load Riwayat dari HP...");
+        const cached = localStorage.getItem('cached_transactions');
+        const pending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
+        let oldTrx = cached ? JSON.parse(cached) : [];
+        transactions = [...pending, ...oldTrx];
         if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
     });
+}
+
+function refreshAllViews() {
+    if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
+    if(!document.getElementById('view-admin').classList.contains('hide')) renderAdminList();
+    if(!document.getElementById('view-stock').classList.contains('hide')) renderStockList();
 }
 
 // --- AUTH FUNCTIONS ---
