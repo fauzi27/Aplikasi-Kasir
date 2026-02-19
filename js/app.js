@@ -25,9 +25,6 @@ let filteredTrx = [];
 let queryFilterMode = 'none';
 let currentUserRole = 'admin'; 
 let shopOwnerId = null; 
-let catListener = null;
-let menuListener = null;
-let trxListener = null;
 
 // --- AUTH LISTENERS (VERSI ANTI-MACET SAAT OFFLINE) ---
 onAuthStateChanged(auth, async (user) => {
@@ -130,88 +127,36 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- DATA INIT (VERSI FINAL: ANTI-DOUBLE & PERSISTENT) ---
+// --- DATA INIT ---
 function initUserData(uid) {
-    // 🛑 STEP 1: MATIKAN LISTENER LAMA (JIKA ADA) BIAR GAK DOUBLE
-    if (catListener) { catListener(); catListener = null; }
-    if (menuListener) { menuListener(); menuListener = null; }
-    if (trxListener) { trxListener(); trxListener = null; }
-
-    // 🔄 STEP 2: LOAD KATEGORI
     const catCol = collection(db, "users", uid, "categories");
-    catListener = onSnapshot(catCol, async (snapshot) => {
-        if (!snapshot.empty) {
-            // Mapping data
-            let loadedCats = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-            
-            // 🔥 TRIK UI: Hapus duplikat berdasarkan nama (jika database kotor)
-            const uniqueCats = [];
-            const seen = new Set();
-            for (const cat of loadedCats) {
-                const lowerName = cat.name.toLowerCase();
-                if (!seen.has(lowerName)) {
-                    seen.add(lowerName);
-                    uniqueCats.push(cat);
-                }
+    onSnapshot(catCol, async (snapshot) => {
+        if (snapshot.empty) {
+            const defaultCats = ["Makanan", "Minuman", "Camilan", "Tambahan"];
+            for (const c of defaultCats) {
+                await addDoc(catCol, { name: c, id: c.toLowerCase() });
             }
-            categories = uniqueCats;
-            
-            localStorage.setItem('cached_categories', JSON.stringify(categories));
+        } else {
+            categories = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
             renderCategoryTiles(); 
         }
-    }, (error) => {
-        // Fallback Offline
-        const cached = localStorage.getItem('cached_categories');
-        if(cached) { categories = JSON.parse(cached); renderCategoryTiles(); }
     });
 
-    // 🔄 STEP 3: LOAD MENU
     const menuCol = collection(db, "users", uid, "menus");
-    menuListener = onSnapshot(menuCol, (snapshot) => {
+    onSnapshot(menuCol, (snapshot) => {
         menus = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        localStorage.setItem('cached_menus', JSON.stringify(menus));
-        refreshAllViews();
-        document.getElementById('loading-menu').classList.add('hidden');
-    }, (error) => {
-        const cached = localStorage.getItem('cached_menus');
-        if(cached) { menus = JSON.parse(cached); refreshAllViews(); }
+        if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
+        if(!document.getElementById('view-admin').classList.contains('hide')) renderAdminList();
+        if(!document.getElementById('view-stock').classList.contains('hide')) renderStockList();
         document.getElementById('loading-menu').classList.add('hidden');
     });
 
-    // 🔄 STEP 4: LOAD TRANSAKSI (GABUNGAN SERVER + HP)
     const trxCol = collection(db, "users", uid, "transactions");
     const qTrx = query(trxCol, orderBy("timestamp", "desc"));
-    
-    trxListener = onSnapshot(qTrx, (snapshot) => {
-        // Ambil Data Server
-        let serverData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Ambil Data HP (Yang belum terupload)
-        const pendingData = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
-        
-        // Gabung: Pending di atas, Server di bawah
-        transactions = [...pendingData, ...serverData];
-        
-        // Simpan Cache Server (50 terakhir)
-        localStorage.setItem('cached_transactions', JSON.stringify(serverData.slice(0, 50))); 
-
-        if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
-    }, (error) => {
-        // Mode Offline Total
-        console.log("Offline: Load Riwayat dari HP...");
-        const cached = localStorage.getItem('cached_transactions');
-        const pending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
-        let oldTrx = cached ? JSON.parse(cached) : [];
-        transactions = [...pending, ...oldTrx];
+    onSnapshot(qTrx, (snapshot) => {
+        transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
     });
-}
-
-
-function refreshAllViews() {
-    if(!document.getElementById('view-cashier').classList.contains('hide')) renderMenuGrid();
-    if(!document.getElementById('view-admin').classList.contains('hide')) renderAdminList();
-    if(!document.getElementById('view-stock').classList.contains('hide')) renderStockList();
 }
 
 // --- AUTH FUNCTIONS ---
@@ -637,8 +582,9 @@ function exitEditMode() {
     renderCart();
 }
 
-// --- PROCESS PAYMENT (PERBAIKAN LOGIKA OFFLINE) ---
+// --- PROCESS PAYMENT (FULL CODE: SEMI-OFFLINE READY) ---
 window.processPayment = async function(method) {
+    // 1. SIAPKAN DATA AWAL (JANGAN DIHAPUS)
     const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
     let total = 0;
     cart.forEach(i => total += ((parseInt(i.price)||0) * (parseInt(i.qty)||0)));
@@ -647,12 +593,12 @@ window.processPayment = async function(method) {
     let changeAmount = 0;
     let remaining = 0;
 
-    // --- 1. LOGIKA INPUT UANG ---
+    // 2. INPUT JUMLAH UANG (LOGIKA PEMBAYARAN)
     if (method === 'TUNAI') {
         const { value: money } = await Swal.fire({
             title: `Total: Rp ${total.toLocaleString('id-ID')}`,
             input: 'number',
-            inputLabel: 'Uang Diterima',
+            inputLabel: 'Masukkan Jumlah Uang Diterima (atau klik Uang Pas)',
             showCancelButton: true,
             confirmButtonText: 'Proses',
             showDenyButton: true,
@@ -660,43 +606,56 @@ window.processPayment = async function(method) {
             inputValidator: (value) => { if (!value) return 'Harus diisi!'; }
         });
 
-        if (money === false) paidAmount = total;
-        else if (money) paidAmount = parseInt(money);
-        else return;
+        if (money === false) { 
+            // Uang Pas (Deny Button)
+            paidAmount = total;
+        } else if (money) {
+            // Input Manual
+            paidAmount = parseInt(money);
+        } else {
+            return; // Cancel
+        }
 
-        if (paidAmount > total) changeAmount = paidAmount - total;
-        else if (paidAmount < total) {
+        if (paidAmount > total) {
+            changeAmount = paidAmount - total;
+        } else if (paidAmount < total) {
             method = 'HUTANG'; 
             remaining = total - paidAmount;
-            Swal.fire('Info', `Sisa Hutang Rp ${remaining.toLocaleString()}`, 'info');
+            Swal.fire('Info', `Uang kurang, transaksi dicatat sebagai Hutang dengan sisa Rp ${remaining.toLocaleString()}`, 'info');
         }
-    } else if (method === 'QRIS') paidAmount = total;
-    else if (method === 'HUTANG') remaining = total;
+    } else if (method === 'QRIS') {
+        paidAmount = total;
+    } else if (method === 'HUTANG') {
+        remaining = total;
+    }
 
+    // 3. EKSEKUSI PENYIMPANAN (LOGIKA FIRE & FORGET)
     Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
 
     try {
-        // --- 2. UPDATE STOK (LOOPING ITEM) ---
+        // A. UPDATE STOK (Local Logic)
         if (!editingTransactionId) {
             for (const item of cart) {
                 if (!item.isManual && item.id) {
                     const menuItem = menus.find(m => m.id === item.id);
                     if (menuItem) {
-                        // Kurangi stok di tampilan HP (Biar instan)
+                        // Update stok di memori lokal dulu biar UI stok langsung berkurang
                         menuItem.stock = (menuItem.stock || 0) - item.qty;
                         
-                        // Update stok di Server (Hanya jika Online)
-                        // Jika offline, stok server akan disinkronkan nanti saat upload transaksi
+                        // Kirim update ke Firebase
+                        const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
                         if (navigator.onLine) {
-                            const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
                             await setDoc(stockRef, { stock: menuItem.stock }, { merge: true });
+                        } else {
+                            // Jika Offline: Kirim tanpa await (Fire & Forget)
+                            setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); 
                         }
                     }
                 }
             }
         }
 
-        // --- 3. SIAPKAN DATA TRANSAKSI ---
+        // B. SIAPKAN DATA TRANSAKSI
         const trxData = {
             buyer: buyer,
             items: cart,
@@ -713,59 +672,51 @@ window.processPayment = async function(method) {
             operatorRole: currentUserRole
         };
 
-        // --- 4. SIMPAN TRANSAKSI (LOGIKA PENYELAMAT DATA) ---
+        // C. KIRIM KE DATABASE (LOGIKA PINTAR: ONLINE vs OFFLINE)
         if (editingTransactionId) {
-            // MODE EDIT (Server Only untuk sementara)
-            delete trxData.timestamp; delete trxData.date; trxData.updatedAt = Date.now();
-            await setDoc(doc(db, "users", shopOwnerId, "transactions", editingTransactionId), trxData, { merge: true });
-            Swal.fire('Sukses', 'Revisi Disimpan', 'success');
-            exitEditMode();
-        } else {
-            // MODE TRANSAKSI BARU
-            const colRef = collection(db, "users", shopOwnerId, "transactions");
+            // --- MODE EDIT ---
+            delete trxData.timestamp; 
+            delete trxData.date;
+            trxData.updatedAt = Date.now();
             
-            try {
-                // COBA KIRIM ONLINE DULU
-                if (navigator.onLine) {
-                    await addDoc(colRef, trxData); // Ini bisa error kalau sinyal kedip
-                    
-                    let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
-                    Swal.fire({icon: 'success', title: 'Transaksi Berhasil', text: msg, timer: 3000, showConfirmButton: true});
-                } else {
-                    // JIKA OFFLINE DARI AWAL
-                    throw new Error("OFFLINE_MODE"); // Lempar ke catch untuk disimpan lokal
-                }
-            } catch (err) {
-                // 🔥 JARING PENGAMAN: JIKA ERROR APAPUN (Offline / Sinyal Putus / Server Error)
-                // MAKA DATA WAJIB DISIMPAN DI HP!
-                
-                console.log("Menyimpan ke LocalStorage karena:", err.message);
-
-                const offlineTrx = { 
-                    id: 'offline_' + Date.now(),
-                    ...trxData,
-                    isPending: true 
-                };
-
-                // 1. Tampil di Layar
-                transactions.unshift(offlineTrx); 
-                renderTransactions(); 
-
-                // 2. SIMPAN PERMANEN DI HP
-                let currentPending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
-                currentPending.push(offlineTrx); 
-                localStorage.setItem('offline_transactions', JSON.stringify(currentPending));
-                
-                Swal.fire({
-                    icon: 'success', 
-                    title: 'Disimpan Offline', 
-                    text: 'Data aman di HP. Akan diupload saat Online.',
-                    timer: 3000, 
-                    showConfirmButton: true
-                });
+            const docRef = doc(db, "users", shopOwnerId, "transactions", editingTransactionId);
+            
+            if (navigator.onLine) {
+                await setDoc(docRef, trxData, { merge: true }); // Tunggu server jika Online
+            } else {
+                setDoc(docRef, trxData, { merge: true }); // Jangan tunggu jika Offline
             }
             
-            // Reset Cart
+            Swal.fire({icon: 'success', title: 'Revisi Disimpan', text: navigator.onLine ? '' : '(Mode Offline)', timer: 1500, showConfirmButton: false});
+            exitEditMode();
+
+        } else {
+            // --- MODE TRANSAKSI BARU ---
+            const colRef = collection(db, "users", shopOwnerId, "transactions");
+            
+            if (navigator.onLine) {
+                await addDoc(colRef, trxData); // Tunggu server confirm
+            } else {
+                addDoc(colRef, trxData); // Langsung lanjut, biarkan antre di background
+                
+                // PENTING: Masukkan manual ke array lokal biar tampil di riwayat tanpa refresh
+                const offlineTrx = { id: 'offline_' + Date.now(), ...trxData };
+                transactions.unshift(offlineTrx); 
+                renderTransactions(); // Refresh tampilan riwayat
+            }
+
+            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
+            if (!navigator.onLine) msg += ' (Disimpan di HP)';
+
+            Swal.fire({
+                icon: 'success', 
+                title: 'Transaksi Berhasil', 
+                text: msg,
+                timer: 3000, 
+                showConfirmButton: true
+            });
+            
+            // Reset Cart setelah berhasil
             cart = [];
             document.getElementById('buyer-name').value = '';
             renderCart();
@@ -774,9 +725,15 @@ window.processPayment = async function(method) {
         window.closeBillModal();
         
     } catch (e) {
-        // Catch terluar (hanya untuk error fatal kodingan, bukan koneksi)
         console.error(e);
-        if(e.message !== "OFFLINE_MODE") Swal.fire('Error Fatal', e.message, 'error');
+        // Kalau errornya cuma koneksi saat offline, abaikan saja dan anggap sukses
+        if (!navigator.onLine) {
+             window.closeBillModal();
+             cart = [];
+             renderCart();
+             return;
+        }
+        Swal.fire('Error', 'Terjadi kesalahan: ' + (e.message || 'Unknown'), 'error');
     }
 }
 
@@ -1560,22 +1517,25 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 function updateConnectionStatus() {
-    const statusLabel = document.querySelector('#business-address-lobby span.text-green-400');
+    const statusLabel = document.querySelector('#business-address-lobby span.text-green-400'); // Label ONLINE di Lobby
+    const statusText = document.querySelector('#business-address-lobby'); // Text Container
     
     if (navigator.onLine) {
         // JIKA ONLINE
         if(statusLabel) {
             statusLabel.innerText = "ONLINE";
-            statusLabel.className = "text-green-400 font-bold blink-slow"; 
+            statusLabel.className = "text-green-400 font-bold blink-slow"; // Tambah efek kedip pelan
         }
-        Swal.close(); 
+        Swal.close(); // Tutup peringatan offline jika ada
         
-        // 🔥 TAMBAHKAN BARIS INI (Wajib!)
-        // Agar begitu sinyal nyala, data offline langsung terbang ke server
-        syncOfflineData(); 
-        
+        // Cek jika baru saja kembali online dari offline
         if (window.wasOffline) {
-            // ... (kode notifikasi existing)
+            Swal.fire({
+                icon: 'success',
+                title: 'Kembali Online!',
+                text: 'Data transaksi offline sedang di-upload otomatis ke server.',
+                toast: true, position: 'top', timer: 3000, showConfirmButton: false
+            });
             window.wasOffline = false;
         }
     } else {
@@ -1604,36 +1564,6 @@ window.addEventListener('offline', updateConnectionStatus);
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
 });
-async function syncOfflineData() {
-    if (!navigator.onLine) return;
-    const raw = localStorage.getItem('offline_transactions');
-    if (!raw) return;
-    const pendingList = JSON.parse(raw);
-    if (pendingList.length === 0) return;
-
-    const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 3000});
-    Toast.fire({icon: 'info', title: `Mengupload ${pendingList.length} data offline...`});
-
-    let failedList = [];
-    for (const trx of pendingList) {
-        try {
-            let cleanData = { ...trx };
-            delete cleanData.id; 
-            delete cleanData.isPending;
-            await addDoc(collection(db, "users", shopOwnerId, "transactions"), cleanData);
-        } catch (e) {
-            console.error("Gagal upload:", e);
-            failedList.push(trx);
-        }
-    }
-
-    if (failedList.length === 0) {
-        localStorage.removeItem('offline_transactions');
-        Toast.fire({icon: 'success', title: 'Sinkronisasi Selesai!'});
-    } else {
-        localStorage.setItem('offline_transactions', JSON.stringify(failedList));
-    }
-}
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
