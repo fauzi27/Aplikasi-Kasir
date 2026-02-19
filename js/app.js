@@ -671,10 +671,38 @@ window.processPayment = async function(method) {
                         const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
                         if (navigator.onLine) {
                             await setDoc(stockRef, { stock: menuItem.stock }, { merge: true });
-                        } else {
-                            // Jika Offline: Kirim tanpa await (Fire & Forget)
-                            setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); 
-                        }
+        } else {
+            // --- LOGIKA OFFLINE (SIMPAN PERMANEN DI HP) ---
+            const offlineTrx = { 
+                id: 'offline_' + Date.now(),
+                ...trxData,
+                isPending: true 
+            };
+
+            // 1. Tampil di Layar (Sementara)
+            transactions.unshift(offlineTrx); 
+            renderTransactions(); 
+
+            // 2. SIMPAN KE MEMORI HP (PENTING BIAR GAK HILANG SAAT KILL APP)
+            let currentPending = JSON.parse(localStorage.getItem('offline_transactions') || "[]");
+            currentPending.push(offlineTrx); 
+            localStorage.setItem('offline_transactions', JSON.stringify(currentPending));
+            
+            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
+            Swal.fire({
+                icon: 'success', 
+                title: 'Disimpan Offline', 
+                text: 'Data aman di HP. Akan diupload saat Online.',
+                timer: 3000, 
+                showConfirmButton: true
+            });
+            
+            // Reset Cart
+            cart = [];
+            document.getElementById('buyer-name').value = '';
+            renderCart();
+        }
+
                     }
                 }
             }
@@ -1589,6 +1617,37 @@ window.addEventListener('offline', updateConnectionStatus);
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
 });
+async function syncOfflineData() {
+    if (!navigator.onLine) return;
+    const raw = localStorage.getItem('offline_transactions');
+    if (!raw) return;
+    const pendingList = JSON.parse(raw);
+    if (pendingList.length === 0) return;
+
+    const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 3000});
+    Toast.fire({icon: 'info', title: `Mengupload ${pendingList.length} data offline...`});
+
+    let failedList = [];
+    for (const trx of pendingList) {
+        try {
+            let cleanData = { ...trx };
+            delete cleanData.id; 
+            delete cleanData.isPending;
+            await addDoc(collection(db, "users", shopOwnerId, "transactions"), cleanData);
+        } catch (e) {
+            console.error("Gagal upload:", e);
+            failedList.push(trx);
+        }
+    }
+
+    if (failedList.length === 0) {
+        localStorage.removeItem('offline_transactions');
+        Toast.fire({icon: 'success', title: 'Sinkronisasi Selesai!'});
+        initUserData(shopOwnerId); // Refresh data
+    } else {
+        localStorage.setItem('offline_transactions', JSON.stringify(failedList));
+    }
+}
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
