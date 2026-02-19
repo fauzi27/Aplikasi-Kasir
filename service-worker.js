@@ -1,43 +1,27 @@
-const CACHE_NAME = 'kasir-super-v10'; // Ganti nama biar refresh total
-const ASSETS = [
+const CACHE_NAME = 'kasir-jaring-raksasa-v1'; // Ganti nama biar browser reset
+const STATIC_ASSETS = [
   './', 
   './index.html',
   './manifest.json',
   './asset/logokasir.png',
-  
-  // PERHATIKAN PATH INI (Harus pakai nama folder karena SW ada di luar)
   './css/style.css',
   './js/app.js',
   './js/firebase.js',
-  './js/ai-brain.js',
-  
-  // Library External (Wajib simpan biar offline jalan)
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/sweetalert2@11',
-  'https://html2canvas.hertzen.com/dist/html2canvas.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  
-  // Firebase SDK (Penting untuk login tidak stuck)
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js'
+  './js/ai-brain.js'
 ];
 
-// 1. INSTALL
+// 1. INSTALL: Simpan Modal Utama Dulu (Static Assets)
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching App Shell...');
-      return cache.addAll(ASSETS);
+      console.log('✅ Menyimpan Aset Utama...');
+      return cache.addAll(STATIC_ASSETS);
     })
   );
 });
 
-// 2. ACTIVATE (Bersih-bersih cache lama)
+// 2. ACTIVATE: Bersihkan Sampah Lama
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
@@ -47,22 +31,41 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. FETCH (Cache First, Network Fallback)
+// 3. FETCH: STRATEGI JARING RAKSASA (Dynamic Caching)
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // JANGAN CACHE Request ke Database (Biar login & data transaksi realtime jalan)
+  // 🛑 PENTING: JANGAN SIMPAN REQUEST DATA DATABASE!
+  // Biarkan request ke Firestore/Google Auth lewat internet saja
   if (url.hostname.includes('firestore.googleapis.com') || 
       url.hostname.includes('identitytoolkit') || 
       url.href.includes('getAccountInfo')) {
-      return; 
+      return; // Langsung ke internet, jangan di-cache
   }
 
+  // UNTUK FILE LAIN (HTML, JS, CSS, GAMBAR, LIBRARY):
   event.respondWith(
     caches.match(event.request).then((cachedResp) => {
-      // Jika ada di cache (offline), pakai itu. Jika tidak, ambil online.
-      return cachedResp || fetch(event.request).catch((err) => {
-          console.log("Offline & file not found:", event.request.url);
+      // A. Kalau ada di saku (Cache), berikan langsung!
+      if (cachedResp) return cachedResp;
+
+      // B. Kalau tidak ada, ambil dari Internet...
+      return fetch(event.request).then((networkResp) => {
+        // Cek apakah download berhasil
+        if (!networkResp || networkResp.status !== 200 || networkResp.type === 'error') {
+          return networkResp;
+        }
+
+        // C. ...DAN LANGSUNG SIMPAN KE SAKU (Cache) buat nanti!
+        const responseToCache = networkResp.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return networkResp;
+      }).catch(() => {
+         // D. Kalau internet mati & file gak ada di saku -> Tampilkan pesan error di console
+         console.log("Gagal load offline:", event.request.url);
       });
     })
   );
