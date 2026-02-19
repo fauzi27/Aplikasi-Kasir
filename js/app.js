@@ -25,8 +25,6 @@ let filteredTrx = [];
 let queryFilterMode = 'none';
 let currentUserRole = 'admin'; 
 let shopOwnerId = null; 
-let longPressTimer = null;
-let isLongPress = false;
 
 // --- AUTH LISTENERS (VERSI ANTI-MACET SAAT OFFLINE) ---
 onAuthStateChanged(auth, async (user) => {
