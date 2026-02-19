@@ -423,7 +423,7 @@ window.executeDeleteCategory = async function(uid, name) {
             // Pindahkan tampilan ke "Semua" jika kategori yg dihapus sedang aktif
             if (currentCategory === name.toLowerCase()) window.setCategory('all');
             
-            // Buka lagi modalnya setelah selesai hapus (barangkali mau hapus yg lain)
+            // Refresh modal dengan memanggilnya lagi (kalau mau hapus yang lain)
             setTimeout(() => { window.showDeleteCategoryModal(); }, 1200);
 
         } catch (e) {
@@ -435,6 +435,7 @@ window.executeDeleteCategory = async function(uid, name) {
         window.showDeleteCategoryModal();
     }
 };
+
 // --- RENDER MENU GRID ---
 function renderMenuGrid() {
     const container = document.getElementById('menu-grid-container');
