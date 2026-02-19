@@ -313,42 +313,48 @@ function renderCategoryTiles() {
     const adminTabs = document.getElementById('admin-cat-tiles');
     const stockTabs = document.getElementById('stock-cat-tiles'); 
     
-    // HTML Normal (Untuk Kasir & Stok - Hanya Klik)
+    // HTML Normal (Untuk Kasir & Stok)
     let normalHtml = `<button onclick="window.setCategory('all')" class="category-btn ${currentCategory === 'all' ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">Semua</button>`;
     
-    // HTML Admin (Bisa Diklik & Bisa Ditahan/Long Press)
-    let adminHtml = `<button onclick="window.setCategory('all')" class="category-btn ${currentCategory === 'all' ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">Semua</button>`;
-    
+    // Kategori Biasa
     categories.forEach(cat => {
         const isActive = currentCategory === cat.name.toLowerCase();
-        
-        // 1. Tambah ke Tombol Kasir/Stok (Biasa)
         normalHtml += `<button onclick="window.setCategory('${cat.name.toLowerCase()}')" class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">${cat.name}</button>`;
-        
-        // 2. 🔥 INI YANG KURANG: Tambah ke Tombol Admin (Ada fungsi sentuh untuk Long Press)
-        adminHtml += `<button 
-            onclick="window.setCategory('${cat.name.toLowerCase()}')" 
-            onmousedown="window.handleCatTouchStart('${cat.uid}', '${cat.name}')" 
-            onmouseup="window.handleCatTouchEnd()" 
-            onmouseleave="window.handleCatTouchEnd()"
-            ontouchstart="window.handleCatTouchStart('${cat.uid}', '${cat.name}')" 
-            ontouchend="window.handleCatTouchEnd()"
-            ontouchcancel="window.handleCatTouchEnd()"
-            oncontextmenu="event.preventDefault();"
-            class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap select-none">
-            ${cat.name}
-        </button>`;
     });
 
-    adminHtml += `<button onclick="window.addCategoryPrompt()" class="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-600 border border-green-200 whitespace-nowrap"><i class="fas fa-plus"></i></button>`;
-
+    // Tampilkan untuk Kasir & Stok
     if(cashierTabs) cashierTabs.innerHTML = normalHtml;
     if(stockTabs) stockTabs.innerHTML = normalHtml; 
-    
-    // Pastikan adminTabs diisi dengan adminHtml, bukan normalHtml
-    if(adminTabs) adminTabs.innerHTML = adminHtml;
+
+    // HTML KHUSUS ADMIN (Tambah Tombol + dan X)
+    if(adminTabs) {
+        // Beri div pembungkus biar rapi
+        let adminHtml = `<div class="flex gap-2 items-center w-full">`; 
+        
+        // Bagian Kiri: Tombol + dan X (Biar kelihatan jelas)
+        adminHtml += `
+            <div class="flex gap-1 border-r border-gray-300 pr-2 flex-none">
+                <button onclick="window.addCategoryPrompt()" class="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-600 border border-green-200 hover:bg-green-200 transition"><i class="fas fa-plus"></i></button>
+                <button onclick="window.showDeleteCategoryModal()" class="px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-600 border border-red-200 hover:bg-red-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+        `;
+
+        // Bagian Kanan: Daftar Kategori (Bisa digeser)
+        adminHtml += `<div class="flex gap-2 overflow-x-auto pb-1 flex-1">`;
+        adminHtml += `<button onclick="window.setCategory('all')" class="category-btn ${currentCategory === 'all' ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">Semua</button>`;
+        
+        categories.forEach(cat => {
+            const isActive = currentCategory === cat.name.toLowerCase();
+            adminHtml += `<button onclick="window.setCategory('${cat.name.toLowerCase()}')" class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">${cat.name}</button>`;
+        });
+        
+        adminHtml += `</div></div>`; // Penutup div
+        
+        adminTabs.innerHTML = adminHtml;
+    }
 }
 
+// ...................
 window.setCategory = function(cat) {
     if (isLongPress) return; // Cegah pindah kategori kalau user habis nekan lama
 
@@ -376,42 +382,69 @@ window.addCategoryPrompt = async function() {
 }
 
 // ============================================================
-// 🔥 FITUR HAPUS KATEGORI (LONG PRESS)
+// 🔥 FITUR HAPUS KATEGORI (MODAL POP-UP)
 // ============================================================
-window.handleCatTouchStart = function(uid, name) {
-    isLongPress = false;
-    longPressTimer = setTimeout(() => {
-        isLongPress = true; // Timer tercapai, aktifkan status hapus
-        window.promptDeleteCategory(uid, name);
-    }, 700); // Harus ditahan selama 0.7 detik
-};
+window.showDeleteCategoryModal = function() {
+    if (categories.length === 0) return Swal.fire('Info', 'Tidak ada kategori untuk dihapus.', 'info');
 
-window.handleCatTouchEnd = function() {
-    clearTimeout(longPressTimer); // Batalkan timer jika dilepas cepat (hanya klik biasa)
-};
-
-window.promptDeleteCategory = async function(uid, name) {
-    if (!uid) return;
+    // Buat HTML List Kategori untuk ditaruh di dalam Swal
+    let listHtml = '<div class="flex flex-col gap-2 max-h-60 overflow-y-auto mt-2 text-left">';
     
-    // Efek Getar (Jika HP Support)
-    if (navigator.vibrate) navigator.vibrate(50);
+    categories.forEach(cat => {
+        listHtml += `
+            <div class="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200">
+                <span class="text-sm font-semibold text-gray-700">${cat.name}</span>
+                <button onclick="window.executeDeleteCategory('${cat.uid}', '${cat.name}')" class="bg-red-500 text-white w-8 h-8 rounded flex items-center justify-center hover:bg-red-600 active:scale-95 transition">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            </div>
+        `;
+    });
+    listHtml += '</div>';
 
+    Swal.fire({
+        title: 'Hapus Kategori',
+        html: listHtml,
+        showConfirmButton: false,
+        showCloseButton: true,
+        customClass: { popup: 'rounded-xl' }
+    });
+};
+
+// Eksekusi hapus dari dalam modal
+window.executeDeleteCategory = async function(uid, name) {
     const res = await Swal.fire({
-        title: 'Hapus Kategori?',
-        text: `Yakin ingin menghapus kategori "${name}"? (Menu di dalamnya tidak akan terhapus)`,
+        title: 'Yakin?',
+        text: `Hapus kategori "${name}"?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Hapus!'
+        cancelButtonText: 'Batal',
+        confirmButtonText: 'Ya, Hapus'
     });
 
     if (res.isConfirmed) {
         Swal.fire({title: 'Menghapus...', didOpen: () => Swal.showLoading()});
         try {
             await deleteDoc(doc(db, "users", shopOwnerId, "categories", uid));
-            Swal.fire('Terhapus!', 'Kategori berhasil dihapus.', 'success');
+            Swal.fire({icon: 'success', title: 'Terhapus!', timer: 1000, showConfirmButton: false});
             
+            // Pindahkan tampilan ke "Semua" jika kategori yg dihapus sedang aktif
+            if (currentCategory === name.toLowerCase()) window.setCategory('all');
+            
+            // Refresh modal dengan memanggilnya lagi (kalau mau hapus yang lain)
+            setTimeout(() => { window.showDeleteCategoryModal(); }, 1200);
+
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Gagal hapus: ' + e.message, 'error');
+        }
+    } else {
+        // Buka lagi modal list kalau batal hapus
+        window.showDeleteCategoryModal();
+    }
+};
+
             // Pindahkan tampilan ke "Semua" jika kategori yg dihapus sedang aktif
             if (currentCategory === name.toLowerCase()) window.setCategory('all');
             
