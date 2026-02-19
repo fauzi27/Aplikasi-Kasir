@@ -25,6 +25,8 @@ let filteredTrx = [];
 let queryFilterMode = 'none';
 let currentUserRole = 'admin'; 
 let shopOwnerId = null; 
+let longPressTimer = null;
+let isLongPress = false;
 
 // --- AUTH LISTENERS (VERSI ANTI-MACET SAAT OFFLINE) ---
 onAuthStateChanged(auth, async (user) => {
@@ -311,21 +313,43 @@ function renderCategoryTiles() {
     const adminTabs = document.getElementById('admin-cat-tiles');
     const stockTabs = document.getElementById('stock-cat-tiles'); 
     
-    let html = `<button onclick="window.setCategory('all')" class="category-btn ${currentCategory === 'all' ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">Semua</button>`;
+    // HTML Normal (Untuk Kasir & Stok - Hanya Klik)
+    let normalHtml = `<button onclick="window.setCategory('all')" class="category-btn ${currentCategory === 'all' ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">Semua</button>`;
+    
+    // HTML Admin (Bisa Diklik & Bisa Ditahan/Long Press)
+    let adminHtml = `<button onclick="window.setCategory('all')" class="category-btn ${currentCategory === 'all' ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">Semua</button>`;
     
     categories.forEach(cat => {
         const isActive = currentCategory === cat.name.toLowerCase();
-        html += `<button onclick="window.setCategory('${cat.name.toLowerCase()}')" class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">${cat.name}</button>`;
+        
+        // 1. Tambah ke Tombol Kasir/Stok (Biasa)
+        normalHtml += `<button onclick="window.setCategory('${cat.name.toLowerCase()}')" class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap">${cat.name}</button>`;
+        
+        // 2. Tambah ke Tombol Admin (Spesial: Ada fungsi sentuh untuk Long Press)
+        adminHtml += `<button 
+            onclick="window.setCategory('${cat.name.toLowerCase()}')" 
+            onmousedown="window.handleCatTouchStart('${cat.uid}', '${cat.name}')" 
+            onmouseup="window.handleCatTouchEnd()" 
+            onmouseleave="window.handleCatTouchEnd()"
+            ontouchstart="window.handleCatTouchStart('${cat.uid}', '${cat.name}')" 
+            ontouchend="window.handleCatTouchEnd()"
+            ontouchcancel="window.handleCatTouchEnd()"
+            oncontextmenu="event.preventDefault();"
+            class="category-btn ${isActive ? 'active' : ''} px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 bg-white text-gray-600 transition whitespace-nowrap select-none">
+            ${cat.name}
+        </button>`;
     });
 
-    let adminHtml = html + `<button onclick="window.addCategoryPrompt()" class="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-600 border border-green-200 whitespace-nowrap"><i class="fas fa-plus"></i></button>`;
+    adminHtml += `<button onclick="window.addCategoryPrompt()" class="px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-600 border border-green-200 whitespace-nowrap"><i class="fas fa-plus"></i></button>`;
 
-    if(cashierTabs) cashierTabs.innerHTML = html;
-    if(stockTabs) stockTabs.innerHTML = html; 
+    if(cashierTabs) cashierTabs.innerHTML = normalHtml;
+    if(stockTabs) stockTabs.innerHTML = normalHtml; 
     if(adminTabs) adminTabs.innerHTML = adminHtml;
 }
 
 window.setCategory = function(cat) {
+    if (isLongPress) return; // Cegah pindah kategori kalau user habis nekan lama
+
     currentCategory = cat;
     renderCategoryTiles(); 
     renderMenuGrid();
@@ -348,6 +372,59 @@ window.addCategoryPrompt = async function() {
         }
     }
 }
+
+// ============================================================
+// 🔥 FITUR HAPUS KATEGORI (LONG PRESS)
+// ============================================================
+window.handleCatTouchStart = function(uid, name) {
+    isLongPress = false;
+    longPressTimer = setTimeout(() => {
+        isLongPress = true; // Timer tercapai, aktifkan status hapus
+        window.promptDeleteCategory(uid, name);
+    }, 700); // Harus ditahan selama 0.7 detik
+};
+
+window.handleCatTouchEnd = function() {
+    clearTimeout(longPressTimer); // Batalkan timer jika dilepas cepat (hanya klik biasa)
+};
+
+window.promptDeleteCategory = async function(uid, name) {
+    if (!uid) return;
+    
+    // Efek Getar (Jika HP Support)
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    const res = await Swal.fire({
+        title: 'Hapus Kategori?',
+        text: `Yakin ingin menghapus kategori "${name}"? (Menu di dalamnya tidak akan terhapus)`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!'
+    });
+
+    if (res.isConfirmed) {
+        Swal.fire({title: 'Menghapus...', didOpen: () => Swal.showLoading()});
+        try {
+            await deleteDoc(doc(db, "users", shopOwnerId, "categories", uid));
+            Swal.fire('Terhapus!', 'Kategori berhasil dihapus.', 'success');
+            
+            // Pindahkan tampilan ke "Semua" jika kategori yg dihapus sedang aktif
+            if (currentCategory === name.toLowerCase()) window.setCategory('all');
+            
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Gagal hapus: ' + e.message, 'error');
+        }
+    }
+    
+    // Reset status dengan jeda sebentar
+    setTimeout(() => { isLongPress = false; }, 300);
+};
+
+// --- RENDER MENU GRID ---
+
 
 // --- RENDER MENU GRID ---
 function renderMenuGrid() {
@@ -929,7 +1006,7 @@ function renderAdminList() {
 }
 
 // --- LOGIKA FILTER METODE BAYAR ---
-window.setReportPaymentFilter = function(mode) {
+window.setcategoryReportPaymentFilter = function(mode) {
     reportPaymentFilter = mode;
     const btns = document.getElementById('report-payment-filters').querySelectorAll('button');
     btns.forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
