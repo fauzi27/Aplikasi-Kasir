@@ -290,28 +290,10 @@ window.navigate = function(viewId) {
         window.setReportPaymentFilter('all'); 
     }
     if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
-    
-    // 🔥 UPDATE BAGIAN INI (Inject Tombol Pembersih di Settings)
     if(viewId === 'view-settings') { 
         document.getElementById('edit-business-name').value = window.shopNameAsli || businessData.name || ''; 
         document.getElementById('edit-business-address').value = window.shopAddressAsli || businessData.address || ''; 
-        
-        // Cek apakah tombol sudah ada, kalau belum, buat baru
-        const settingContainer = document.querySelector('#view-settings .flex-1');
-        if (settingContainer && !document.getElementById('btn-cleanup-db')) {
-            const btnHtml = `
-                <div class="bg-white p-4 rounded-xl shadow mb-4 border border-red-200 mt-4">
-                    <h3 class="font-bold text-red-600 mb-1 text-sm">Zona Bahaya</h3>
-                    <p class="text-xs text-gray-500 mb-3">Gunakan jika kategori muncul ganda/double.</p>
-                    <button id="btn-cleanup-db" onclick="window.bersihkanKategoriDouble()" class="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded font-bold text-sm hover:bg-red-100 transition active:scale-95">
-                        <i class="fas fa-broom mr-2"></i>Hapus Kategori Ganda
-                    </button>
-                </div>
-            `;
-            settingContainer.insertAdjacentHTML('beforeend', btnHtml);
-        }
     }
-    
     if(viewId !== 'view-calculator') window.clearCalc();
     
     if (viewId === 'view-lobby' && editingTransactionId) {
@@ -754,61 +736,6 @@ window.processPayment = async function(method) {
         Swal.fire('Error', 'Terjadi kesalahan: ' + (e.message || 'Unknown'), 'error');
     }
 }
-// ==========================================
-// 🧹 FITUR PEMBERSIH DATABASE (CLEANUP)
-// ==========================================
-window.bersihkanKategoriDouble = async function() {
-    if (!shopOwnerId) return Swal.fire('Error', 'Anda belum login.', 'error');
-    
-    const result = await Swal.fire({
-        title: 'Bersihkan Kategori?',
-        text: "Sistem akan menghapus kategori yang namanya sama (duplikat) dan menyisakan satu saja.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'Ya, Bersihkan!'
-    });
-
-    if (!result.isConfirmed) return;
-
-    Swal.fire({
-        title: 'Sedang bekerja...',
-        text: 'Jangan tutup aplikasi.',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
-
-    try {
-        // 1. Ambil semua kategori
-        const catCol = collection(db, "users", shopOwnerId, "categories");
-        const snapshot = await getDocs(catCol);
-        
-        const seen = new Set(); // Daftar nama yang sudah diabsen
-        let deletedCount = 0;
-
-        // 2. Cek satu per satu
-        for (const docSnap of snapshot.docs) {
-            const data = docSnap.data();
-            // Normalisasi nama (kecilkan huruf & hapus spasi pinggir) biar akurat
-            const name = (data.name || "").toLowerCase().trim(); 
-
-            if (seen.has(name)) {
-                // JIKA SUDAH ADA DI DAFTAR ABSEN -> HAPUS DOKUMEN INI
-                await deleteDoc(doc(db, "users", shopOwnerId, "categories", docSnap.id));
-                deletedCount++;
-            } else {
-                // JIKA BELUM ADA -> CATAT NAMANYA (INI YANG DISIMPAN)
-                seen.add(name);
-            }
-        }
-
-        Swal.fire('Selesai!', `Berhasil menghapus ${deletedCount} kategori ganda.`, 'success');
-        
-    } catch (error) {
-        console.error("Cleanup Error:", error);
-        Swal.fire('Gagal', 'Terjadi kesalahan: ' + error.message, 'error');
-    }
-};
 
 // --- HELPER FUNCTIONS ---
 window.updateQty = function(idx, change) {
