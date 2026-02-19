@@ -25,6 +25,9 @@ let filteredTrx = [];
 let queryFilterMode = 'none';
 let currentUserRole = 'admin'; 
 let shopOwnerId = null; 
+let catListener = null;
+let menuListener = null;
+let trxListener = null;
 
 // --- AUTH LISTENERS (VERSI ANTI-MACET SAAT OFFLINE) ---
 onAuthStateChanged(auth, async (user) => {
