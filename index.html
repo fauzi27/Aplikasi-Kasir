@@ -436,12 +436,52 @@
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('✅ App Siap Offline!', reg.scope))
+            // Tambahkan versi di parameter agar SW juga ikut update
+            navigator.serviceWorker.register('./service-worker.js?v=15.1')
+                .then(reg => {
+                    console.log('✅ App Siap Offline!', reg.scope);
+                    
+                    // 1. Paksa browser mengecek apakah ada file service-worker.js yang baru di server
+                    reg.update();
+                    
+                    // 2. Jika ada update baru terdeteksi
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    // Kode baru sudah siap, beri tahu user
+                                    console.log('🚀 Update baru tersedia!');
+                                    
+                                    // Munculkan popup dari SweetAlert
+                                    Swal.fire({
+                                        title: 'Update Tersedia!',
+                                        text: 'Versi terbaru aplikasi sudah siap. Muat ulang sekarang?',
+                                        icon: 'info',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Ya, Muat Ulang',
+                                        cancelButtonText: 'Nanti',
+                                        allowOutsideClick: false
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            // Bersihkan cache lama (opsional tapi disarankan)
+                                            caches.keys().then((names) => {
+                                                for (let name of names) caches.delete(name);
+                                            });
+                                            // Refresh halaman secara paksa untuk memuat kode baru
+                                            window.location.reload();
+                                        }
+                                    });
+                                }
+                            }
+                        };
+                    };
+                })
                 .catch(err => console.log('❌ Gagal SW:', err));
         });
     }
 </script>
+
 
 </body>
 </html>
