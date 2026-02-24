@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sahabat-usahamu-v15.5'; // Ganti nama biar browser reset
+const CACHE_NAME = 'sahabat-usahamu-v16'; // Ganti nama biar browser reset
 const STATIC_ASSETS = [
   './', 
   './index.html',
