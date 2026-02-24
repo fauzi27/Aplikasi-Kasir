@@ -1076,12 +1076,17 @@ function renderAdminList() {
         const row = document.createElement('div');
         row.className = 'bg-white border rounded p-3 flex justify-between items-center shadow-sm mb-2';
         
-        // Tampilan diubah: Menambahkan Harga (warna biru) dan Tombol Edit
+        // 🔥 LOGIKA FOTO UNTUK ADMIN:
+        let mediaAdminHtml = `<div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100 flex-none"><i class="fas ${item.icon || 'fa-utensils'}"></i></div>`;
+        if (item.image) {
+            // Kompresi ukurannya diatur jadi w_100,h_100 (100x100 pixel) biar pas dan super ringan untuk list admin
+            const compressedUrl = item.image.replace('/upload/', '/upload/w_100,h_100,c_fill,q_auto,f_auto/');
+            mediaAdminHtml = `<img src="${compressedUrl}" alt="${item.name}" class="w-10 h-10 object-cover rounded-lg shadow-sm border border-gray-200 flex-none">`;
+        }
+
         row.innerHTML = `
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-500 bg-gray-100">
-                    <i class="fas ${item.icon}"></i>
-                </div>
+                ${mediaAdminHtml}
                 <div>
                     <div class="font-bold text-sm text-gray-800">${item.name}</div>
                     <div class="text-xs text-blue-600 font-bold">Rp ${(item.price || 0).toLocaleString('id-ID')}</div>
@@ -1102,6 +1107,7 @@ function renderAdminList() {
         list.appendChild(row);
     });
 }
+
 
 // --- FUNGSI EDIT MENU (POPUP MODAL) ---
 window.editMenuPrompt = async function(docId) {
