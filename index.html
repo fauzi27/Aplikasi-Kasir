@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=15.1">
+    <link rel="stylesheet" href="css/style.css?v=15.2">
 
 </head>
 <body>
@@ -441,12 +441,12 @@
     </button>
 </div>
 
-    <script type="module" src="js/app.js?v=15.1"></script>
+    <script type="module" src="js/app.js?v=15.2"></script>
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             // Tambahkan versi di parameter agar SW juga ikut update
-            navigator.serviceWorker.register('./service-worker.js?v=15.1')
+            navigator.serviceWorker.register('./service-worker.js?v=15.2')
                 .then(reg => {
                     console.log('✅ App Siap Offline!', reg.scope);
                     
