@@ -454,17 +454,27 @@ function renderMenuGrid() {
         const el = document.createElement('div');
         const stockDisplay = item.stock !== undefined ? `<span class="text-[10px] ${item.stock < 5 ? 'text-red-500 font-bold' : 'text-gray-400'}">Stok: ${item.stock}</span>` : '';
         
-        el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer h-28 text-center transition active:scale-95`;
+        el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer h-28 text-center transition active:scale-95 relative overflow-hidden`;
         el.onclick = () => window.addToCart(item.id);
+        
+        // 🔥 LOGIKA BARU: Cek apakah menu punya foto dari Cloudinary
+        let mediaHtml = `<i class="fas ${item.icon || 'fa-utensils'} text-xl mb-1 text-gray-700 opacity-70"></i>`;
+        if (item.image) {
+            // Kompres otomatis jadi kecil, format ringan, dan dipotong pas tengah (Biar irit kuota!)
+            const compressedUrl = item.image.replace('/upload/', '/upload/w_150,h_150,c_fill,q_auto,f_auto/');
+            mediaHtml = `<img src="${compressedUrl}" alt="${item.name}" class="w-12 h-12 object-cover rounded-full shadow-sm mb-1 border border-gray-200">`;
+        }
+
         el.innerHTML = `
-            <i class="fas ${item.icon || 'fa-utensils'} text-xl mb-1 text-gray-700 opacity-70"></i>
-            <h4 class="font-bold text-[10px] leading-tight text-gray-800 line-clamp-2 h-6 flex items-center justify-center overflow-hidden w-full">${item.name}</h4>
-            <p class="text-xs text-blue-700 font-bold mt-0.5">Rp ${item.price.toLocaleString('id-ID')}</p>
-            ${stockDisplay}
+            ${mediaHtml}
+            <h4 class="font-bold text-[10px] leading-tight text-gray-800 line-clamp-2 h-6 flex items-center justify-center overflow-hidden w-full mt-1 relative z-10">${item.name}</h4>
+            <p class="text-xs text-blue-700 font-bold mt-0.5 relative z-10">Rp ${item.price.toLocaleString('id-ID')}</p>
+            <div class="relative z-10">${stockDisplay}</div>
         `;
         container.appendChild(el);
     });
 }
+
 
 // --- LOGIKA ADD TO CART ---
 window.addToCart = function(itemId) {
