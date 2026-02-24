@@ -5,7 +5,7 @@ import { collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, setDoc,
 
 // STATE
 let menus = [];
-let categories = []; 
+let categories = [];
 let transactions = [];
 let cart = [];
 let currentCategory = 'all';
