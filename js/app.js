@@ -863,28 +863,84 @@ function getSortedMenus(menuList) {
     if(sortMode === 'price_low') sorted.sort((a,b) => a.price - b.price);
     return sorted;
 }
+// ==========================================
+// 🌟 MESIN UPLOAD CLOUDINARY
+// ==========================================
+window.previewImage = function(input, previewId) {
+    const previewContainer = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewContainer.innerHTML = `<img src="${e.target.result}" class="h-16 w-auto rounded shadow-sm object-cover mx-auto">`;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+window.uploadToCloudinary = async function(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "menu_warung"); // Preset Unsigned bosku
+
+    try {
+        // Tembak langsung ke Cloudinary dsutaioqw
+        const response = await fetch("https://api.cloudinary.com/v1_1/dsutaioqw/image/upload", {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        return data.secure_url; // Mengembalikan Link URL gambar asli
+    } catch (error) {
+        console.error("Error upload Cloudinary:", error);
+        throw new Error("Gagal mengunggah gambar ke server media");
+    }
+}
 
 window.addNewMenu = async function() {
     const name = document.getElementById('new-menu-name').value;
     const price = document.getElementById('new-menu-price').value;
     const stock = document.getElementById('new-menu-stock').value;
+    const imageInput = document.getElementById('new-menu-image'); // Tangkap file foto
     let cat = document.getElementById('selected-admin-cat').value;
     if(!cat || cat === 'all') cat = 'makanan';
 
-    if(!name || !price) return Swal.fire('Error', 'Lengkapi data', 'error');
+    if(!name || !price) return Swal.fire('Error', 'Lengkapi data nama dan harga', 'error');
 
     let icon = 'fa-utensils';
     let color = 'bg-white';
     if(cat.includes('minum')) { icon = 'fa-glass-water'; color = 'bg-blue-50'; }
     if(cat.includes('camil')) { icon = 'fa-bread-slice'; color = 'bg-yellow-50'; }
     
-    Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+    Swal.fire({title: 'Menyimpan Menu...', text: 'Mengunggah foto & data...', didOpen: () => Swal.showLoading()});
     try {
+        let imageUrl = ""; 
+        
+        // JIKA ADA FOTO YANG DIPILIH, UPLOAD DULU!
+        if (imageInput.files && imageInput.files[0]) {
+            imageUrl = await window.uploadToCloudinary(imageInput.files[0]);
+        }
+
+        // SIMPAN KE FIREBASE
         await addDoc(collection(db, "users", shopOwnerId, "menus"), {
-            name: name, price: parseInt(price), category: cat, icon: icon, color: color, stock: parseInt(stock) || 0, favorite: false
+            name: name, 
+            price: parseInt(price), 
+            category: cat, 
+            icon: icon, 
+            color: color, 
+            stock: parseInt(stock) || 0, 
+            favorite: false,
+            image: imageUrl // Menyimpan URL gambar dari Cloudinary
         });
+
+        // RESET FORM TAMPILAN
         document.getElementById('new-menu-name').value = '';
         document.getElementById('new-menu-price').value = '';
+        imageInput.value = '';
+        document.getElementById('preview-add-img').innerHTML = `
+            <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 mb-1"></i>
+            <span class="text-xs text-gray-500 font-bold">Tap untuk Upload Foto Menu</span>
+        `;
+        
         Swal.fire({icon: 'success', title: 'Tersimpan', timer: 1000, showConfirmButton: false});
     } catch (e) { 
         console.error(e);
