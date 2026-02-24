@@ -216,13 +216,27 @@
             <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah / Edit Menu</h3>
                 <div class="flex gap-2 overflow-x-auto mb-3 pb-1" id="admin-cat-tiles"></div>
-                <div class="space-y-3">
-                    <input type="text" id="new-menu-name" placeholder="Nama Menu (ex: Mie Setan)" class="w-full p-2 text-sm border rounded focus:border-blue-500 outline-none">
-                    <div class="flex gap-2">
-                        <input type="number" id="new-menu-price" placeholder="Harga" class="w-1/2 p-2 text-sm border rounded outline-none">
-                        <input type="number" id="new-menu-stock" placeholder="Stok Awal" class="w-1/2 p-2 text-sm border rounded outline-none" value="100">
-                    </div>
-                    <input type="hidden" id="selected-admin-cat" value="makanan">
+<div class="space-y-3">
+    <input type="text" id="new-menu-name" placeholder="Nama Menu (ex: Mie Setan)" class="w-full p-2 text-sm border rounded focus:border-blue-500 outline-none">
+    <div class="flex gap-2">
+        <input type="number" id="new-menu-price" placeholder="Harga" class="w-1/2 p-2 text-sm border rounded outline-none">
+        <input type="number" id="new-menu-stock" placeholder="Stok Awal" class="w-1/2 p-2 text-sm border rounded outline-none" value="100">
+    </div>
+    
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50 relative hover:bg-gray-100 transition">
+        <input type="file" id="new-menu-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.previewImage(this, 'preview-add-img')">
+        <div id="preview-add-img" class="flex flex-col items-center pointer-events-none">
+            <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 mb-1"></i>
+            <span class="text-xs text-gray-500 font-bold">Tap untuk Upload Foto Menu</span>
+        </div>
+    </div>
+    
+    <input type="hidden" id="selected-admin-cat" value="makanan">
+    <button onclick="window.addNewMenu()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 active:scale-95 transition">
+        <i class="fas fa-save"></i> Simpan ke Cloud
+    </button>
+</div>
+
                     <button onclick="window.addNewMenu()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 active:scale-95 transition">
                         <i class="fas fa-save"></i> Simpan ke Cloud
                     </button>
