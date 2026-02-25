@@ -2007,6 +2007,8 @@ window.saveThemeToFirebase = async function() {
 window.applyThemeToLobby = function() {
     if (!businessData || !businessData.themeData) return;
     const theme = businessData.themeData;
+
+    // 1. Terapkan ke Tombol Mulai Jualan (Bedakan karena icon di dalam lingkaran hitam)
     if (theme['btn_cashier']) {
         const btn = document.getElementById('real_btn_cashier');
         if (btn) {
@@ -2016,28 +2018,32 @@ window.applyThemeToLobby = function() {
             if(iconEl) iconEl.className = `fas ${theme['btn_cashier'].icon} text-lg`;
         }
     }
-    if (theme['btn_admin']) {
-        const btn = document.getElementById('real_btn_admin');
-        if (btn) {
-            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_admin'].color);
-            btn.querySelector('h3').innerText = theme['btn_admin'].text;
-            const iconEl = btn.querySelector('i.fas');
-            if(iconEl) iconEl.className = `fas ${theme['btn_admin'].icon} text-2xl mb-1`;
+
+    // 2. Terapkan ke Sisa Tombol Lainnya (Menggunakan Looping agar ringkas)
+    const otherButtons = ['btn_stock', 'btn_report', 'btn_table', 'btn_calc', 'btn_admin', 'btn_setting'];
+    
+    otherButtons.forEach(btnId => {
+        if (theme[btnId]) {
+            const btn = document.getElementById('real_' + btnId);
+            if (btn) {
+                // Hapus warna lama, timpa dengan warna baru
+                btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
+                
+                // Ubah teks H3
+                const h3El = btn.querySelector('h3');
+                if(h3El) h3El.innerText = theme[btnId].text;
+                
+                // Ubah Icon
+                const iconEl = btn.querySelector('i.fas');
+                if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-2xl mb-1`;
+            }
         }
-    }
-    if (theme['btn_report']) {
-        const btn = document.getElementById('real_btn_report');
-        if (btn) {
-            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_report'].color);
-            btn.querySelector('h3').innerText = theme['btn_report'].text;
-            const iconEl = btn.querySelector('i.fas');
-            if(iconEl) iconEl.className = `fas ${theme['btn_report'].icon} text-2xl mb-1`;
-        }
-    }
+    });
 };
 
 // ================= FITUR DEBOUNCE SEARCH (KASIR, ADMIN, STOK) =================
 document.addEventListener('DOMContentLoaded', () => {
+
     const debounce = (func, delay) => {
         let timer;
         return (...args) => {
