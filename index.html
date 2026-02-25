@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=18">
+    <link rel="stylesheet" href="css/style.css?v=18.01">
 
 </head>
 <body>
@@ -57,7 +57,7 @@
                 <p class="text-center text-sm text-gray-600">Sudah punya akun? <span onclick="window.toggleAuth('login')" class="text-blue-600 font-bold cursor-pointer hover:underline">Login di sini</span></p>
             </div>
         </div>
-        <div class="p-4 text-center text-xs text-gray-400">App v18 (For more fitur contact us 081559557553)</div>
+        <div class="p-4 text-center text-xs text-gray-400">App v18.01 (For more fitur contact us 081559557553)</div>
     </div>
 
     <div id="view-lobby" class="page-container hide bg-gray-900 z-50">
@@ -104,7 +104,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v18 (For more fitur contact us 081559557553)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v18.01 (For more fitur contact us 081559557553)</p>
             <button onclick="toggleDarkMode()" class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2">Dark Mode</button>
             <button onclick="backupData()" class="text-xs bg-green-600 text-white px-2 py-1 rounded mt-2">Backup CSV</button>
             <button onclick="doLogout()" class="text-xs bg-red-600 text-white px-2 py-1 rounded mt-2">Logout</button>
@@ -441,12 +441,12 @@
     </button>
 </div>
 
-    <script type="module" src="js/app.js?v=18"></script>
+    <script type="module" src="js/app.js?v=18.01"></script>
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             // Tambahkan versi di parameter agar SW juga ikut update
-            navigator.serviceWorker.register('./service-worker.js?v=18')
+            navigator.serviceWorker.register('./service-worker.js?v=18.01')
                 .then(reg => {
                     console.log('✅ App Siap Offline!', reg.scope);
                     
