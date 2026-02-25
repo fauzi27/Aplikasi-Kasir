@@ -152,11 +152,17 @@ function initUserData(uid) {
 
     const trxCol = collection(db, "users", uid, "transactions");
     const qTrx = query(trxCol, orderBy("timestamp", "desc"));
-    onSnapshot(qTrx, (snapshot) => {
-        transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // 🔥 PERBAIKAN: Tambah { includeMetadataChanges: true } untuk membaca status upload
+    onSnapshot(qTrx, { includeMetadataChanges: true }, (snapshot) => {
+        transactions = snapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            isPending: doc.metadata.hasPendingWrites, // Sensor nyangkut/tidaknya data
+            ...doc.data() 
+        }));
         if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
     });
-}
+
 
 // --- AUTH FUNCTIONS ---
 window.toggleAuth = function(mode) {
@@ -796,7 +802,12 @@ window.processPayment = async function(method) {
             addDoc(colRef, trxData); 
             
             // 🔥 Karena tidak tunggu server, kita suntikkan data palsu ke UI agar langsung tampil di Laporan
-            const optimisticTrx = { id: 'local_' + Date.now(), ...trxData };
+            // 🔥 Karena tidak tunggu server, kita suntikkan data palsu ke UI agar langsung tampil di Laporan
+            const optimisticTrx = { 
+                id: 'local_' + Date.now(), 
+                isPending: true, // Otomatis berstatus Kuning/Merah saat baru dibuat
+                ...trxData 
+            };
             transactions.unshift(optimisticTrx); 
             if(document.getElementById('view-database').classList.contains('show')) {
                  renderTransactions(); 
