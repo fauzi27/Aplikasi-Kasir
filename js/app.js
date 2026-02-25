@@ -1958,7 +1958,6 @@ window.renderTableView = function() {
         tbody.appendChild(tr);
     });
 }
-
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
 // 1. LOGIKA TOMBOL GESER & KLIK
