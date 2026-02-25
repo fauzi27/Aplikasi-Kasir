@@ -1298,9 +1298,22 @@ function renderTransactions() {
             
             el.className = `bg-white p-3 rounded-xl border-l-4 ${borderColor} cursor-pointer shadow-sm hover:shadow-md transition relative`;
             let hutangBadge = trx.remaining > 0 ? `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded ml-2">Ngutang Rp ${trx.remaining.toLocaleString('id-ID')}</span>` : '';
-
-            // 🔥 PERBAIKAN 1: Tampilkan Jam DAN Tanggal (Dipisahkan strip)
             let fullDateStr = trx.date.replace(',', ' -'); 
+
+            // 🔥 LOGIKA LAMPU INDIKATOR UPLOAD
+            let syncDot = '';
+            if (trx.isPending) {
+                if (!navigator.onLine) {
+                    // MERAH = Offline (Menunggu Internet)
+                    syncDot = `<span class="flex h-2.5 w-2.5 relative ml-2" title="Offline - Belum Terupload"><span class="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></span>`;
+                } else {
+                    // KUNING BERKEDIP = Proses Upload
+                    syncDot = `<span class="flex h-2.5 w-2.5 relative ml-2" title="Sedang Proses Upload..."><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span></span>`;
+                }
+            } else {
+                // HIJAU = Aman di Server
+                syncDot = `<span class="flex h-2.5 w-2.5 relative ml-2" title="Tersimpan di Server"><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>`;
+            }
 
             el.innerHTML = `
                 <div class="flex justify-between items-start mb-1">
@@ -1309,7 +1322,7 @@ function renderTransactions() {
                 </div>
                 <div class="flex justify-between items-center text-xs text-gray-500">
                     <div class="flex items-center gap-1">${methodIcon} ${trx.items ? trx.items.length : 0} Item</div>
-                    <div><i class="far fa-clock mr-1"></i>${fullDateStr}</div>
+                    <div class="flex items-center"><i class="far fa-clock mr-1"></i>${fullDateStr} ${syncDot}</div>
                 </div>
             `;
             list.appendChild(el);
@@ -1418,20 +1431,35 @@ window.showCustomerDetail = function(buyerName, type) {
 
         el.className = `bg-white p-3 rounded-xl border-l-4 ${borderColor} cursor-pointer shadow-sm hover:shadow-md transition relative mb-2`; 
 
-        let hutangBadge = trx.remaining > 0 ? `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded ml-2">Ngutang Rp ${trx.remaining.toLocaleString('id-ID')}</span>` : '';
-        let fullDateStr = trx.date.replace(',', ' -');
+            let hutangBadge = trx.remaining > 0 ? `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded ml-2">Ngutang Rp ${trx.remaining.toLocaleString('id-ID')}</span>` : '';
+            let fullDateStr = trx.date.replace(',', ' -'); 
 
-        el.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
-                <div class="font-bold text-sm text-gray-800 flex items-center">${trx.buyer} ${hutangBadge}</div>
-                <div class="font-extrabold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</div>
-            </div>
-            <div class="flex justify-between items-center text-xs text-gray-500">
-                <div class="flex items-center gap-1">${methodIcon} ${trx.items ? trx.items.length : 0} Item</div>
-                <div><i class="far fa-clock mr-1"></i>${fullDateStr}</div>
-            </div>
-        `;
-        list.appendChild(el);
+            // 🔥 LOGIKA LAMPU INDIKATOR UPLOAD
+            let syncDot = '';
+            if (trx.isPending) {
+                if (!navigator.onLine) {
+                    // MERAH = Offline (Menunggu Internet)
+                    syncDot = `<span class="flex h-2.5 w-2.5 relative ml-2" title="Offline - Belum Terupload"><span class="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></span>`;
+                } else {
+                    // KUNING BERKEDIP = Proses Upload
+                    syncDot = `<span class="flex h-2.5 w-2.5 relative ml-2" title="Sedang Proses Upload..."><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span></span>`;
+                }
+            } else {
+                // HIJAU = Aman di Server
+                syncDot = `<span class="flex h-2.5 w-2.5 relative ml-2" title="Tersimpan di Server"><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span>`;
+            }
+
+            el.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <div class="font-bold text-sm text-gray-800 flex items-center">${trx.buyer} ${hutangBadge}</div>
+                    <div class="font-extrabold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</div>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-500">
+                    <div class="flex items-center gap-1">${methodIcon} ${trx.items ? trx.items.length : 0} Item</div>
+                    <div class="flex items-center"><i class="far fa-clock mr-1"></i>${fullDateStr} ${syncDot}</div>
+                </div>
+            `;
+            list.appendChild(el);
     });
 }
 
