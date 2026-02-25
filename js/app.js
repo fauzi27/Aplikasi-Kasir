@@ -1252,20 +1252,16 @@ function renderTransactions() {
     let totalKotor = 0, sumTunai = 0, sumQris = 0, sumHutang = 0;
     
     filteredTrx.forEach(trx => {
-        totalKotor += (trx.total || 0); // Menjumlahkan semua harga kotor
-        
+        totalKotor += (trx.total || 0); 
         if (trx.method === 'TUNAI') {
-            // Hitung uang tunai murni yang masuk (Total kotor dikurangi sisa hutang jika ada)
             let tunaiMurni = trx.total - (trx.remaining || 0);
             sumTunai += (tunaiMurni > 0 ? tunaiMurni : 0); 
         } else if (trx.method === 'QRIS') {
             sumQris += (trx.total || 0);
         }
-        
-        sumHutang += (trx.remaining || 0); // Akumulasi semua sisa hutang
+        sumHutang += (trx.remaining || 0); 
     });
 
-    // Menempelkan hasil hitungan ke UI HTML (Zona Tengah)
     document.getElementById('report-period-label').innerText = "Omzet Kotor " + filterLabel;
     document.getElementById('report-grand-total').innerText = 'Rp ' + totalKotor.toLocaleString('id-ID');
     document.getElementById('dash-tunai').innerText = 'Rp ' + sumTunai.toLocaleString('id-ID');
@@ -1284,21 +1280,21 @@ function renderTransactions() {
         return; 
     }
 
-    // Eksekusi jika mode normal (bukan Query Top Menus dll)
     if (queryFilterMode === 'none') {
         filteredTrx.forEach(trx => {
             const el = document.createElement('div');
             el.onclick = () => window.viewTransactionDetail(trx.id);
             
-            // Penentuan Warna Garis Pinggir berdasarkan metode bayar/hutang
             let borderColor = 'border-green-500';
             let methodIcon = '<i class="fas fa-money-bill-wave text-green-500 w-5"></i>';
             if (trx.method === 'QRIS') { borderColor = 'border-blue-500'; methodIcon = '<i class="fas fa-qrcode text-blue-500 w-5"></i>'; }
             if (trx.method === 'HUTANG' || trx.remaining > 0) { borderColor = 'border-red-500'; methodIcon = '<i class="fas fa-book-open text-red-500 w-5"></i>'; }
             
             el.className = `bg-white p-3 rounded-xl border-l-4 ${borderColor} cursor-pointer shadow-sm hover:shadow-md transition relative`;
-            
             let hutangBadge = trx.remaining > 0 ? `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded ml-2">Ngutang Rp ${trx.remaining.toLocaleString('id-ID')}</span>` : '';
+
+            // 🔥 PERBAIKAN 1: Tampilkan Jam DAN Tanggal (Dipisahkan strip)
+            let fullDateStr = trx.date.replace(',', ' -'); 
 
             el.innerHTML = `
                 <div class="flex justify-between items-start mb-1">
@@ -1307,15 +1303,12 @@ function renderTransactions() {
                 </div>
                 <div class="flex justify-between items-center text-xs text-gray-500">
                     <div class="flex items-center gap-1">${methodIcon} ${trx.items ? trx.items.length : 0} Item</div>
-                    <div><i class="far fa-clock mr-1"></i>${trx.date.split(' ')[1] || trx.date}</div>
+                    <div><i class="far fa-clock mr-1"></i>${fullDateStr}</div>
                 </div>
             `;
             list.appendChild(el);
         });
     } else {
-        // [Fungsi Query Lanjutan tetap dibiarkan agar tidak eror saat tombol terlaris di-klik]
-        // Kode ini dijalankan saat filter tambahan diklik (Top Menus, dll)
-        
         list.innerHTML = ''; 
         if (queryFilterMode === 'top_menus') {
             let menuSales = {};
@@ -1345,8 +1338,18 @@ function renderTransactions() {
             const sorted = Object.entries(custHutang).sort((a, b) => b[1].sisa - a[1].sisa).slice(0, 10);
             sorted.forEach(([buyer, data]) => {
                 const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-red-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${buyer}</div><div class="text-xs text-gray-500">Sisa: Rp ${data.sisa.toLocaleString('id-ID')} | Transaksi: ${data.count} kali</div>`;
+                // 🔥 PERBAIKAN 2: Tambah class hover & onclick untuk List Hutang
+                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-red-500 shadow-sm cursor-pointer hover:bg-red-50 transition active:scale-95';
+                el.onclick = () => window.showCustomerDetail(buyer, 'HUTANG');
+                
+                el.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm text-gray-800">${buyer}</div>
+                            <div class="text-xs text-gray-500">Sisa: Rp ${data.sisa.toLocaleString('id-ID')} | ${data.count} Bon</div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300"></i>
+                    </div>`;
                 list.appendChild(el);
             });
         } else if (queryFilterMode === 'pelanggan_setia') {
@@ -1359,13 +1362,73 @@ function renderTransactions() {
             const sorted = Object.entries(custFreq).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
             sorted.forEach(([buyer, data]) => {
                 const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-blue-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${buyer}</div><div class="text-xs text-gray-500">Transaksi: ${data.count} kali | Belanja: Rp ${data.total.toLocaleString('id-ID')}</div>`;
+                // 🔥 PERBAIKAN 2: Tambah class hover & onclick untuk Pelanggan Setia
+                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-blue-500 shadow-sm cursor-pointer hover:bg-blue-50 transition active:scale-95';
+                el.onclick = () => window.showCustomerDetail(buyer, 'ALL');
+                
+                el.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm text-gray-800">${buyer}</div>
+                            <div class="text-xs text-gray-500">Transaksi: ${data.count} kali | Belanja: Rp ${data.total.toLocaleString('id-ID')}</div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300"></i>
+                    </div>`;
                 list.appendChild(el);
             });
         }
     }
 }
+
+// 🔥 FUNGSI BARU: Melihat List Transaksi Khusus 1 Pelanggan
+window.showCustomerDetail = function(buyerName, type) {
+    const list = document.getElementById('transaction-list');
+    list.innerHTML = ''; 
+
+    // Tombol Kembali
+    list.innerHTML = `
+        <div class="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
+            <h4 class="font-bold text-gray-800 text-sm">Bon: <span class="${type === 'HUTANG' ? 'text-red-600' : 'text-blue-600'}">${buyerName}</span></h4>
+            <button onclick="renderTransactions()" class="text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 active:scale-95 transition hover:bg-gray-300">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </button>
+        </div>
+    `;
+
+    // Filter transaksi murni untuk pelanggan ini di rentang waktu terpilih
+    let customerTrx = filteredTrx.filter(t => t.buyer === buyerName);
+    if (type === 'HUTANG') {
+        customerTrx = customerTrx.filter(t => t.remaining > 0);
+    }
+
+    customerTrx.forEach(trx => {
+        const el = document.createElement('div');
+        el.onclick = () => window.viewTransactionDetail(trx.id);
+
+        let borderColor = 'border-green-500';
+        let methodIcon = '<i class="fas fa-money-bill-wave text-green-500 w-5"></i>';
+        if (trx.method === 'QRIS') { borderColor = 'border-blue-500'; methodIcon = '<i class="fas fa-qrcode text-blue-500 w-5"></i>'; }
+        if (trx.method === 'HUTANG' || trx.remaining > 0) { borderColor = 'border-red-500'; methodIcon = '<i class="fas fa-book-open text-red-500 w-5"></i>'; }
+
+        el.className = `bg-white p-3 rounded-xl border-l-4 ${borderColor} cursor-pointer shadow-sm hover:shadow-md transition relative mb-2`; 
+
+        let hutangBadge = trx.remaining > 0 ? `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded ml-2">Ngutang Rp ${trx.remaining.toLocaleString('id-ID')}</span>` : '';
+        let fullDateStr = trx.date.replace(',', ' -');
+
+        el.innerHTML = `
+            <div class="flex justify-between items-start mb-1">
+                <div class="font-bold text-sm text-gray-800 flex items-center">${trx.buyer} ${hutangBadge}</div>
+                <div class="font-extrabold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</div>
+            </div>
+            <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center gap-1">${methodIcon} ${trx.items ? trx.items.length : 0} Item</div>
+                <div><i class="far fa-clock mr-1"></i>${fullDateStr}</div>
+            </div>
+        `;
+        list.appendChild(el);
+    });
+}
+
 
 // 4. Update Fungsi Tombol Filter Pil Waktu (Ditambah filter Query Lanjutan)
 window.setQueryFilter = function(mode) {
