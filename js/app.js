@@ -1525,6 +1525,32 @@ window.viewTransactionDetail = function(id) {
     document.getElementById('view-actions').classList.add('flex');
     document.getElementById('bill-modal').classList.remove('hidden');
 }
+// 🔥 FUNGSI YANG SEMPAT TERHAPUS: MUNCULKAN POPUP BAYAR
+window.showBillPreview = function() {
+    if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
+    
+    let total = 0;
+    try {
+        total = cart.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.qty) || 0)), 0);
+    } catch(e) { total = 0; }
+
+    const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
+    const date = new Date().toLocaleString('id-ID');
+    const currentKasir = businessData.name || "Admin"; 
+    
+    document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date, "DRAFT", 0, 0, 0, currentKasir);
+    
+    if (editingTransactionId) {
+        document.getElementById('bill-modal-title').innerText = "Konfirmasi Revisi";
+    } else {
+        document.getElementById('bill-modal-title').innerText = "Detail Transaksi";
+    }
+    document.getElementById('payment-actions').classList.remove('hidden');
+    document.getElementById('payment-actions').classList.add('grid');
+    document.getElementById('view-actions').classList.add('hidden');
+    document.getElementById('view-actions').classList.remove('flex');
+    document.getElementById('bill-modal').classList.remove('hidden');
+}
 
 
 window.sendToWA = function() {
