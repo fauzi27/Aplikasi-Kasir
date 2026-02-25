@@ -1965,7 +1965,7 @@ setTimeout(() => {
     }
 }, 1500);
 
-// 2. FUNGSI BUKA TUTUP CHAT (INI YANG TADI HILANG)
+// 2. FUNGSI BUKA TUTUP CHAT
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     if (!chatWindow) return;
@@ -2041,6 +2041,7 @@ window.sendChatMessage = async function() {
         console.error(e);
     }
 }
+
 // ================= FITUR VOICE COMMAND (SPEECH TO TEXT) =================
 
 window.startVoiceInput = function() {
@@ -2072,10 +2073,6 @@ window.startVoiceInput = function() {
         
         // Kembalikan tombol ke semula
         stopMicVisual();
-        
-        // Opsional: Langsung kirim setelah ngomong
-        // window.sendChatMessage(); 
-        // Saya sarankan jangan auto-kirim dulu, biar user bisa cek teksnya benar/salah
     };
 
     recognition.onspeechend = () => {
@@ -2086,7 +2083,6 @@ window.startVoiceInput = function() {
     recognition.onerror = (event) => {
         console.error("Voice Error:", event.error);
         stopMicVisual();
-        // Jangan alert error kalau cuma "no-speech" (diam)
         if(event.error !== 'no-speech') {
             Swal.fire('Gagal', 'Suara tidak terdengar jelas.', 'info');
         }
