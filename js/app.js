@@ -98,13 +98,18 @@ onAuthStateChanged(auth, async (user) => {
         
         updateBusinessNameUI();
 
-        // Atur menu navigasi sesuai Role
-        const navDisplay = currentUserRole === 'kasir' ? 'none' : 'flex';
-        ['view-admin', 'view-database', 'view-settings'].forEach(id => {
-            const el = document.querySelector(`[onclick="navigate('${id}')"]`);
-            if(el) el.style.display = navDisplay;
+        // 🔥 PROTEKSI MENU UI SESUAI ROLE
+        const isKasir = currentUserRole === 'kasir';
+        ['view-admin', 'view-stock', 'view-settings'].forEach(id => {
+            const el = document.querySelector(`[onclick="navigate('${id}')"]`) || document.querySelector(`[onclick="window.navigate('${id}')"]`);
+            if(el) {
+                if (isKasir) {
+                    el.style.display = 'none'; // Sembunyikan Kelola Menu, Stok, dan Setting
+                } else {
+                    el.style.display = ''; // Tampilkan kembali untuk Admin
+                }
+            }
         });
-
         // 5. BUKA PINTU LOBI (PENTING: Ini yang bikin stuck kalau code di atas error)
         document.getElementById('view-auth').classList.remove('show'); 
         document.getElementById('view-auth').classList.add('hide');
@@ -170,15 +175,23 @@ window.togglePass = function(id) {
 }
 
 window.doLogin = function() {
-    const email = document.getElementById('login-email').value;
+    let inputId = document.getElementById('login-email').value.trim().toLowerCase();
     const pass = document.getElementById('login-pass').value;
-    if(!email || !pass) return Swal.fire('Error', 'Isi email dan password', 'error');
     
+    if(!inputId || !pass) return Swal.fire('Error', 'Isi ID/Email dan password', 'error');
+    
+    // 🔥 TRIK VIRTUAL EMAIL: Jika tidak ada huruf '@', anggap itu Username Kasir
+    let email = inputId;
+    if (!email.includes('@')) {
+        email = `${inputId}@sahabatusahamu.com`;
+    }
+
     Swal.fire({title: 'Masuk...', didOpen: () => Swal.showLoading()});
     signInWithEmailAndPassword(auth, email, pass)
         .then(() => Swal.close())
         .catch((error) => handleAuthError(error));
 }
+
 
 window.doRegister = function() {
     const email = document.getElementById('reg-email').value;
@@ -206,33 +219,38 @@ window.doRegister = function() {
 }
 
 window.tambahKaryawan = async function() {
-    if (currentUserRole !== 'admin') return Swal.fire('Akses Ditolak', 'Hanya Admin yang bisa menambah karyawan', 'error');
+    if (currentUserRole !== 'admin') return Swal.fire('Akses Ditolak', 'Hanya Admin', 'error');
 
+    // Ambil dari input email yang lama, tapi kita perlakukan sebagai Username
+    const usernameInput = document.getElementById('new-emp-email');
+    const username = usernameInput.value.trim().toLowerCase().replace(/\s+/g, ''); // Hapus spasi
     const nama = document.getElementById('new-emp-name').value;
-    const email = document.getElementById('new-emp-email').value;
     const pass = document.getElementById('new-emp-pass').value;
-    const role = document.getElementById('new-emp-role').value;
 
-    if(!email || !nama || !pass) return Swal.fire('Error', 'Semua kolom wajib diisi!', 'error');
+    if(!username || !nama || !pass) return Swal.fire('Error', 'Semua kolom wajib diisi!', 'error');
 
-    Swal.fire({title: 'Mendaftarkan Karyawan...', didOpen: () => Swal.showLoading()});
+    // 🔥 Buat Email Bayangan
+    const virtualEmail = `${username}@sahabatusahamu.com`;
+
+    Swal.fire({title: 'Mendaftarkan Kasir...', didOpen: () => Swal.showLoading()});
     try {
-        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, virtualEmail, pass);
         const newUser = userCredential.user;
 
         await setDoc(doc(db, "users", newUser.uid), {
             name: nama,
-            email: email,
-            role: role,
+            username: username,
+            email: virtualEmail,
+            role: 'kasir', // Paksa role jadi kasir
             ownerId: shopOwnerId,
             joinedAt: Date.now()
         });
 
         await signOut(secondaryAuth);
-        Swal.fire('Sukses', `Karyawan ${nama} berhasil ditambahkan!`, 'success');
+        Swal.fire('Sukses', `Kasir ${nama} ditambahkan!\nSilakan login dengan ID: ${username}`, 'success');
         
         document.getElementById('new-emp-name').value = '';
-        document.getElementById('new-emp-email').value = '';
+        usernameInput.value = '';
         document.getElementById('new-emp-pass').value = '';
     } catch (error) {
         handleAuthError(error);
