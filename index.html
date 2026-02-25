@@ -65,26 +65,40 @@
                 <p class="text-gray-400 text-sm"><span id="business-address-lobby">Nusadua Bali</span> •</p>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-sm md:max-w-3xl flex-none">
-                <button onclick="navigate('view-cashier')" class="col-span-2 md:col-span-4 bg-blue-600 hover:bg-blue-700 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left">
-                    <div class="bg-blue-800 p-3 rounded-full w-10 h-10 flex items-center justify-center">
+                <button id="real_btn_cashier" onclick="navigate('view-cashier')" class="col-span-2 md:col-span-4 bg-blue-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left text-white">
+                    <div class="bg-black bg-opacity-20 p-3 rounded-full w-10 h-10 flex items-center justify-center">
                         <i class="fas fa-cash-register text-lg"></i>
                     </div>
                     <div>
                         <h3 class="font-bold text-base">Mulai Jualan</h3>
-                        <p class="text-[10px] text-blue-200">Buka Kasir Menu</p>
+                        <p class="text-[10px] opacity-80">Buka Kasir Menu</p>
                     </div>
                 </button>
 
-                <button onclick="navigate('view-stock')" class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button onclick="navigate('view-stock')" class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-boxes text-2xl mb-1"></i>
                     <h3 class="font-bold text-sm">Stok</h3>
                 </button>
 
-                <button onclick="navigate('view-database')" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button id="real_btn_report" onclick="navigate('view-database')" class="bg-purple-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-file-invoice text-2xl mb-1"></i>
                     <h3 class="font-bold text-sm">Laporan</h3>
                 </button>
+                
+                <button onclick="navigate('view-table')" class="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                    <i class="fas fa-table text-2xl mb-1"></i>
+                    <h3 class="font-bold text-xs">Tabel Rekap</h3>
+                </button>
+                <button onclick="navigate('view-calculator')" class="bg-teal-600 hover:bg-teal-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                    <i class="fas fa-calculator text-2xl mb-1"></i>
+                    <h3 class="font-bold text-xs">Manual</h3>
+                </button>
+
+                <button id="real_btn_admin" onclick="navigate('view-admin')" class="bg-orange-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                    <i class="fas fa-utensils text-2xl mb-1"></i>
+                    <h3 class="font-bold text-xs">Kelola Menu</h3>
+                </button>
+
                
                <button onclick="navigate('view-table')" class="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
                     <i class="fas fa-table text-2xl mb-1"></i>
