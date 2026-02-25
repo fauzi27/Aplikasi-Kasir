@@ -1861,10 +1861,6 @@ function updateConnectionStatus() {
     if(document.getElementById('view-database').classList.contains('show')) renderTransactions();
     
     if (navigator.onLine) {
-// ... (Sisa kodenya biarkan sama)
-
-    
-    if (navigator.onLine) {
         // JIKA ONLINE
         if(statusLabel) {
             statusLabel.innerText = "ONLINE";
