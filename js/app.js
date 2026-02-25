@@ -1216,51 +1216,16 @@ window.editMenuPrompt = async function(docId) {
         }
     }
 }
-
-
-// --- LOGIKA FILTER METODE BAYAR ---
-window.setReportPaymentFilter = function(mode) {
-    reportPaymentFilter = mode;
-    const btns = document.getElementById('report-payment-filters').querySelectorAll('button');
-    btns.forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
-    btns.forEach(btn => btn.classList.add('text-purple-200', 'bg-purple-700'));
-    
-    if(mode === 'all') { btns[0].classList.add('active', 'bg-purple-600', 'text-white'); btns[0].classList.remove('text-purple-200', 'bg-purple-700'); }
-    if(mode === 'TUNAI') { btns[1].classList.add('active', 'bg-purple-600', 'text-white'); btns[1].classList.remove('text-purple-200', 'bg-purple-700'); }
-    if(mode === 'HUTANG') { btns[2].classList.add('active', 'bg-purple-600', 'text-white'); btns[2].classList.remove('text-purple-200', 'bg-purple-700'); }
-    if(mode === 'QRIS') { btns[3].classList.add('active', 'bg-purple-600', 'text-white'); btns[3].classList.remove('text-purple-200', 'bg-purple-700'); }
-
-    renderTransactions();
-}
-
-// --- LOGIKA FILTER QUERY TAMBAHAN ---
-window.setQueryFilter = function(mode) {
-    if (queryFilterMode === mode) {
-        queryFilterMode = 'none'; 
-    } else {
-        queryFilterMode = mode;
-    }
-    const btns = document.getElementById('report-query-filters').querySelectorAll('button');
-    btns.forEach(btn => btn.classList.remove('active'));
-    if (queryFilterMode !== 'none') {
-        btns.forEach(btn => {
-            if (btn.onclick.toString().includes(mode)) btn.classList.add('active');
-        });
-    }
-    renderTransactions();
-};
-
-// --- TRANSACTIONS & BILL ---
+// --- MESIN DASHBOARD LAPORAN (ZONA BAWAH + ZONA TENGAH) ---
 function renderTransactions() {
     const list = document.getElementById('transaction-list');
-    const totalEl = document.getElementById('report-grand-total');
-    const labelEl = document.getElementById('report-period-label');
     list.innerHTML = '';
     
     const now = new Date();
     filteredTrx = transactions;
-    let filterLabel = "Semua";
+    let filterLabel = "Semua Waktu";
 
+    // 1. FILTER BERDASARKAN TANGGAL
     if (reportFilterMode === 'today') {
         const todayStr = now.toLocaleDateString('id-ID');
         filteredTrx = transactions.filter(t => new Date(t.timestamp).toLocaleDateString('id-ID') === todayStr);
@@ -1270,6 +1235,11 @@ function renderTransactions() {
         const yestStr = yest.toLocaleDateString('id-ID');
         filteredTrx = transactions.filter(t => new Date(t.timestamp).toLocaleDateString('id-ID') === yestStr);
         filterLabel = "Kemarin";
+    } else if (reportFilterMode === '7days') {
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        filteredTrx = transactions.filter(t => new Date(t.timestamp) >= sevenDaysAgo);
+        filterLabel = "7 Hari Terakhir";
     } else if (reportFilterMode === 'month') {
         filteredTrx = transactions.filter(t => { const d = new Date(t.timestamp); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
         filterLabel = "Bulan Ini";
@@ -1279,41 +1249,75 @@ function renderTransactions() {
         filterLabel = selStr;
     }
 
-    if (reportPaymentFilter !== 'all') {
-        filteredTrx = filteredTrx.filter(t => t.method === reportPaymentFilter);
-        filterLabel += ` (${reportPaymentFilter})`;
+    // 2. KALKULATOR DASHBOARD KARTU RINGKASAN
+    let totalKotor = 0, sumTunai = 0, sumQris = 0, sumHutang = 0;
+    
+    filteredTrx.forEach(trx => {
+        totalKotor += (trx.total || 0); // Menjumlahkan semua harga kotor
+        
+        if (trx.method === 'TUNAI') {
+            // Hitung uang tunai murni yang masuk (Total kotor dikurangi sisa hutang jika ada)
+            let tunaiMurni = trx.total - (trx.remaining || 0);
+            sumTunai += (tunaiMurni > 0 ? tunaiMurni : 0); 
+        } else if (trx.method === 'QRIS') {
+            sumQris += (trx.total || 0);
+        }
+        
+        sumHutang += (trx.remaining || 0); // Akumulasi semua sisa hutang
+    });
+
+    // Menempelkan hasil hitungan ke UI HTML (Zona Tengah)
+    document.getElementById('report-period-label').innerText = "Omzet Kotor " + filterLabel;
+    document.getElementById('report-grand-total').innerText = 'Rp ' + totalKotor.toLocaleString('id-ID');
+    document.getElementById('dash-tunai').innerText = 'Rp ' + sumTunai.toLocaleString('id-ID');
+    document.getElementById('dash-qris').innerText = 'Rp ' + sumQris.toLocaleString('id-ID');
+    document.getElementById('dash-hutang').innerText = 'Rp ' + sumHutang.toLocaleString('id-ID');
+    document.getElementById('dash-count').innerText = filteredTrx.length + ' Nota';
+
+    // 3. RENDER DAFTAR RIWAYAT (ZONA BAWAH)
+    if(filteredTrx.length === 0) { 
+        list.innerHTML = `
+            <div class="flex flex-col items-center justify-center mt-10 p-6 bg-white rounded-xl border border-dashed border-gray-300">
+                <i class="fas fa-receipt text-3xl text-gray-300 mb-2"></i>
+                <p class="text-center text-gray-400 text-sm font-bold">Belum ada transaksi</p>
+                <p class="text-center text-gray-400 text-[10px]">Pilih tanggal lain atau mulai jualan.</p>
+            </div>`;
+        return; 
     }
 
-    if(filteredTrx.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 text-xs mt-10">Kosong</p>'; totalEl.innerText = 'Rp 0'; return; }
-    
-    let omzet = 0;
-    let isHutangFilter = reportPaymentFilter === 'HUTANG';
-    labelEl.innerText = (isHutangFilter ? "Sisa Hutang " : "Omzet ") + filterLabel;
-
+    // Eksekusi jika mode normal (bukan Query Top Menus dll)
     if (queryFilterMode === 'none') {
         filteredTrx.forEach(trx => {
-            const calcValue = isHutangFilter ? (trx.remaining || 0) : trx.total;
-            omzet += calcValue;
-            
             const el = document.createElement('div');
             el.onclick = () => window.viewTransactionDetail(trx.id);
-            el.className = `bg-white p-3 mb-2 rounded border-l-4 ${trx.method === 'HUTANG' || trx.remaining > 0 ? 'border-red-500' : 'border-green-500'} cursor-pointer shadow-sm`;
-            let paymentInfo = `${trx.items ? trx.items.length : 0} Item • ${trx.method} • Kasir: ${trx.operatorName || 'Admin'}`;
-
-            if (trx.remaining > 0) {
-                paymentInfo += ` (Sisa Hutang: Rp ${trx.remaining.toLocaleString('id-ID')})`;
-            }
-            if (isHutangFilter && trx.total !== trx.remaining) {
-                paymentInfo += ` (Total Belanja: Rp ${trx.total.toLocaleString('id-ID')})`;
-            }
             
-            el.innerHTML = `<div class="flex justify-between"><span class="font-bold text-sm">${trx.buyer}</span><span class="text-xs text-gray-500">${trx.date}</span></div><div class="flex justify-between mt-1"><span class="text-xs text-gray-500">${paymentInfo}</span><span class="font-bold text-gray-800">Rp ${calcValue.toLocaleString('id-ID')}</span></div>`;
+            // Penentuan Warna Garis Pinggir berdasarkan metode bayar/hutang
+            let borderColor = 'border-green-500';
+            let methodIcon = '<i class="fas fa-money-bill-wave text-green-500 w-5"></i>';
+            if (trx.method === 'QRIS') { borderColor = 'border-blue-500'; methodIcon = '<i class="fas fa-qrcode text-blue-500 w-5"></i>'; }
+            if (trx.method === 'HUTANG' || trx.remaining > 0) { borderColor = 'border-red-500'; methodIcon = '<i class="fas fa-book-open text-red-500 w-5"></i>'; }
+            
+            el.className = `bg-white p-3 rounded-xl border-l-4 ${borderColor} cursor-pointer shadow-sm hover:shadow-md transition relative`;
+            
+            let hutangBadge = trx.remaining > 0 ? `<span class="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded ml-2">Ngutang Rp ${trx.remaining.toLocaleString('id-ID')}</span>` : '';
+
+            el.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <div class="font-bold text-sm text-gray-800 flex items-center">${trx.buyer} ${hutangBadge}</div>
+                    <div class="font-extrabold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</div>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-500">
+                    <div class="flex items-center gap-1">${methodIcon} ${trx.items ? trx.items.length : 0} Item</div>
+                    <div><i class="far fa-clock mr-1"></i>${trx.date.split(' ')[1] || trx.date}</div>
+                </div>
+            `;
             list.appendChild(el);
         });
-        totalEl.innerText = 'Rp ' + omzet.toLocaleString('id-ID');
     } else {
+        // [Fungsi Query Lanjutan tetap dibiarkan agar tidak eror saat tombol terlaris di-klik]
+        // Kode ini dijalankan saat filter tambahan diklik (Top Menus, dll)
+        
         list.innerHTML = ''; 
-        totalEl.innerText = ''; 
         if (queryFilterMode === 'top_menus') {
             let menuSales = {};
             filteredTrx.forEach(trx => {
@@ -1324,53 +1328,10 @@ function renderTransactions() {
                 });
             });
             const sorted = Object.entries(menuSales).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
-            labelEl.innerText = "Menu Terlaris " + filterLabel;
             sorted.forEach(([name, data]) => {
                 const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-blue-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${name}</div><div class="text-xs text-gray-500">Qty: ${data.qty} | Omzet: Rp ${data.revenue.toLocaleString('id-ID')}</div>`;
-                list.appendChild(el);
-            });
-        } else if (queryFilterMode === 'daily_menu') {
-            Swal.fire({ title: 'Pilih Menu', input: 'text' }).then(async (result) => {
-                const menuName = result.value;
-                if (!menuName) return;
-                let dailySales = {};
-                filteredTrx.forEach(trx => {
-                    const day = new Date(trx.timestamp).toLocaleDateString('id-ID');
-                    const menuItems = trx.items.filter(i => i.name.toLowerCase().includes(menuName.toLowerCase()));
-                    let dayQty = 0, dayRev = 0;
-                    menuItems.forEach(i => { dayQty += i.qty; dayRev += i.price * i.qty; });
-                    if (dayQty > 0) {
-                        if (!dailySales[day]) dailySales[day] = { qty: 0, revenue: 0 };
-                        dailySales[day].qty += dayQty;
-                        dailySales[day].revenue += dayRev;
-                    }
-                });
-                const sortedDays = Object.entries(dailySales).sort((a, b) => new Date(b[0]) - new Date(a[0]));
-                labelEl.innerText = `Penjualan Harian ${menuName} ` + filterLabel;
-                sortedDays.forEach(([day, data]) => {
-                    const el = document.createElement('div');
-                    el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-green-500 shadow-sm';
-                    el.innerHTML = `<div class="font-bold text-sm">${day}</div><div class="text-xs text-gray-500">Qty: ${data.qty} | Omzet: Rp ${data.revenue.toLocaleString('id-ID')}</div>`;
-                    list.appendChild(el);
-                });
-            });
-        } else if (queryFilterMode === 'category_omzet') {
-            let catOmzet = {};
-            filteredTrx.forEach(trx => {
-                trx.items.forEach(item => {
-                    const cat = menus.find(m => m.id === item.id)?.category || 'Lainnya';
-                    if (!catOmzet[cat]) catOmzet[cat] = { revenue: 0, qty: 0 };
-                    catOmzet[cat].revenue += item.price * item.qty;
-                    catOmzet[cat].qty += item.qty;
-                });
-            });
-            labelEl.innerText = "Omzet per Kategori " + filterLabel;
-            Object.entries(catOmzet).forEach(([cat, data]) => {
-                const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-purple-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${cat}</div><div class="text-xs text-gray-500">Qty: ${data.qty} | Omzet: Rp ${data.revenue.toLocaleString('id-ID')}</div>`;
+                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-yellow-500 shadow-sm';
+                el.innerHTML = `<div class="font-bold text-sm">${name}</div><div class="text-xs text-gray-500">Terjual: ${data.qty} porsi | Omzet: Rp ${data.revenue.toLocaleString('id-ID')}</div>`;
                 list.appendChild(el);
             });
         } else if (queryFilterMode === 'top_hutang') {
@@ -1383,71 +1344,10 @@ function renderTransactions() {
                 }
             });
             const sorted = Object.entries(custHutang).sort((a, b) => b[1].sisa - a[1].sisa).slice(0, 10);
-            labelEl.innerText = "Pelanggan Hutang Terbanyak " + filterLabel;
             sorted.forEach(([buyer, data]) => {
                 const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-red-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${buyer}</div><div class="text-xs text-gray-500">Sisa: Rp ${data.sisa.toLocaleString('id-ID')} | Transaksi: ${data.count}</div>`;
-                list.appendChild(el);
-            });
-            totalEl.innerText = 'Rp ' + sorted.reduce((sum, [_, d]) => sum + d.sisa, 0).toLocaleString('id-ID');
-        } else if (queryFilterMode === 'tren_mingguan') {
-            let weeklyOmzet = {};
-            filteredTrx.forEach(trx => {
-                const date = new Date(trx.timestamp);
-                const week = `${date.getFullYear()}-W${Math.floor((date.getDate() - date.getDay() + 7) / 7)}`;
-                if (!weeklyOmzet[week]) weeklyOmzet[week] = 0;
-                weeklyOmzet[week] += trx.total;
-            });
-            const sortedWeeks = Object.entries(weeklyOmzet).sort((a, b) => a[0].localeCompare(b[0]));
-            labelEl.innerText = "Tren Omzet Mingguan " + filterLabel;
-            sortedWeeks.forEach(([week, omzet]) => {
-                const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-indigo-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${week}</div><div class="text-xs text-gray-500">Omzet: Rp ${omzet.toLocaleString('id-ID')}</div>`;
-                list.appendChild(el);
-            });
-        } else if (queryFilterMode === 'item_per_hari') {
-            Swal.fire({ title: 'Pilih Kategori/Menu', input: 'text' }).then(async (result) => {
-                const search = result.value.toLowerCase();
-                if (!search) return;
-                let dailyQty = {};
-                filteredTrx.forEach(trx => {
-                    const day = new Date(trx.timestamp).toLocaleDateString('id-ID');
-                    let dayQty = 0;
-                    trx.items.forEach(item => {
-                        const cat = menus.find(m => m.id === item.id)?.category || '';
-                        if (item.name.toLowerCase().includes(search) || cat.toLowerCase().includes(search)) dayQty += item.qty;
-                    });
-                    if (dayQty > 0) {
-                        if (!dailyQty[day]) dailyQty[day] = 0;
-                        dailyQty[day] += dayQty;
-                    }
-                });
-                const sortedDays = Object.entries(dailyQty).sort((a, b) => new Date(b[0]) - new Date(a[0]));
-                labelEl.innerText = `Item Terjual per Hari (${search}) ` + filterLabel;
-                sortedDays.forEach(([day, qty]) => {
-                    const el = document.createElement('div');
-                    el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-teal-500 shadow-sm';
-                    el.innerHTML = `<div class="font-bold text-sm">${day}</div><div class="text-xs text-gray-500">Qty: ${qty}</div>`;
-                    list.appendChild(el);
-                });
-            });
-        } else if (queryFilterMode === 'payment_breakdown') {
-            let methodBreak = { TUNAI: { count: 0, total: 0 }, HUTANG: { count: 0, total: 0 }, QRIS: { count: 0, total: 0 } };
-            filteredTrx.forEach(trx => {
-                const key = trx.method;
-                if (methodBreak[key]) {
-                    methodBreak[key].count += 1;
-                    methodBreak[key].total += (key === 'HUTANG' ? trx.remaining : trx.total);
-                }
-            });
-            labelEl.innerText = "Breakdown Pembayaran " + filterLabel;
-            Object.entries(methodBreak).forEach(([method, data]) => {
-                const perc = (data.total / omzet * 100).toFixed(2) || 0;
-                const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-yellow-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${method}</div><div class="text-xs text-gray-500">Transaksi: ${data.count} | Total: Rp ${data.total.toLocaleString('id-ID')} (${perc}%)</div>`;
+                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-red-500 shadow-sm';
+                el.innerHTML = `<div class="font-bold text-sm">${buyer}</div><div class="text-xs text-gray-500">Sisa: Rp ${data.sisa.toLocaleString('id-ID')} | Transaksi: ${data.count} kali</div>`;
                 list.appendChild(el);
             });
         } else if (queryFilterMode === 'pelanggan_setia') {
@@ -1458,34 +1358,59 @@ function renderTransactions() {
                 custFreq[trx.buyer].total += trx.total;
             });
             const sorted = Object.entries(custFreq).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
-            labelEl.innerText = "Pelanggan Setia " + filterLabel;
             sorted.forEach(([buyer, data]) => {
                 const el = document.createElement('div');
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-green-500 shadow-sm';
-                el.innerHTML = `<div class="font-bold text-sm">${buyer}</div><div class="text-xs text-gray-500">Transaksi: ${data.count} | Total Belanja: Rp ${data.total.toLocaleString('id-ID')}</div>`;
-                list.appendChild(el);
-            });
-        } else if (queryFilterMode === 'revisi_transaksi') {
-            const revisedTrx = filteredTrx.filter(trx => trx.updatedAt); 
-            labelEl.innerText = "Transaksi Direvisi " + filterLabel;
-            revisedTrx.forEach(trx => {
-                const el = document.createElement('div');
-                el.onclick = () => window.viewTransactionDetail(trx.id);
-                el.className = 'bg-white p-3 mb-2 rounded border-l-4 border-orange-500 cursor-pointer shadow-sm';
-                el.innerHTML = `<div class="flex justify-between"><span class="font-bold text-sm">${trx.buyer}</span><span class="text-xs text-gray-500">${trx.date}</span></div><div class="flex justify-between mt-1"><span class="text-xs text-gray-500">Direvisi pada ${new Date(trx.updatedAt).toLocaleString('id-ID')}</span><span class="font-bold text-gray-800">Rp ${trx.total.toLocaleString('id-ID')}</span></div>`;
+                el.className = 'bg-white p-3 mb-2 rounded-xl border-l-4 border-blue-500 shadow-sm';
+                el.innerHTML = `<div class="font-bold text-sm">${buyer}</div><div class="text-xs text-gray-500">Transaksi: ${data.count} kali | Belanja: Rp ${data.total.toLocaleString('id-ID')}</div>`;
                 list.appendChild(el);
             });
         }
     }
 }
 
+// 4. Update Fungsi Tombol Filter Pil Waktu (Ditambah filter Query Lanjutan)
+window.setQueryFilter = function(mode) {
+    if (queryFilterMode === mode) {
+        queryFilterMode = 'none'; 
+    } else {
+        queryFilterMode = mode;
+    }
+    const btns = document.getElementById('report-query-filters').querySelectorAll('button');
+    btns.forEach(btn => btn.classList.remove('active', 'border-purple-400', 'bg-purple-50'));
+    if (queryFilterMode !== 'none') {
+        btns.forEach(btn => {
+            if (btn.onclick.toString().includes(mode)) btn.classList.add('active', 'border-purple-400', 'bg-purple-50');
+        });
+    }
+    renderTransactions();
+};
+
 window.setReportFilter = function(mode, val) {
     reportFilterMode = mode;
     if(val) reportFilterDate = val;
+    
+    // Logika UI untuk merubah warna pill button yang aktif
     const btns = document.getElementById('report-filters').querySelectorAll('.filter-btn');
-    btns.forEach(b => b.classList.remove('active'));
+    btns.forEach(b => {
+        b.classList.remove('active', 'bg-white', 'text-purple-800');
+        b.classList.add('bg-purple-700', 'text-purple-100');
+    });
+
+    let activeBtn;
+    if(mode === 'today') activeBtn = btns[0];
+    else if(mode === 'yesterday') activeBtn = btns[1];
+    else if(mode === '7days') activeBtn = btns[2];
+    else if(mode === 'month') activeBtn = btns[3];
+    else if(mode === 'custom') activeBtn = btns[4];
+
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-purple-700', 'text-purple-100');
+        activeBtn.classList.add('active', 'bg-white', 'text-purple-800');
+    }
+
     renderTransactions();
 }
+
 
 window.closeBillModal = function() { document.getElementById('bill-modal').classList.add('hidden'); }
 
