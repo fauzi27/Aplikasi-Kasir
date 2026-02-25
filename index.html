@@ -18,8 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=19.01">
-
+    <link rel="stylesheet" href="css/style.css?v=19.04">
 </head>
 <body>
 
@@ -27,7 +26,6 @@
         <div class="flex-1 flex flex-col justify-center px-8 overflow-y-auto">
             <div class="text-center mb-8">
             <img src="asset/logokasir.png" alt="Logo Kasir" class="w-20 h-20 object-contain mx-auto mb-3 rounded-full shadow-sm">
-
                 <h1 class="text-3xl font-extrabold text-gray-800">SAHABAT USAHAMU</h1>
                 <p class="text-gray-500 text-sm">Kelola usaha dengan mudah & gratis</p>
             </div>
@@ -57,14 +55,14 @@
                 <p class="text-center text-sm text-gray-600">Sudah punya akun? <span onclick="window.toggleAuth('login')" class="text-blue-600 font-bold cursor-pointer hover:underline">Login di sini</span></p>
             </div>
         </div>
-        <div class="p-4 text-center text-xs text-gray-400">App v19.01 (For more fitur contact us 081559557553)</div>
+        <div class="p-4 text-center text-xs text-gray-400">App v19.04 (For more fitur contact us 081559557553)</div>
     </div>
 
     <div id="view-lobby" class="page-container hide bg-mist-500 z-50">
         <div class="flex-1 flex flex-col items-center justify-center p-6 text-white text-center overflow-y-auto">
             <div class="mb-6 flex-none">
                 <h1 class="text-3xl font-extrabold text-yellow-400 mb-1" id="business-name-lobby">SAHABAT USAHAMU</h1>
-                <p class="text-gray-400 text-sm"><span id="business-address-lobby">Nusadua Bali</span> •
+                <p class="text-gray-400 text-sm"><span id="business-address-lobby">Nusadua Bali</span> •</p>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-sm md:max-w-3xl flex-none">
@@ -87,6 +85,7 @@
                     <i class="fas fa-file-invoice text-2xl mb-1"></i>
                     <h3 class="font-bold text-sm">Laporan</h3>
                 </button>
+               
                <button onclick="navigate('view-table')" class="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
                     <i class="fas fa-table text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Tabel Rekap</h3>
@@ -108,7 +107,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.01 (For more fitur contact us 081559557553)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.04 (For more fitur contact us 081559557553)</p>
             <button onclick="toggleDarkMode()" class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2">Dark Mode</button>
             <button onclick="backupData()" class="text-xs bg-green-600 text-white px-2 py-1 rounded mt-2">Backup CSV</button>
             <button onclick="doLogout()" class="text-xs bg-red-600 text-white px-2 py-1 rounded mt-2">Logout</button>
@@ -132,8 +131,8 @@
                     <i class="fas fa-save"></i> Simpan Perubahan
                 </button>
             </div>
-
-          <div class="bg-white p-4 rounded-xl shadow mb-4">
+            
+            <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah Karyawan</h3>
                 <input type="text" id="new-emp-name" placeholder="Nama Karyawan" class="w-full p-2 text-sm border rounded outline-none mb-2">
                 <input type="email" id="new-emp-email" placeholder="user id karyawan" class="w-full p-2 text-sm border rounded outline-none mb-2">
@@ -147,9 +146,105 @@
                     <i class="fas fa-user-plus"></i> Tambah Karyawan
                 </button>
             </div>
+
+            <div class="bg-white p-4 rounded-xl shadow mb-4">
+                <h3 class="font-bold text-gray-700 mb-3 text-sm">Desain Aplikasi (Theme)</h3>
+                <p class="text-xs text-gray-500 mb-3">Kustomisasi warna dan icon tombol halaman utama khusus untuk kasir warung Anda.</p>
+                <button onclick="navigate('view-studio')" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-paint-roller"></i> Buka Studio Tampilan
+                </button>
+            </div>
         </div>
     </div>
 
+    <div id="view-studio" class="page-container hide bg-gray-100 flex flex-col">
+        <div class="bg-indigo-800 text-white p-4 shadow-md flex-none z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="navigate('view-settings')" class="active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
+                <div>
+                    <h2 class="font-bold text-lg">Studio Tampilan</h2>
+                    <p class="text-[10px] text-indigo-200">Klik icon di bawah untuk mengedit warnanya</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto p-4 flex flex-col items-center">
+            <div class="bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-800 relative" style="height: 70vh;">
+                <div class="p-6 text-center mt-4">
+                    <h1 class="text-2xl font-extrabold text-yellow-400 mb-1">PREVIEW LOBI</h1>
+                    <p class="text-gray-400 text-xs">Ketuk tombol untuk edit</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 p-4 w-full">
+                    <button onclick="window.openThemeEditor('btn_cashier', 'Mulai Jualan', 'bg-blue-600', 'fa-cash-register')" class="col-span-2 bg-blue-600 p-4 rounded-xl shadow-lg flex items-center gap-3 active:scale-95 transition">
+                        <div class="bg-black bg-opacity-20 p-3 rounded-full w-10 h-10 flex items-center justify-center text-white"><i class="fas fa-cash-register"></i></div>
+                        <div class="text-left text-white"><h3 class="font-bold text-sm">Mulai Jualan</h3></div>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_admin', 'Kelola Menu', 'bg-orange-600', 'fa-utensils')" class="bg-orange-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-utensils text-xl"></i><h3 class="font-bold text-[10px]">Kelola Menu</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_report', 'Laporan', 'bg-purple-600', 'fa-file-invoice')" class="bg-purple-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-file-invoice text-xl"></i><h3 class="font-bold text-[10px]">Laporan</h3>
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="window.saveThemeToFirebase()" class="mt-6 bg-green-600 text-white w-full max-w-sm py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
+                <i class="fas fa-cloud-upload-alt mr-1"></i> Terapkan Tema ke Semua HP
+            </button>
+        </div>
+    </div>
+
+    <div id="theme-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-gray-800"><i class="fas fa-paint-brush mr-2 text-indigo-600"></i>Edit Tombol</h3>
+                <button onclick="document.getElementById('theme-modal').classList.add('hidden')" class="text-gray-500 text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="edit-theme-id">
+                
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Nama Teks Menu</label>
+                    <input type="text" id="edit-theme-text" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Pilih Warna (Tailwind)</label>
+                    <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
+                        <option value="bg-blue-600">Biru Terang</option>
+                        <option value="bg-blue-800">Biru Gelap</option>
+                        <option value="bg-orange-600">Orange</option>
+                        <option value="bg-emerald-600">Hijau Zamrud</option>
+                        <option value="bg-red-600">Merah</option>
+                        <option value="bg-purple-600">Ungu</option>
+                        <option value="bg-gray-800">Abu-abu Gelap</option>
+                        <option value="bg-pink-500">Pink</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Icon (FontAwesome)</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" id="edit-theme-icon" class="flex-1 p-2 border rounded-lg text-sm outline-none" placeholder="fa-utensils">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center border"><i id="preview-theme-icon" class="fas fa-box text-gray-600"></i></div>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1">Contoh: fa-coffee, fa-store, fa-shopping-cart</p>
+                </div>
+                
+                <div class="border border-dashed border-gray-300 p-3 rounded-xl bg-gray-50 text-center opacity-50 cursor-not-allowed" title="Segera Hadir">
+                    <i class="fas fa-image text-gray-400 mb-1"></i>
+                    <p class="text-[10px] text-gray-500 font-bold">Upload Gambar Kustom (Coming Soon)</p>
+                </div>
+
+                <button onclick="window.applyThemeToPreview()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow active:scale-95 transition">
+                    Preview Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
     <div id="view-cashier" class="page-container hide">
         <div id="edit-mode-indicator" class="edit-mode-banner hidden">MODE EDIT TRANSAKSI</div>
         <div class="bg-white shadow-sm z-10 flex-none w-full">
@@ -374,6 +469,7 @@
             </button>
         </div>
     </div>
+    
     <div id="view-table" class="page-container hide bg-gray-50 flex flex-col">
         <div class="bg-emerald-700 text-white p-4 shadow-md flex-none z-10">
             <div class="flex items-center justify-between">
@@ -487,11 +583,11 @@
     </button>
 </div>
 
-    <script type="module" src="js/app.js?v=19.01"></script>
+    <script type="module" src="js/app.js?v=19.04"></script>
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js?v=19.01')
+            navigator.serviceWorker.register('./service-worker.js?v=19.04')
                 .then(reg => {
                     console.log('✅ App Siap Offline!', reg.scope);
                     reg.update();
