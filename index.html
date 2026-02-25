@@ -76,7 +76,7 @@
                     </div>
                 </button>
 
-                <button onclick="navigate('view-stock')" class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                <button id="real_btn_stock" onclick="navigate('view-stock')" class="bg-indigo-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-boxes text-2xl mb-1"></i>
                     <h3 class="font-bold text-sm">Stok</h3>
                 </button>
@@ -86,12 +86,12 @@
                     <h3 class="font-bold text-sm">Laporan</h3>
                 </button>
                
-                <button onclick="navigate('view-table')" class="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                <button id="real_btn_table" onclick="navigate('view-table')" class="bg-emerald-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-table text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Tabel Rekap</h3>
                 </button>
 
-                <button onclick="navigate('view-calculator')" class="bg-teal-600 hover:bg-teal-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                <button id="real_btn_calc" onclick="navigate('view-calculator')" class="bg-teal-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-calculator text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Manual</h3>
                 </button>
@@ -101,13 +101,14 @@
                     <h3 class="font-bold text-xs">Kelola Menu</h3>
                 </button>
 
-                <button onclick="navigate('view-settings')" class="bg-gray-600 hover:bg-gray-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                <button id="real_btn_setting" onclick="navigate('view-settings')" class="bg-gray-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-cog text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Setting</h3>
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.06 (For more fitur contact us 081559557553)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.11 (For more fitur contact us 081559557553)</p>
+
             <button onclick="toggleDarkMode()" class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2">Dark Mode</button>
             <button onclick="backupData()" class="text-xs bg-green-600 text-white px-2 py-1 rounded mt-2">Backup CSV</button>
             <button onclick="doLogout()" class="text-xs bg-red-600 text-white px-2 py-1 rounded mt-2">Logout</button>
