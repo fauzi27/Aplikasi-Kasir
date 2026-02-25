@@ -2028,6 +2028,42 @@ window.saveThemeToFirebase = async function() {
         Swal.fire('Error', e.message, 'error');
     }
 };
+// Fungsi untuk menerapkan tema dari Firebase ke Lobi Asli
+window.applyThemeToLobby = function() {
+    if (!businessData || !businessData.themeData) return;
+
+    const theme = businessData.themeData;
+
+    // Terapkan ke Tombol Mulai Jualan Asli
+    if (theme['btn_cashier']) {
+        const btn = document.getElementById('real_btn_cashier');
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_cashier'].color);
+            btn.querySelector('h3').innerText = theme['btn_cashier'].text;
+            btn.querySelector('.bg-black i').className = `fas ${theme['btn_cashier'].icon} text-lg`;
+        }
+    }
+
+    // Terapkan ke Tombol Kelola Menu Asli
+    if (theme['btn_admin']) {
+        const btn = document.getElementById('real_btn_admin');
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_admin'].color);
+            btn.querySelector('h3').innerText = theme['btn_admin'].text;
+            btn.querySelector('i.fas').className = `fas ${theme['btn_admin'].icon} text-2xl mb-1`;
+        }
+    }
+
+    // Terapkan ke Tombol Laporan Asli
+    if (theme['btn_report']) {
+        const btn = document.getElementById('real_btn_report');
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_report'].color);
+            btn.querySelector('h3').innerText = theme['btn_report'].text;
+            btn.querySelector('i.fas').className = `fas ${theme['btn_report'].icon} text-2xl mb-1`;
+        }
+    }
+};
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
