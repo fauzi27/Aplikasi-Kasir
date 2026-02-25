@@ -1463,7 +1463,6 @@ window.showCustomerDetail = function(buyerName, type) {
     });
 }
 
-
 // 4. Update Fungsi Tombol Filter Pil Waktu (Ditambah filter Query Lanjutan)
 window.setQueryFilter = function(mode) {
     if (queryFilterMode === mode) {
