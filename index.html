@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=18.03">
+    <link rel="stylesheet" href="css/style.css?v=18.04">
 
 </head>
 <body>
@@ -57,7 +57,7 @@
                 <p class="text-center text-sm text-gray-600">Sudah punya akun? <span onclick="window.toggleAuth('login')" class="text-blue-600 font-bold cursor-pointer hover:underline">Login di sini</span></p>
             </div>
         </div>
-        <div class="p-4 text-center text-xs text-gray-400">App v18.03 (For more fitur contact us 081559557553)</div>
+        <div class="p-4 text-center text-xs text-gray-400">App v18.04 (For more fitur contact us 081559557553)</div>
     </div>
 
     <div id="view-lobby" class="page-container hide bg-gray-900 z-50">
@@ -104,7 +104,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v18.03 (For more fitur contact us 081559557553)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v18.04 (For more fitur contact us 081559557553)</p>
             <button onclick="toggleDarkMode()" class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2">Dark Mode</button>
             <button onclick="backupData()" class="text-xs bg-green-600 text-white px-2 py-1 rounded mt-2">Backup CSV</button>
             <button onclick="doLogout()" class="text-xs bg-red-600 text-white px-2 py-1 rounded mt-2">Logout</button>
@@ -216,26 +216,26 @@
             <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah / Edit Menu</h3>
                 <div class="flex gap-2 overflow-x-auto mb-3 pb-1" id="admin-cat-tiles"></div>
-<div class="space-y-3">
-    <input type="text" id="new-menu-name" placeholder="Nama Menu (ex: Mie Setan)" class="w-full p-2 text-sm border rounded focus:border-blue-500 outline-none">
-    <div class="flex gap-2">
-        <input type="number" id="new-menu-price" placeholder="Harga" class="w-1/2 p-2 text-sm border rounded outline-none">
-        <input type="number" id="new-menu-stock" placeholder="Stok Awal" class="w-1/2 p-2 text-sm border rounded outline-none" value="100">
-    </div>
-    
-    <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50 relative hover:bg-gray-100 transition">
-        <input type="file" id="new-menu-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.previewImage(this, 'preview-add-img')">
-        <div id="preview-add-img" class="flex flex-col items-center pointer-events-none">
-            <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 mb-1"></i>
-            <span class="text-xs text-gray-500 font-bold">Tap untuk Upload Foto Menu</span>
-        </div>
-    </div>
-    
-    <input type="hidden" id="selected-admin-cat" value="makanan">
-    <button onclick="window.addNewMenu()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 active:scale-95 transition">
-        <i class="fas fa-save"></i> Simpan ke Cloud
-    </button>
-</div>
+                <div class="space-y-3">
+                    <input type="text" id="new-menu-name" placeholder="Nama Menu (ex: Mie Setan)" class="w-full p-2 text-sm border rounded focus:border-blue-500 outline-none">
+                    <div class="flex gap-2">
+                        <input type="number" id="new-menu-price" placeholder="Harga" class="w-1/2 p-2 text-sm border rounded outline-none">
+                        <input type="number" id="new-menu-stock" placeholder="Stok Awal" class="w-1/2 p-2 text-sm border rounded outline-none" value="100">
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50 relative hover:bg-gray-100 transition">
+                        <input type="file" id="new-menu-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.previewImage(this, 'preview-add-img')">
+                        <div id="preview-add-img" class="flex flex-col items-center pointer-events-none">
+                            <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 mb-1"></i>
+                            <span class="text-xs text-gray-500 font-bold">Tap untuk Upload Foto Menu</span>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="selected-admin-cat" value="makanan">
+                    <button onclick="window.addNewMenu()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 active:scale-95 transition">
+                        <i class="fas fa-save"></i> Simpan ke Cloud
+                    </button>
+                </div>
             </div>
             <h3 class="font-bold text-gray-600 text-xs mb-2 px-1">Daftar Menu (Filter: <span id="admin-filter-label">Semua</span>)</h3>
             <input type="text" id="admin-search" placeholder="Cari nama menu..." class="w-full p-2 rounded text-gray-800 text-sm outline-none mb-2">
@@ -449,47 +449,35 @@
     </button>
 </div>
 
-    <script type="module" src="js/app.js?v=18.03"></script>
+    <script type="module" src="js/app.js?v=18.04"></script>
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            // Tambahkan versi di parameter agar SW juga ikut update
-            navigator.serviceWorker.register('./service-worker.js?v=18.03')
+            navigator.serviceWorker.register('./service-worker.js?v=18.04')
                 .then(reg => {
                     console.log('✅ App Siap Offline!', reg.scope);
-                    
-                    // 1. Paksa browser mengecek apakah ada file service-worker.js yang baru di server
                     reg.update();
-                    
-                    // 2. Jika ada update baru terdeteksi
                     reg.onupdatefound = () => {
                         const installingWorker = reg.installing;
                         installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed') {
-                                if (navigator.serviceWorker.controller) {
-                                    // Kode baru sudah siap, beri tahu user
-                                    console.log('🚀 Update baru tersedia!');
-                                    
-                                    // Munculkan popup dari SweetAlert
-                                    Swal.fire({
-                                        title: 'Update Tersedia!',
-                                        text: 'Versi terbaru aplikasi sudah siap. Muat ulang sekarang?',
-                                        icon: 'info',
-                                        showCancelButton: true,
-                                        confirmButtonText: 'Ya, Muat Ulang',
-                                        cancelButtonText: 'Nanti',
-                                        allowOutsideClick: false
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            // Bersihkan cache lama (opsional tapi disarankan)
-                                            caches.keys().then((names) => {
-                                                for (let name of names) caches.delete(name);
-                                            });
-                                            // Refresh halaman secara paksa untuk memuat kode baru
-                                            window.location.reload();
-                                        }
-                                    });
-                                }
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('🚀 Update baru tersedia!');
+                                Swal.fire({
+                                    title: 'Update Tersedia!',
+                                    text: 'Versi terbaru aplikasi sudah siap. Muat ulang sekarang?',
+                                    icon: 'info',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Ya, Muat Ulang',
+                                    cancelButtonText: 'Nanti',
+                                    allowOutsideClick: false
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        caches.keys().then((names) => {
+                                            for (let name of names) caches.delete(name);
+                                        });
+                                        window.location.reload();
+                                    }
+                                });
                             }
                         };
                     };
@@ -498,7 +486,6 @@
         });
     }
 </script>
-
 
 </body>
 </html>
