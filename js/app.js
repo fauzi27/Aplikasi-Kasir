@@ -311,8 +311,8 @@ window.navigate = function(viewId) {
         document.getElementById('edit-business-name').value = window.shopNameAsli || businessData.name || ''; 
         document.getElementById('edit-business-address').value = window.shopAddressAsli || businessData.address || ''; 
     }
-     if(viewId === 'view-table') window.renderTableView();
     if(viewId !== 'view-calculator') window.clearCalc();
+    if(viewId === 'view-table') window.renderTableView();
     if (viewId === 'view-lobby' && editingTransactionId) {
         if(!confirm("Batalkan edit transaksi?")) {
             window.navigate('view-cashier'); 
@@ -1909,6 +1909,55 @@ window.addEventListener('offline', updateConnectionStatus);
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
 });
+// ================= FITUR TABEL BUKU BESAR =================
+window.renderTableView = function() {
+    const tbody = document.getElementById('table-body-data');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500 italic text-sm">Belum ada data transaksi.</td></tr>';
+        return;
+    }
+
+    // Mengubah data NoSQL jadi baris HTML murni
+    transactions.forEach((trx, index) => {
+        // Ekstrak data Array di dalam NoSQL menjadi teks ke bawah
+        let itemsHTML = '';
+        if (trx.items && trx.items.length > 0) {
+            trx.items.forEach(item => {
+                itemsHTML += `<div class="text-[11px] mb-0.5">• ${item.name} <span class="font-bold text-blue-600">(x${item.qty})</span></div>`;
+            });
+        } else {
+            itemsHTML = '-';
+        }
+
+        // Penentuan Status
+        let statusBadge = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">LUNAS</span>`;
+        if (trx.remaining > 0) {
+            statusBadge = `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold">HUTANG Rp ${trx.remaining.toLocaleString('id-ID')}</span>`;
+        }
+
+        // Pembuatan Baris
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-blue-50 transition cursor-pointer';
+        tr.onclick = () => window.viewTransactionDetail(trx.id); // Jika baris diklik, buka struknya
+        
+        // Memecah tanggal dan jam agar rapi
+        let dateSplit = trx.date ? trx.date.split(', ') : ['-', '-'];
+        
+        tr.innerHTML = `
+            <td class="p-3 text-xs text-gray-500 text-center">${index + 1}</td>
+            <td class="p-3 text-xs text-gray-600"><div class="font-bold text-gray-800">${dateSplit[0]}</div><div class="text-[10px]">${dateSplit[1] || ''}</div></td>
+            <td class="p-3 text-xs font-bold text-gray-800 uppercase">${trx.buyer}</td>
+            <td class="p-3">${itemsHTML}</td>
+            <td class="p-3 text-xs font-extrabold text-gray-800 text-right whitespace-nowrap">Rp ${trx.total.toLocaleString('id-ID')}</td>
+            <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
 // 1. LOGIKA TOMBOL GESER & KLIK
