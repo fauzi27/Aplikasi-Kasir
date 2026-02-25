@@ -1494,6 +1494,31 @@ window.viewTransactionDetail = function(id) {
     
     document.getElementById('bill-content').innerHTML = generateReceiptHTML(trx.buyer, trx.items, trx.total, trx.date, trx.method, trx.paid, trx.change, trx.remaining || 0, trx.operatorName || 'Admin');
     
+    // 🔥 LOGIKA TOMBOL READ-ONLY
+    const actionContainer = document.getElementById('view-actions');
+    
+    if (currentUserRole === 'kasir') {
+        // KASIR: Hanya bisa Kirim WA dan Simpan Gambar
+        actionContainer.innerHTML = `
+            <button onclick="window.sendToWA()" class="bg-green-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition">
+                <i class="fab fa-whatsapp mr-1"></i> WA
+            </button>
+            <button onclick="window.saveReceiptImage()" class="bg-blue-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition">
+                <i class="fas fa-image mr-1"></i> Simpan
+            </button>
+        `;
+    } else {
+        // ADMIN: Tampil semua tombol (Edit & Hapus)
+        actionContainer.innerHTML = `
+            <div class="flex gap-2 w-full">
+                <button onclick="window.sendToWA()" class="bg-green-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fab fa-whatsapp"></i></button>
+                <button onclick="window.saveReceiptImage()" class="bg-blue-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fas fa-image"></i></button>
+                <button onclick="window.editTransaction()" class="bg-yellow-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fas fa-edit"></i></button>
+                <button onclick="window.deleteTransaction()" class="bg-red-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fas fa-trash"></i></button>
+            </div>
+        `;
+    }
+    
     document.getElementById('payment-actions').classList.add('hidden');
     document.getElementById('payment-actions').classList.remove('grid');
     document.getElementById('view-actions').classList.remove('hidden');
@@ -1501,31 +1526,6 @@ window.viewTransactionDetail = function(id) {
     document.getElementById('bill-modal').classList.remove('hidden');
 }
 
-window.showBillPreview = function() {
-    if(cart.length === 0) return Swal.fire('Kosong', 'Belum ada pesanan', 'warning');
-    
-    let total = 0;
-    try {
-        total = cart.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.qty) || 0)), 0);
-    } catch(e) { total = 0; }
-
-    const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
-    const date = new Date().toLocaleString('id-ID');
-    const currentKasir = businessData.name || "Admin"; 
-    
-    document.getElementById('bill-content').innerHTML = generateReceiptHTML(buyer, cart, total, date, "DRAFT", 0, 0, 0, currentKasir);
-    
-    if (editingTransactionId) {
-        document.getElementById('bill-modal-title').innerText = "Konfirmasi Revisi";
-    } else {
-        document.getElementById('bill-modal-title').innerText = "Detail Transaksi";
-    }
-    document.getElementById('payment-actions').classList.remove('hidden');
-    document.getElementById('payment-actions').classList.add('grid');
-    document.getElementById('view-actions').classList.add('hidden');
-    document.getElementById('view-actions').classList.remove('flex');
-    document.getElementById('bill-modal').classList.remove('hidden');
-}
 
 window.sendToWA = function() {
     if(!currentViewedTrx) return;
