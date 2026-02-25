@@ -100,7 +100,7 @@ onAuthStateChanged(auth, async (user) => {
 
         // 🔥 PROTEKSI MENU UI SESUAI ROLE
         const isKasir = currentUserRole === 'kasir';
-        ['view-admin', 'view-stock', 'view-settings'].forEach(id => {
+        ['view-admin', 'view-stock', 'view-settings', 'view-table'].forEach(id => {
             const el = document.querySelector(`[onclick="navigate('${id}')"]`) || document.querySelector(`[onclick="window.navigate('${id}')"]`);
             if(el) {
                 if (isKasir) {
