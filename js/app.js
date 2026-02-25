@@ -1910,7 +1910,7 @@ window.addEventListener('offline', updateConnectionStatus);
 // Cek saat pertama kali load
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
-})1
+})
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
