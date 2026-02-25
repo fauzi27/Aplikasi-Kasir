@@ -280,8 +280,7 @@ window.navigate = function(viewId) {
     if(viewId === 'view-cashier') renderMenuGrid();
     if(viewId === 'view-admin') { renderCategoryTiles(); renderAdminList(); }
     if(viewId === 'view-database') { 
-        window.setReportFilter('today'); 
-        window.setReportPaymentFilter('all'); 
+        window.setReportFilter('today');
     }
     if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
     if(viewId === 'view-settings') { 
