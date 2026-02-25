@@ -1781,10 +1781,19 @@ window.exportToExcel = function() {
 function updateBusinessNameUI() {
     document.getElementById('business-name-lobby').innerText = window.shopNameAsli || 'SAHABAT USAHAMU';
     const addressLobby = document.getElementById('business-address-lobby');
+    
     if(addressLobby) {
-        addressLobby.innerText = window.shopAddressAsli || 'Nusadua Bali';
+        let addressText = window.shopAddressAsli || 'Nusadua Bali';
+        // 🔥 PERBAIKAN: Gunakan innerHTML agar bisa membuat ID khusus indikator
+        let isOnline = navigator.onLine;
+        let statusHtml = isOnline ? 
+            `<span id="connection-status" class="text-green-400 font-bold blink-slow"> • ONLINE</span>` : 
+            `<span id="connection-status" class="text-red-500 font-bold blink"> • OFFLINE (Data di HP)</span>`;
+            
+        addressLobby.innerHTML = `${addressText} ${statusHtml}`;
     }
 }
+
 
 window.updateBusinessName = async function() {
     const newName = document.getElementById('edit-business-name').value.trim();
@@ -1854,26 +1863,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 function updateConnectionStatus() {
-    const statusLabel = document.querySelector('#business-address-lobby span.text-green-400'); // Label ONLINE di Lobby
-    const statusText = document.querySelector('#business-address-lobby'); // Text Container
+    // 🔥 PERBAIKAN: Panggil langsung ID-nya, bukan class warnanya
+    const statusLabel = document.getElementById('connection-status'); 
     
-    // 🔥 TAMBAHKAN BARIS INI: Refresh layar laporan jika sinyal berubah
-    if(document.getElementById('view-database').classList.contains('show')) renderTransactions();
+    if(document.getElementById('view-database') && document.getElementById('view-database').classList.contains('show')) {
+        renderTransactions();
+    }
     
     if (navigator.onLine) {
         // JIKA ONLINE
         if(statusLabel) {
-            statusLabel.innerText = "ONLINE";
-            statusLabel.className = "text-green-400 font-bold blink-slow"; // Tambah efek kedip pelan
+            statusLabel.innerText = " • ONLINE";
+            statusLabel.className = "text-green-400 font-bold blink-slow"; 
         }
-        Swal.close(); // Tutup peringatan offline jika ada
+        Swal.close(); 
         
-        // Cek jika baru saja kembali online dari offline
         if (window.wasOffline) {
             Swal.fire({
                 icon: 'success',
                 title: 'Kembali Online!',
-                text: 'Data transaksi offline sedang di-upload otomatis ke server.',
+                text: 'Data transaksi offline sedang di-upload.',
                 toast: true, position: 'top', timer: 3000, showConfirmButton: false
             });
             window.wasOffline = false;
@@ -1881,12 +1890,11 @@ function updateConnectionStatus() {
     } else {
         // JIKA OFFLINE
         if(statusLabel) {
-            statusLabel.innerText = "OFFLINE (Data Tersimpan di HP)";
+            statusLabel.innerText = " • OFFLINE (Data Tersimpan di HP)";
             statusLabel.className = "text-red-500 font-bold blink";
         }
         window.wasOffline = true;
         
-        // Beri notifikasi kecil (Toast)
         Swal.fire({
             icon: 'warning',
             title: 'Mode Offline',
@@ -1895,7 +1903,6 @@ function updateConnectionStatus() {
         });
     }
 }
-
 // Pasang "Telinga" untuk mendengar perubahan sinyal
 window.addEventListener('online', updateConnectionStatus);
 window.addEventListener('offline', updateConnectionStatus);
