@@ -97,7 +97,8 @@ onAuthStateChanged(auth, async (user) => {
         }
         
         updateBusinessNameUI();
-
+        window.applyThemeToLobby();
+        
         // 🔥 PROTEKSI MENU UI SESUAI ROLE
         const isKasir = currentUserRole === 'kasir';
         ['view-admin', 'view-stock', 'view-settings', 'view-table'].forEach(id => {
@@ -2021,6 +2022,8 @@ window.saveThemeToFirebase = async function() {
         // Update data lokal HP agar tidak perlu refresh
         if(!businessData.themeData) businessData.themeData = {};
         businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
+        
+        window.applyThemeToLobby();
         
         Swal.fire('Sukses', 'Tema berhasil disimpan ke Cloud!', 'success');
         currentEditingTheme = {}; // Reset setelah berhasil save
