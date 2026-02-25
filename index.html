@@ -176,18 +176,34 @@
                     <p class="text-gray-400 text-xs">Ketuk tombol untuk edit</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 p-4 w-full">
+                <div class="grid grid-cols-2 gap-3 p-4 w-full overflow-y-auto max-h-[50vh] pb-10 hide-scrollbar">
                     <button onclick="window.openThemeEditor('btn_cashier', 'Mulai Jualan', 'bg-blue-600', 'fa-cash-register')" class="col-span-2 bg-blue-600 p-4 rounded-xl shadow-lg flex items-center gap-3 active:scale-95 transition">
                         <div class="bg-black bg-opacity-20 p-3 rounded-full w-10 h-10 flex items-center justify-center text-white"><i class="fas fa-cash-register"></i></div>
                         <div class="text-left text-white"><h3 class="font-bold text-sm">Mulai Jualan</h3></div>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_stock', 'Stok', 'bg-indigo-600', 'fa-boxes')" class="bg-indigo-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-boxes text-xl"></i><h3 class="font-bold text-[10px]">Stok</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_report', 'Laporan', 'bg-purple-600', 'fa-file-invoice')" class="bg-purple-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-file-invoice text-xl"></i><h3 class="font-bold text-[10px]">Laporan</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_table', 'Tabel Rekap', 'bg-emerald-600', 'fa-table')" class="bg-emerald-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-table text-xl"></i><h3 class="font-bold text-[10px]">Tabel Rekap</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_calc', 'Manual', 'bg-teal-600', 'fa-calculator')" class="bg-teal-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-calculator text-xl"></i><h3 class="font-bold text-[10px]">Manual</h3>
                     </button>
 
                     <button onclick="window.openThemeEditor('btn_admin', 'Kelola Menu', 'bg-orange-600', 'fa-utensils')" class="bg-orange-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
                         <i class="fas fa-utensils text-xl"></i><h3 class="font-bold text-[10px]">Kelola Menu</h3>
                     </button>
 
-                    <button onclick="window.openThemeEditor('btn_report', 'Laporan', 'bg-purple-600', 'fa-file-invoice')" class="bg-purple-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
-                        <i class="fas fa-file-invoice text-xl"></i><h3 class="font-bold text-[10px]">Laporan</h3>
+                    <button onclick="window.openThemeEditor('btn_setting', 'Setting', 'bg-gray-600', 'fa-cog')" class="bg-gray-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-cog text-xl"></i><h3 class="font-bold text-[10px]">Setting</h3>
                     </button>
                 </div>
             </div>
@@ -195,6 +211,7 @@
             <button onclick="window.saveThemeToFirebase()" class="mt-6 bg-green-600 text-white w-full max-w-sm py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
                 <i class="fas fa-cloud-upload-alt mr-1"></i> Terapkan Tema ke Semua HP
             </button>
+
         </div>
     </div>
 
