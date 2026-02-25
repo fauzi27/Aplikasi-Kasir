@@ -97,8 +97,7 @@ onAuthStateChanged(auth, async (user) => {
         }
         
         updateBusinessNameUI();
-        window.applyThemeToLobby();
-        
+
         // 🔥 PROTEKSI MENU UI SESUAI ROLE
         const isKasir = currentUserRole === 'kasir';
         ['view-admin', 'view-stock', 'view-settings', 'view-table'].forEach(id => {
@@ -1942,130 +1941,6 @@ window.renderTableView = function() {
         `;
         tbody.appendChild(tr);
     });
-};
-// ================= FITUR STUDIO TAMPILAN (THEME BUILDER) =================
-
-// Variabel untuk menyimpan tema sementara sebelum di-save ke Firebase
-let currentEditingTheme = {};
-
-window.openThemeEditor = function(buttonId, currentText, currentColor, currentIcon) {
-    document.getElementById('edit-theme-id').value = buttonId;
-    document.getElementById('edit-theme-text').value = currentText;
-    document.getElementById('edit-theme-color').value = currentColor;
-    
-    // Pastikan input icon tidak ada dobel 'fa-'
-    let cleanIcon = currentIcon.replace('fa-', '');
-    document.getElementById('edit-theme-icon').value = cleanIcon;
-    document.getElementById('preview-theme-icon').className = `fas fa-${cleanIcon} text-gray-600`;
-    
-    // Auto-update icon preview saat bosku mengetik
-    document.getElementById('edit-theme-icon').onkeyup = function() {
-        let typedIcon = this.value.replace('fa-', '');
-        document.getElementById('preview-theme-icon').className = `fas fa-${typedIcon} text-gray-600`;
-    };
-
-    document.getElementById('theme-modal').classList.remove('hidden');
-};
-
-window.applyThemeToPreview = function() {
-    const id = document.getElementById('edit-theme-id').value;
-    const text = document.getElementById('edit-theme-text').value;
-    const color = document.getElementById('edit-theme-color').value;
-    let icon = document.getElementById('edit-theme-icon').value.replace('fa-', '');
-    let fullIconClass = 'fa-' + icon;
-
-    // Simpan ke memori sementara
-    currentEditingTheme[id] = { text: text, color: color, icon: fullIconClass };
-
-    // Update UI Preview langsung berkedip ganti warna
-    const btn = document.querySelector(`button[onclick*="openThemeEditor('${id}'"]`);
-    
-    if(btn) {
-        // Ganti warna background
-        btn.className = btn.className.replace(/bg-[a-z]+-\d+/, color); 
-        
-        // Update fungsi klik agar data barunya tersimpan
-        btn.setAttribute('onclick', `window.openThemeEditor('${id}', '${text}', '${color}', '${fullIconClass}')`);
-        
-        // Ganti teks
-        const textEl = btn.querySelector('h3');
-        if(textEl) textEl.innerText = text;
-        
-        // Ganti Icon
-        if(id === 'btn_cashier') {
-            // Khusus tombol kasir, iconnya ada di dalam lingkaran bulat
-            const iconEl = btn.querySelector('.bg-black i');
-            if(iconEl) iconEl.className = `fas ${fullIconClass}`;
-        } else {
-            // Tombol lain
-            const iconEl = btn.querySelector('i.fas');
-            if(iconEl) iconEl.className = `fas ${fullIconClass} text-xl`;
-        }
-    }
-    
-    // Tutup popup dan beri notifikasi
-    document.getElementById('theme-modal').classList.add('hidden');
-    Swal.fire({toast: true, position: 'top', icon: 'success', title: 'Preview diupdate', timer: 1000, showConfirmButton: false});
-};
-
-window.saveThemeToFirebase = async function() {
-    // Kalau belum ada yang diedit, tolak
-    if(Object.keys(currentEditingTheme).length === 0) return Swal.fire('Info', 'Belum ada perubahan tema', 'info');
-
-    Swal.fire({title: 'Menerapkan Tema...', didOpen: () => Swal.showLoading()});
-    try {
-        // Tembak data tema ke Firestore di akun Owner
-        await setDoc(doc(db, "users", shopOwnerId), { 
-            themeData: currentEditingTheme 
-        }, { merge: true });
-        
-        // Update data lokal HP agar tidak perlu refresh
-        if(!businessData.themeData) businessData.themeData = {};
-        businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
-        
-        window.applyThemeToLobby();
-        
-        Swal.fire('Sukses', 'Tema berhasil disimpan ke Cloud!', 'success');
-        currentEditingTheme = {}; // Reset setelah berhasil save
-    } catch (e) {
-        Swal.fire('Error', e.message, 'error');
-    }
-};
-// Fungsi untuk menerapkan tema dari Firebase ke Lobi Asli
-window.applyThemeToLobby = function() {
-    if (!businessData || !businessData.themeData) return;
-
-    const theme = businessData.themeData;
-
-    // Terapkan ke Tombol Mulai Jualan Asli
-    if (theme['btn_cashier']) {
-        const btn = document.getElementById('real_btn_cashier');
-        if (btn) {
-            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_cashier'].color);
-            btn.querySelector('h3').innerText = theme['btn_cashier'].text;
-            btn.querySelector('.bg-black i').className = `fas ${theme['btn_cashier'].icon} text-lg`;
-        }
-    }
-
-    // Terapkan ke Tombol Kelola Menu Asli
-    if (theme['btn_admin']) {
-        const btn = document.getElementById('real_btn_admin');
-        if (btn) {
-            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_admin'].color);
-            btn.querySelector('h3').innerText = theme['btn_admin'].text;
-            btn.querySelector('i.fas').className = `fas ${theme['btn_admin'].icon} text-2xl mb-1`;
-        }
-    }
-
-    // Terapkan ke Tombol Laporan Asli
-    if (theme['btn_report']) {
-        const btn = document.getElementById('real_btn_report');
-        if (btn) {
-            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_report'].color);
-            btn.querySelector('h3').innerText = theme['btn_report'].text;
-            btn.querySelector('i.fas').className = `fas ${theme['btn_report'].icon} text-2xl mb-1`;
-        }
-    }
 };
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
