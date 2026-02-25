@@ -1,4 +1,4 @@
-import { auth, db, secondaryAuth } from './firebase.js?v=19.02';
+import { auth, db, secondaryAuth } from './firebase.js?v=19.03';
 import { generateContext, askGroqAI } from './ai-brain.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
