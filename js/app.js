@@ -311,8 +311,8 @@ window.navigate = function(viewId) {
         document.getElementById('edit-business-name').value = window.shopNameAsli || businessData.name || ''; 
         document.getElementById('edit-business-address').value = window.shopAddressAsli || businessData.address || ''; 
     }
+     if(viewId === 'view-table') window.renderTableView();
     if(viewId !== 'view-calculator') window.clearCalc();
-        if(viewId === 'view-table') window.renderTableView();
     if (viewId === 'view-lobby' && editingTransactionId) {
         if(!confirm("Batalkan edit transaksi?")) {
             window.navigate('view-cashier'); 
@@ -1957,6 +1957,7 @@ window.renderTableView = function() {
         `;
         tbody.appendChild(tr);
     });
+}
 }
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
