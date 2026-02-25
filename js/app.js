@@ -1857,6 +1857,13 @@ function updateConnectionStatus() {
     const statusLabel = document.querySelector('#business-address-lobby span.text-green-400'); // Label ONLINE di Lobby
     const statusText = document.querySelector('#business-address-lobby'); // Text Container
     
+    // 🔥 TAMBAHKAN BARIS INI: Refresh layar laporan jika sinyal berubah
+    if(document.getElementById('view-database').classList.contains('show')) renderTransactions();
+    
+    if (navigator.onLine) {
+// ... (Sisa kodenya biarkan sama)
+
+    
     if (navigator.onLine) {
         // JIKA ONLINE
         if(statusLabel) {
