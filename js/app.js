@@ -452,24 +452,29 @@ function renderMenuGrid() {
 
     filteredMenus.forEach(item => {
         const el = document.createElement('div');
-        const stockDisplay = item.stock !== undefined ? `<span class="text-[10px] ${item.stock < 5 ? 'text-red-500 font-bold' : 'text-gray-400'}">Stok: ${item.stock}</span>` : '';
+        const stockDisplay = item.stock !== undefined ? `<span class="text-[9px] ${item.stock < 5 ? 'text-red-500 font-bold' : 'text-gray-400'} block mt-0.5">Stok: ${item.stock}</span>` : '';
         
-        el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-center cursor-pointer h-28 text-center transition active:scale-95 relative overflow-hidden`;
+        // 🔥 PERBAIKAN 1: Hapus tinggi mati (h-32), ganti dengan min-h-[130px] agar bisa menyesuaikan diri
+        // 🔥 PERBAIKAN 2: Gunakan justify-between agar elemen tersebar rapi dari atas ke bawah
+        el.className = `menu-card ${item.color || 'bg-white'} p-2 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center justify-between cursor-pointer min-h-[130px] text-center transition active:scale-95`;
         el.onclick = () => window.addToCart(item.id);
         
-        // 🔥 LOGIKA BARU: Cek apakah menu punya foto dari Cloudinary
-        let mediaHtml = `<i class="fas ${item.icon || 'fa-utensils'} text-xl mb-1 text-gray-700 opacity-70"></i>`;
+        let mediaHtml = `<div class="w-11 h-11 flex items-center justify-center mb-1 flex-none"><i class="fas ${item.icon || 'fa-utensils'} text-2xl text-gray-700 opacity-70"></i></div>`;
         if (item.image) {
-            // Kompres otomatis jadi kecil, format ringan, dan dipotong pas tengah (Biar irit kuota!)
             const compressedUrl = item.image.replace('/upload/', '/upload/w_150,h_150,c_fill,q_auto,f_auto/');
-            mediaHtml = `<img src="${compressedUrl}" alt="${item.name}" class="w-12 h-12 object-cover rounded-full shadow-sm mb-1 border border-gray-200">`;
+            mediaHtml = `<img src="${compressedUrl}" alt="${item.name}" class="w-11 h-11 object-cover rounded-full shadow-sm mb-1 border border-gray-200 flex-none">`;
         }
 
+        // 🔥 PERBAIKAN 3: Struktur HTML dipecah jadi 3 blok yang tidak akan saling bertabrakan
         el.innerHTML = `
             ${mediaHtml}
-            <h4 class="font-bold text-[10px] leading-tight text-gray-800 line-clamp-2 h-6 flex items-center justify-center overflow-hidden w-full mt-1 relative z-10">${item.name}</h4>
-            <p class="text-xs text-blue-700 font-bold mt-0.5 relative z-10">Rp ${item.price.toLocaleString('id-ID')}</p>
-            <div class="relative z-10">${stockDisplay}</div>
+            <div class="flex-1 flex flex-col justify-center w-full my-0.5">
+                <h4 class="font-bold text-[10px] leading-snug text-gray-800 break-words">${item.name}</h4>
+            </div>
+            <div class="w-full flex-none mt-auto pt-1 border-t border-gray-50 border-dashed">
+                <p class="text-[11px] text-blue-700 font-extrabold">Rp ${(item.price || 0).toLocaleString('id-ID')}</p>
+                ${stockDisplay}
+            </div>
         `;
         container.appendChild(el);
     });
