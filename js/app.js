@@ -1462,7 +1462,6 @@ window.showCustomerDetail = function(buyerName, type) {
             list.appendChild(el);
     });
 }
-}
 // 4. Update Fungsi Tombol Filter Pil Waktu (Ditambah filter Query Lanjutan)
 window.setQueryFilter = function(mode) {
     if (queryFilterMode === mode) {
@@ -1957,7 +1956,6 @@ window.renderTableView = function() {
         `;
         tbody.appendChild(tr);
     });
-}
 }
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
