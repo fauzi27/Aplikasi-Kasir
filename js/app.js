@@ -162,7 +162,7 @@ function initUserData(uid) {
         }));
         if(!document.getElementById('view-database').classList.contains('hide')) renderTransactions();
     });
-
+}
 
 // --- AUTH FUNCTIONS ---
 window.toggleAuth = function(mode) {
