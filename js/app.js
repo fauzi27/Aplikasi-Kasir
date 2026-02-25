@@ -677,9 +677,9 @@ function exitEditMode() {
     renderCart();
 }
 
-// --- PROCESS PAYMENT (FULL CODE: SEMI-OFFLINE READY) ---
+// --- PROCESS PAYMENT (VERSI OPTIMISTIC UI - SUPER NGEBUT 0 DETIK) ---
 window.processPayment = async function(method) {
-    // 1. SIAPKAN DATA AWAL (JANGAN DIHAPUS)
+    // 1. SIAPKAN DATA AWAL
     const buyer = document.getElementById('buyer-name').value.trim() || "Pelanggan";
     let total = 0;
     cart.forEach(i => total += ((parseInt(i.price)||0) * (parseInt(i.qty)||0)));
@@ -688,7 +688,7 @@ window.processPayment = async function(method) {
     let changeAmount = 0;
     let remaining = 0;
 
-    // 2. INPUT JUMLAH UANG (LOGIKA PEMBAYARAN)
+    // 2. INPUT JUMLAH UANG
     if (method === 'TUNAI') {
         const { value: money } = await Swal.fire({
             title: `Total: Rp ${total.toLocaleString('id-ID')}`,
@@ -701,22 +701,16 @@ window.processPayment = async function(method) {
             inputValidator: (value) => { if (!value) return 'Harus diisi!'; }
         });
 
-        if (money === false) { 
-            // Uang Pas (Deny Button)
-            paidAmount = total;
-        } else if (money) {
-            // Input Manual
-            paidAmount = parseInt(money);
-        } else {
-            return; // Cancel
-        }
+        if (money === false) { paidAmount = total; } 
+        else if (money) { paidAmount = parseInt(money); } 
+        else { return; }
 
-        if (paidAmount > total) {
-            changeAmount = paidAmount - total;
-        } else if (paidAmount < total) {
+        if (paidAmount > total) { changeAmount = paidAmount - total; } 
+        else if (paidAmount < total) {
             method = 'HUTANG'; 
             remaining = total - paidAmount;
-            Swal.fire('Info', `Uang kurang, transaksi dicatat sebagai Hutang dengan sisa Rp ${remaining.toLocaleString()}`, 'info');
+            // Peringatan ini tetap ada karena butuh persetujuan kasir
+            await Swal.fire('Info', `Uang kurang, dicatat sebagai Hutang dengan sisa Rp ${remaining.toLocaleString()}`, 'info');
         }
     } else if (method === 'QRIS') {
         paidAmount = total;
@@ -724,27 +718,21 @@ window.processPayment = async function(method) {
         remaining = total;
     }
 
-    // 3. EKSEKUSI PENYIMPANAN (LOGIKA FIRE & FORGET)
-    Swal.fire({title: 'Memproses...', didOpen: () => Swal.showLoading()});
+    // 🔥 HAPUS LOADING SWAL DI SINI (Biar tidak ada jeda muter-muter)
 
     try {
-        // A. UPDATE STOK (Local Logic)
+        // A. UPDATE STOK SECARA INSTAN (Fire & Forget)
         if (!editingTransactionId) {
             for (const item of cart) {
                 if (!item.isManual && item.id) {
                     const menuItem = menus.find(m => m.id === item.id);
                     if (menuItem) {
-                        // Update stok di memori lokal dulu biar UI stok langsung berkurang
+                        // 1. Kurangi di UI Lokal langsung
                         menuItem.stock = (menuItem.stock || 0) - item.qty;
                         
-                        // Kirim update ke Firebase
+                        // 2. Lempar ke background tanpa await!
                         const stockRef = doc(db, "users", shopOwnerId, "menus", item.id);
-                        if (navigator.onLine) {
-                            await setDoc(stockRef, { stock: menuItem.stock }, { merge: true });
-                        } else {
-                            // Jika Offline: Kirim tanpa await (Fire & Forget)
-                            setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); 
-                        }
+                        setDoc(stockRef, { stock: menuItem.stock }, { merge: true }); 
                     }
                 }
             }
@@ -767,7 +755,7 @@ window.processPayment = async function(method) {
             operatorRole: currentUserRole
         };
 
-        // C. KIRIM KE DATABASE (LOGIKA PINTAR: ONLINE vs OFFLINE)
+        // C. KIRIM KE DATABASE (TANPA AWAIT - JALAN DI LATAR BELAKANG)
         if (editingTransactionId) {
             // --- MODE EDIT ---
             delete trxData.timestamp; 
@@ -776,42 +764,37 @@ window.processPayment = async function(method) {
             
             const docRef = doc(db, "users", shopOwnerId, "transactions", editingTransactionId);
             
-            if (navigator.onLine) {
-                await setDoc(docRef, trxData, { merge: true }); // Tunggu server jika Online
-            } else {
-                setDoc(docRef, trxData, { merge: true }); // Jangan tunggu jika Offline
-            }
+            // Lempar update ke background
+            setDoc(docRef, trxData, { merge: true }); 
             
-            Swal.fire({icon: 'success', title: 'Revisi Disimpan', text: navigator.onLine ? '' : '(Mode Offline)', timer: 1500, showConfirmButton: false});
+            Swal.fire({icon: 'success', title: 'Revisi Disimpan', timer: 1200, showConfirmButton: false});
             exitEditMode();
 
         } else {
             // --- MODE TRANSAKSI BARU ---
             const colRef = collection(db, "users", shopOwnerId, "transactions");
             
-            if (navigator.onLine) {
-                await addDoc(colRef, trxData); // Tunggu server confirm
-            } else {
-                addDoc(colRef, trxData); // Langsung lanjut, biarkan antre di background
-                
-                // PENTING: Masukkan manual ke array lokal biar tampil di riwayat tanpa refresh
-                const offlineTrx = { id: 'offline_' + Date.now(), ...trxData };
-                transactions.unshift(offlineTrx); 
-                renderTransactions(); // Refresh tampilan riwayat
+            // 🔥 Lempar ke Firebase tanpa menunggu (Background Upload)
+            addDoc(colRef, trxData); 
+            
+            // 🔥 Karena tidak tunggu server, kita suntikkan data palsu ke UI agar langsung tampil di Laporan
+            const optimisticTrx = { id: 'local_' + Date.now(), ...trxData };
+            transactions.unshift(optimisticTrx); 
+            if(document.getElementById('view-database').classList.contains('show')) {
+                 renderTransactions(); 
             }
 
-            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil';
-            if (!navigator.onLine) msg += ' (Disimpan di HP)';
-
+            // Tampilkan Notif Berhasil Sekejap
+            let msg = method === 'TUNAI' ? `Kembali: Rp ${changeAmount.toLocaleString('id-ID')}` : 'Berhasil Disimpan';
             Swal.fire({
                 icon: 'success', 
-                title: 'Transaksi Berhasil', 
+                title: 'Transaksi Sukses', 
                 text: msg,
-                timer: 3000, 
-                showConfirmButton: true
+                timer: 1500, 
+                showConfirmButton: false // Hilangkan tombol OK biar kasir bisa langsung klik pesanan baru
             });
             
-            // Reset Cart setelah berhasil
+            // Instan bersihkan keranjang
             cart = [];
             document.getElementById('buyer-name').value = '';
             renderCart();
@@ -821,16 +804,10 @@ window.processPayment = async function(method) {
         
     } catch (e) {
         console.error(e);
-        // Kalau errornya cuma koneksi saat offline, abaikan saja dan anggap sukses
-        if (!navigator.onLine) {
-             window.closeBillModal();
-             cart = [];
-             renderCart();
-             return;
-        }
-        Swal.fire('Error', 'Terjadi kesalahan: ' + (e.message || 'Unknown'), 'error');
+        Swal.fire('Error', 'Sistem gagal mencatat: ' + (e.message || 'Unknown'), 'error');
     }
 }
+
 
 // --- HELPER FUNCTIONS ---
 window.updateQty = function(idx, change) {
