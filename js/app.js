@@ -1,4 +1,4 @@
-import { auth, db, secondaryAuth } from './firebase.js?v=19.05';
+import { auth, db, secondaryAuth } from './firebase.js?v=19.09';
 import { generateContext, askGroqAI } from './ai-brain.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -1943,10 +1943,127 @@ window.renderTableView = function() {
     });
 };
 
+// ================= FITUR STUDIO TAMPILAN (THEME BUILDER) =================
+let currentEditingTheme = {};
+
+window.openThemeEditor = function(buttonId, currentText, currentColor, currentIcon) {
+    document.getElementById('edit-theme-id').value = buttonId;
+    document.getElementById('edit-theme-text').value = currentText;
+    document.getElementById('edit-theme-color').value = currentColor;
+    let cleanIcon = currentIcon.replace('fa-', '');
+    document.getElementById('edit-theme-icon').value = cleanIcon;
+    document.getElementById('preview-theme-icon').className = `fas fa-${cleanIcon} text-gray-600`;
+    
+    document.getElementById('edit-theme-icon').onkeyup = function() {
+        let typedIcon = this.value.replace('fa-', '');
+        document.getElementById('preview-theme-icon').className = `fas fa-${typedIcon} text-gray-600`;
+    };
+    document.getElementById('theme-modal').classList.remove('hidden');
+};
+
+window.applyThemeToPreview = function() {
+    const id = document.getElementById('edit-theme-id').value;
+    const text = document.getElementById('edit-theme-text').value;
+    const color = document.getElementById('edit-theme-color').value;
+    let icon = document.getElementById('edit-theme-icon').value.replace('fa-', '');
+    let fullIconClass = 'fa-' + icon;
+
+    currentEditingTheme[id] = { text: text, color: color, icon: fullIconClass };
+
+    const btn = document.querySelector(`button[onclick*="openThemeEditor('${id}'"]`);
+    if(btn) {
+        btn.className = btn.className.replace(/bg-[a-z]+-\d+/, color); 
+        btn.setAttribute('onclick', `window.openThemeEditor('${id}', '${text}', '${color}', '${fullIconClass}')`);
+        const textEl = btn.querySelector('h3');
+        if(textEl) textEl.innerText = text;
+        
+        if(id === 'btn_cashier') {
+            const iconEl = btn.querySelector('.bg-black i');
+            if(iconEl) iconEl.className = `fas ${fullIconClass}`;
+        } else {
+            const iconEl = btn.querySelector('i.fas');
+            if(iconEl) iconEl.className = `fas ${fullIconClass} text-xl`;
+        }
+    }
+    document.getElementById('theme-modal').classList.add('hidden');
+    Swal.fire({toast: true, position: 'top', icon: 'success', title: 'Preview diupdate', timer: 1000, showConfirmButton: false});
+};
+
+window.saveThemeToFirebase = async function() {
+    if(Object.keys(currentEditingTheme).length === 0) return Swal.fire('Info', 'Belum ada perubahan tema', 'info');
+    Swal.fire({title: 'Menerapkan Tema...', didOpen: () => Swal.showLoading()});
+    try {
+        await setDoc(doc(db, "users", shopOwnerId), { themeData: currentEditingTheme }, { merge: true });
+        if(!businessData.themeData) businessData.themeData = {};
+        businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
+        window.applyThemeToLobby();
+        Swal.fire('Sukses', 'Tema berhasil diterapkan ke semua kasir!', 'success');
+        currentEditingTheme = {}; 
+    } catch (e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+};
+
+window.applyThemeToLobby = function() {
+    if (!businessData || !businessData.themeData) return;
+    const theme = businessData.themeData;
+    if (theme['btn_cashier']) {
+        const btn = document.getElementById('real_btn_cashier');
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_cashier'].color);
+            btn.querySelector('h3').innerText = theme['btn_cashier'].text;
+            const iconEl = btn.querySelector('.bg-black i');
+            if(iconEl) iconEl.className = `fas ${theme['btn_cashier'].icon} text-lg`;
+        }
+    }
+    if (theme['btn_admin']) {
+        const btn = document.getElementById('real_btn_admin');
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_admin'].color);
+            btn.querySelector('h3').innerText = theme['btn_admin'].text;
+            const iconEl = btn.querySelector('i.fas');
+            if(iconEl) iconEl.className = `fas ${theme['btn_admin'].icon} text-2xl mb-1`;
+        }
+    }
+    if (theme['btn_report']) {
+        const btn = document.getElementById('real_btn_report');
+        if (btn) {
+            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_report'].color);
+            btn.querySelector('h3').innerText = theme['btn_report'].text;
+            const iconEl = btn.querySelector('i.fas');
+            if(iconEl) iconEl.className = `fas ${theme['btn_report'].icon} text-2xl mb-1`;
+        }
+    }
+};
+
+// ================= FITUR DEBOUNCE SEARCH (KASIR, ADMIN, STOK) =================
+document.addEventListener('DOMContentLoaded', () => {
+    const debounce = (func, delay) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func(...args), delay);
+        };
+    };
+
+    const debouncedRenderMenuGrid = debounce(renderMenuGrid, 300);
+    const cashierSearch = document.getElementById('cashier-search');
+    if (cashierSearch) cashierSearch.addEventListener('keyup', debouncedRenderMenuGrid);
+
+    const debouncedRenderAdminList = debounce(renderAdminList, 300);
+    const adminSearch = document.getElementById('admin-search');
+    if (adminSearch) adminSearch.addEventListener('keyup', debouncedRenderAdminList);
+
+    const debouncedRenderStockList = debounce(renderStockList, 300);
+    const stockSearch = document.getElementById('stock-search');
+    if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
+});
+
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
 // 🔥 PERBAIKAN: Menambahkan Titik Koma di awal agar tidak crash dengan baris di atasnya
 ;(function initFloatingButton() {
+
     const fab = document.getElementById('tombol-jelajah-ai');
     if (!fab) return;
 
@@ -2082,7 +2199,7 @@ window.startVoiceInput = function() {
         const text = event.results[0][0].transcript;
         const inputEl = document.getElementById('chat-input');
         inputEl.value = text;
-        stopMicVisual();
+        stopMicVisual()
     };
 
     recognition.onspeechend = () => {
