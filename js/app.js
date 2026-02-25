@@ -1407,7 +1407,7 @@ window.showCustomerDetail = function(buyerName, type) {
     // Tombol Kembali
     list.innerHTML = `
         <div class="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
-            <h4 class="font-bold text-gray-800 text-sm">Bon: <span class="${type === 'HUTANG' ? 'text-red-600' : 'text-blue-600'}">${buyerName}</span></h4>
+            <h4 class="font-bold text-gray-800 text-sm">Bon: <span class="${type === 'HUTANG' ? 'text-red-600' :'text-blue-600'}">${buyerName}</span></h4>
             <button onclick="renderTransactions()" class="text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 active:scale-95 transition hover:bg-gray-300">
                 <i class="fas fa-arrow-left"></i> Kembali
             </button>
@@ -1861,7 +1861,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 function updateConnectionStatus() {
-    // 🔥 PERBAIKAN: Panggil langsung ID-nya, bukan class warnanya
     const statusLabel = document.getElementById('connection-status'); 
     
     if(document.getElementById('view-database') && document.getElementById('view-database').classList.contains('show')) {
@@ -1869,46 +1868,37 @@ function updateConnectionStatus() {
     }
     
     if (navigator.onLine) {
-        // JIKA ONLINE
         if(statusLabel) {
             statusLabel.innerText = " • ONLINE";
             statusLabel.className = "text-green-400 font-bold blink-slow"; 
         }
         Swal.close(); 
-        
         if (window.wasOffline) {
             Swal.fire({
-                icon: 'success',
-                title: 'Kembali Online!',
-                text: 'Data transaksi offline sedang di-upload.',
+                icon: 'success', title: 'Kembali Online!', text: 'Data transaksi offline sedang di-upload.',
                 toast: true, position: 'top', timer: 3000, showConfirmButton: false
             });
             window.wasOffline = false;
         }
     } else {
-        // JIKA OFFLINE
         if(statusLabel) {
             statusLabel.innerText = " • OFFLINE (Data Tersimpan di HP)";
             statusLabel.className = "text-red-500 font-bold blink";
         }
         window.wasOffline = true;
-        
         Swal.fire({
-            icon: 'warning',
-            title: 'Mode Offline',
-            text: 'Internet terputus. Transaksi tetap bisa dilakukan & akan di-sync nanti.',
+            icon: 'warning', title: 'Mode Offline', text: 'Internet terputus. Transaksi tetap bisa dilakukan & akan di-sync nanti.',
             toast: true, position: 'bottom', showConfirmButton: false, timer: 3000
         });
     }
 }
-// Pasang "Telinga" untuk mendengar perubahan sinyal
 window.addEventListener('online', updateConnectionStatus);
 window.addEventListener('offline', updateConnectionStatus);
 
-// Cek saat pertama kali load
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
 });
+
 // ================= FITUR TABEL BUKU BESAR =================
 window.renderTableView = function() {
     const tbody = document.getElementById('table-body-data');
@@ -1920,9 +1910,7 @@ window.renderTableView = function() {
         return;
     }
 
-    // Mengubah data NoSQL jadi baris HTML murni
     transactions.forEach((trx, index) => {
-        // Ekstrak data Array di dalam NoSQL menjadi teks ke bawah
         let itemsHTML = '';
         if (trx.items && trx.items.length > 0) {
             trx.items.forEach(item => {
@@ -1932,18 +1920,15 @@ window.renderTableView = function() {
             itemsHTML = '-';
         }
 
-        // Penentuan Status
         let statusBadge = `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">LUNAS</span>`;
         if (trx.remaining > 0) {
             statusBadge = `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold">HUTANG Rp ${trx.remaining.toLocaleString('id-ID')}</span>`;
         }
 
-        // Pembuatan Baris
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-blue-50 transition cursor-pointer';
-        tr.onclick = () => window.viewTransactionDetail(trx.id); // Jika baris diklik, buka struknya
+        tr.className = 'hover:bg-blue-50 transition cursor-pointer border-b border-gray-100';
+        tr.onclick = () => window.viewTransactionDetail(trx.id); 
         
-        // Memecah tanggal dan jam agar rapi
         let dateSplit = trx.date ? trx.date.split(', ') : ['-', '-'];
         
         tr.innerHTML = `
@@ -1956,12 +1941,12 @@ window.renderTableView = function() {
         `;
         tbody.appendChild(tr);
     });
-}
+};
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
-// 1. LOGIKA TOMBOL GESER & KLIK
-(function initFloatingButton() {
+// 🔥 PERBAIKAN: Menambahkan Titik Koma di awal agar tidak crash dengan baris di atasnya
+;(function initFloatingButton() {
     const fab = document.getElementById('tombol-jelajah-ai');
     if (!fab) return;
 
@@ -1998,7 +1983,6 @@ window.renderTableView = function() {
     });
 })();
 
-// FIX TOMBOL ENTER
 setTimeout(() => {
     const chatInput = document.getElementById('chat-input');
     if(chatInput) {
@@ -2011,7 +1995,6 @@ setTimeout(() => {
     }
 }, 1500);
 
-// 2. FUNGSI BUKA TUTUP CHAT
 window.toggleChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     if (!chatWindow) return;
@@ -2027,7 +2010,6 @@ window.toggleChat = function() {
     }
 }
 
-// 3. HELPER BUBBLE CHAT
 function addChatBubble(text, sender) {
     const chatBox = document.getElementById('chat-messages');
     if(!chatBox) return;
@@ -2045,17 +2027,14 @@ function addChatBubble(text, sender) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// 4. FUNGSI UTAMA (MENGGUNAKAN OTAK BARU / AI-BRAIN.JS)
 window.sendChatMessage = async function() {
     const inputEl = document.getElementById('chat-input');
     const message = inputEl.value.trim();
     if (!message) return;
 
-    // Tampilkan Chat User
     addChatBubble(message, 'user');
     inputEl.value = '';
 
-    // Tampilkan Loading
     const loadingId = 'loading-' + Date.now();
     const chatBox = document.getElementById('chat-messages');
     chatBox.insertAdjacentHTML('beforeend', `
@@ -2068,19 +2047,11 @@ window.sendChatMessage = async function() {
     `);
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // --- PANGGIL OTAK AI ---
     try {
-        // 1. Susun data (Context) menggunakan fungsi dari brain
-        // Pastikan variabel 'transactions' dan 'menus' sudah ada di app.js
         const contextPrompt = generateContext(transactions, menus);
-
-        // 2. Tanya ke Groq
         const reply = await askGroqAI(message, contextPrompt);
-
-        // 3. Tampilkan Jawaban
         document.getElementById(loadingId).remove();
         addChatBubble(reply, 'bot');
-
     } catch (e) {
         if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
         addChatBubble("Otak AI sedang gangguan bosku. Cek file brain-nya ya! 😅", 'bot');
@@ -2089,20 +2060,15 @@ window.sendChatMessage = async function() {
 }
 
 // ================= FITUR VOICE COMMAND (SPEECH TO TEXT) =================
-
 window.startVoiceInput = function() {
-    // Cek dukungan browser
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        return Swal.fire('Maaf', 'Browser HP ini tidak mendukung fitur suara. Gunakan Google Chrome.', 'warning');
-    }
+    if (!SpeechRecognition) return Swal.fire('Maaf', 'Browser HP ini tidak mendukung fitur suara.', 'warning');
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'id-ID'; // Bahasa Indonesia
+    recognition.lang = 'id-ID'; 
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    // Efek Visual saat merekam
     const btnMic = document.getElementById('btn-mic');
     const originalHtml = btnMic.innerHTML;
     const originalClass = btnMic.className;
@@ -2116,8 +2082,6 @@ window.startVoiceInput = function() {
         const text = event.results[0][0].transcript;
         const inputEl = document.getElementById('chat-input');
         inputEl.value = text;
-        
-        // Kembalikan tombol ke semula
         stopMicVisual();
     };
 
@@ -2129,9 +2093,7 @@ window.startVoiceInput = function() {
     recognition.onerror = (event) => {
         console.error("Voice Error:", event.error);
         stopMicVisual();
-        if(event.error !== 'no-speech') {
-            Swal.fire('Gagal', 'Suara tidak terdengar jelas.', 'info');
-        }
+        if(event.error !== 'no-speech') Swal.fire('Gagal', 'Suara tidak terdengar jelas.', 'info');
     };
 
     function stopMicVisual() {
