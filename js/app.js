@@ -1,4 +1,4 @@
-import { auth, db, secondaryAuth } from './firebase.js?v=18.10';
+import { auth, db, secondaryAuth } from './firebase.js?v=18.11';
 import { generateContext, askGroqAI } from './ai-brain.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -1910,7 +1910,7 @@ window.addEventListener('offline', updateConnectionStatus);
 // Cek saat pertama kali load
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
-});
+})1
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
