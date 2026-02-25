@@ -1114,7 +1114,7 @@ function renderAdminList() {
 }
 
 
-// --- FUNGSI EDIT MENU (POPUP MODAL) ---
+// --- FUNGSI EDIT MENU (POPUP MODAL DENGAN UPLOAD FOTO) ---
 window.editMenuPrompt = async function(docId) {
     const item = menus.find(m => m.id === docId);
     if (!item) return;
@@ -1131,13 +1131,24 @@ window.editMenuPrompt = async function(docId) {
         }
     });
 
-    // Sesuaikan pilihan dropdown dengan kategori item saat ini
     catOptions = catOptions.replace(`value="${item.category}"`, `value="${item.category}" selected`);
+
+    // 🔥 Tampilkan foto lama (jika ada) di modal popup
+    let currentImageHtml = '';
+    if (item.image) {
+        // Kompres agar fotonya kecil di dalam popup
+        const imgThumb = item.image.replace('/upload/', '/upload/w_150,h_150,c_fill,q_auto,f_auto/');
+        currentImageHtml = `<img src="${imgThumb}" class="h-16 w-16 object-cover mx-auto mb-2 rounded shadow-sm border border-gray-300">`;
+    }
 
     // 2. Munculkan Popup SweetAlert
     const { value: formValues } = await Swal.fire({
         title: 'Edit Item',
         html: `
+            ${currentImageHtml}
+            <div class="text-left mb-1 mt-2 text-xs font-bold text-gray-700">Ganti Foto (Kosongkan jika tidak diganti)</div>
+            <input type="file" id="edit-image" accept="image/*" class="w-full text-xs p-1 mb-2 border rounded bg-gray-50 cursor-pointer">
+            
             <div class="text-left mb-1 mt-2 text-xs font-bold text-gray-700">Nama Menu</div>
             <input id="edit-name" class="swal2-input !m-0 !w-full" placeholder="Nama Menu" value="${item.name}">
             
@@ -1159,7 +1170,9 @@ window.editMenuPrompt = async function(docId) {
                 name: document.getElementById('edit-name').value,
                 price: parseInt(document.getElementById('edit-price').value),
                 stock: parseInt(document.getElementById('edit-stock').value),
-                category: document.getElementById('edit-category').value
+                category: document.getElementById('edit-category').value,
+                // 🔥 Tangkap file foto baru jika Admin mengunggahnya
+                imageFile: document.getElementById('edit-image').files[0] 
             }
         }
     });
@@ -1170,23 +1183,31 @@ window.editMenuPrompt = async function(docId) {
             return Swal.fire('Error', 'Nama dan Harga harus diisi dengan angka yang valid!', 'error');
         }
 
-        // Auto-update icon/warna jika kategorinya berubah (minuman/makanan)
         let newIcon = item.icon || 'fa-utensils';
         let newColor = item.color || 'bg-white';
         if(formValues.category.includes('minum')) { newIcon = 'fa-glass-water'; newColor = 'bg-blue-50'; }
         else if(formValues.category.includes('camil')) { newIcon = 'fa-bread-slice'; newColor = 'bg-yellow-50'; }
         else { newIcon = 'fa-utensils'; newColor = 'bg-white'; }
 
-        Swal.fire({title: 'Menyimpan...', didOpen: () => Swal.showLoading()});
+        Swal.fire({title: 'Menyimpan...', text: 'Memperbarui data & foto...', didOpen: () => Swal.showLoading()});
         try {
-            await setDoc(doc(db, "users", shopOwnerId, "menus", docId), {
+            let updateData = {
                 name: formValues.name,
                 price: formValues.price,
                 stock: formValues.stock,
                 category: formValues.category,
                 icon: newIcon,
                 color: newColor
-            }, { merge: true });
+            };
+
+            // 🔥 Jika admin memilih foto baru, upload dulu ke Cloudinary
+            if (formValues.imageFile) {
+                const newImageUrl = await window.uploadToCloudinary(formValues.imageFile);
+                updateData.image = newImageUrl;
+            }
+
+            // Simpan ke Firestore
+            await setDoc(doc(db, "users", shopOwnerId, "menus", docId), updateData, { merge: true });
             
             Swal.fire({icon: 'success', title: 'Berhasil Diupdate', timer: 1200, showConfirmButton: false});
         } catch (e) {
@@ -1195,6 +1216,7 @@ window.editMenuPrompt = async function(docId) {
         }
     }
 }
+
 
 // --- LOGIKA FILTER METODE BAYAR ---
 window.setReportPaymentFilter = function(mode) {
