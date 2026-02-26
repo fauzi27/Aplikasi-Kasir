@@ -1,25 +1,25 @@
 // ============================================================
-// 🧠 OTAK KECERDASAN BUATAN (AI BRAIN - LEVEL ANALIS DATA)
+// 🧠 OTAK KECERDASAN BUATAN (AI BRAIN - LEVEL SUPER ASISTEN)
 // ============================================================
 
 const GROQ_API_KEY = "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"; 
 
 // 1. KEPRIBADIAN & ATURAN
 const AI_PERSONALITY = `
-Kamu adalah "Sahabat AI", asisten virtual super cerdas, serba bisa, dan sahabat terbaik untuk Bos Pemilik "SAHABAT USAHAMU".
+Kamu adalah "Sahabat AI", asisten virtual super cerdas, serba bisa, dan sahabat terbaik untuk Bos Pemilik "SAHABAT USAHAMU" (Sebuah Aplikasi Kasir PWA/Point of Sale).
 
 KEMAMPUAN UTAMAMU (HYBRID):
-1. ASISTEN UMUM: Kamu bebas dan bisa melakukan apa saja! Jika Bos meminta dibuatkan puisi, menulis kode (coding), bercanda, atau menjawab pengetahuan umum, layani dengan kreatif, santai, dan cerdas.
-2. ANALIS BISNIS: Jika Bos bertanya tentang omzet, penjualan, atau stok warung, JANGAN MENGARANG ANGKA. Wajib gunakan "DATA RANGKUMAN BISNIS" di bawah ini untuk memberikan analisa dan saran strategi.
+1. ASISTEN UMUM: Bebas dan santai! Jika Bos meminta dibuatkan puisi, coding, bercanda, atau pengetahuan umum, layani dengan kreatif dan asyik.
+2. ANALIS BISNIS: Jika Bos bertanya tentang omzet, penjualan, atau stok warung, JANGAN MENGARANG ANGKA. Wajib gunakan "DATA RANGKUMAN BISNIS" di bawah ini.
+3. CUSTOMER SERVICE APLIKASI: Jika Bos atau Kasir bertanya cara menggunakan aplikasi ini, pandu mereka menggunakan "PANDUAN APLIKASI" di bawah ini.
 
 ATURAN SIKAP:
 - Selalu panggil user dengan sebutan "Bosku".
 - Gunakan bahasa yang santai, asyik, suportif, dan gunakan emoji secukupnya.
-- Jika ditanya hal di luar data warung (seperti cuaca hari ini), jawab saja pengetahuan umummu atau katakan dengan santai kalau kamu belum terhubung ke satelit BMKG.
+- Berikan jawaban berbentuk poin-poin (bullet points) jika menjelaskan tutorial/langkah-langkah agar mudah dibaca.
 `;
 
-
-// 2. FUNGSI PENGOLAH DATA (THE CALCULATOR ENGINE)
+// 2. FUNGSI PENGOLAH DATA & KONTEKS (THE ENGINE)
 export function generateContext(transactions, menus) {
     const now = new Date();
     const todayStr = now.toLocaleDateString('id-ID');
@@ -31,7 +31,7 @@ export function generateContext(transactions, menus) {
         today: { omzet: 0, trx: 0, items: {} },
         thisWeek: { omzet: 0, trx: 0 },
         thisMonth: { omzet: 0, trx: 0, items: {} },
-        lastMonth: { omzet: 0, trx: 0 }, // Untuk perbandingan
+        lastMonth: { omzet: 0, trx: 0 }, 
         thisYear: { omzet: 0, trx: 0 },
         hutang: []
     };
@@ -47,7 +47,6 @@ export function generateContext(transactions, menus) {
             stats.today.trx += 1;
             if (t.remaining > 0) stats.hutang.push(`${t.buyer} (Rp ${t.remaining.toLocaleString()})`);
             
-            // Item Harian
             if(t.items) t.items.forEach(i => {
                 stats.today.items[i.name] = (stats.today.items[i.name] || 0) + i.qty;
             });
@@ -65,14 +64,12 @@ export function generateContext(transactions, menus) {
         if (tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
             stats.thisMonth.omzet += t.total;
             stats.thisMonth.trx += 1;
-            // Item Bulanan (Untuk cari Best Seller Bulanan)
             if(t.items) t.items.forEach(i => {
                 stats.thisMonth.items[i.name] = (stats.thisMonth.items[i.name] || 0) + i.qty;
             });
         }
 
         // 4. DATA BULAN LALU (Untuk Komparasi)
-        // Logika sederhana: Jika bulan sekarang 0 (Jan), bulan lalu 11 (Des) tahun sebelumnya
         let prevMonth = currentMonth - 1;
         let prevYear = currentYear;
         if (prevMonth < 0) { prevMonth = 11; prevYear = currentYear - 1; }
@@ -90,23 +87,18 @@ export function generateContext(transactions, menus) {
     });
 
     // --- ANALISA LANJUTAN ---
-
-    // Cari Menu Terlaris Harian
     let bestSellerToday = Object.entries(stats.today.items)
         .sort((a, b) => b[1] - a[1]).slice(0, 3)
         .map(i => `${i[0]} (${i[1]})`).join(', ');
 
-    // Cari Menu Terlaris Bulanan
     let bestSellerMonth = Object.entries(stats.thisMonth.items)
         .sort((a, b) => b[1] - a[1]).slice(0, 3)
         .map(i => `${i[0]} (${i[1]} pcs)`).join(', ');
 
-    // Cek Stok Menipis
     let lowStock = menus
         .filter(m => (m.stock || 0) <= 5)
         .map(m => `${m.name} (Sisa: ${m.stock})`).join(', ');
 
-    // Analisa Pertumbuhan (Month over Month)
     let growthText = "";
     if (stats.lastMonth.omzet > 0) {
         let percent = ((stats.thisMonth.omzet - stats.lastMonth.omzet) / stats.lastMonth.omzet) * 100;
@@ -119,29 +111,43 @@ export function generateContext(transactions, menus) {
     return `
 ${AI_PERSONALITY}
 
-=== 📊 RANGKUMAN BISNIS REAL-TIME ===
+=== 📊 RANGKUMAN BISNIS REAL-TIME (${todayStr}) ===
+1. HARI INI: Omzet Rp ${stats.today.omzet.toLocaleString('id-ID')} | Trx: ${stats.today.trx} | Terlaris: ${bestSellerToday || "-"} | Hutang: ${stats.hutang.join(', ') || "Nihil"}
+2. MINGGU INI (7 Hari): Rp ${stats.thisWeek.omzet.toLocaleString('id-ID')}
+3. BULAN INI: Rp ${stats.thisMonth.omzet.toLocaleString('id-ID')} | Terlaris: ${bestSellerMonth || "-"} | Status: ${growthText}
+4. TAHUN INI: Rp ${stats.thisYear.omzet.toLocaleString('id-ID')}
+5. STOK GUDANG: Kritis/Habis: ${lowStock || "Semua Aman"} | Total Menu: ${menus.length} Item
 
-1. PERFORMA HARI INI (${todayStr}):
-   - Omzet: Rp ${stats.today.omzet.toLocaleString('id-ID')} (${stats.today.trx} transaksi)
-   - Terlaris: ${bestSellerToday || "-"}
-   - Hutang Baru: ${stats.hutang.join(', ') || "Nihil"}
+=== 📱 PANDUAN PENGGUNAAN APLIKASI (BANTU USER JIKA BERTANYA) ===
+1. MULAI JUALAN (Kasir): 
+   - Klik menu untuk tambah pesanan. (+) dan (-) untuk ubah jumlah.
+   - Klik "Bayar", pilih metode (TUNAI, QRIS, HUTANG). Masukkan nominal bayar, sistem otomatis hitung kembalian.
+   - Struk bisa dikirim via WhatsApp atau di-download.
 
-2. PERFORMA MINGGU INI (7 Hari Terakhir):
-   - Total Omzet: Rp ${stats.thisWeek.omzet.toLocaleString('id-ID')}
+2. STOK: 
+   - Tempat melihat sisa barang. Tekan (-) atau (+) untuk ubah stok instan.
 
-3. PERFORMA BULAN INI:
-   - Total Omzet: Rp ${stats.thisMonth.omzet.toLocaleString('id-ID')}
-   - Menu Jagoan Bulan Ini: ${bestSellerMonth || "-"}
-   - Perbandingan: ${growthText} (Bulan lalu: Rp ${stats.lastMonth.omzet.toLocaleString()})
+3. LAPORAN (Dashboard): 
+   - Melihat omzet kotor, uang tunai, hutang. 
+   - Tombol filter "Terlaris", "Hutang Terbanyak", "Pelanggan Setia". Bisa dicetak ke PDF / Excel.
 
-4. PERFORMA TAHUN INI (${currentYear}):
-   - Total Akumulasi: Rp ${stats.thisYear.omzet.toLocaleString('id-ID')}
+4. TABEL REKAP: 
+   - Riwayat transaksi berwujud tabel rapi seperti Excel. Menampilkan detail item dan status Lunas/Hutang.
 
-5. STATUS GUDANG:
-   - Stok Kritis: ${lowStock || "Semua Aman"}
-   - Total Varian Menu: ${menus.length} Item
+5. MANUAL (Kalkulator): 
+   - Buat jual barang yang belum didaftarkan di menu. Ketik harga -> klik ADD -> beri nama -> masuk keranjang.
 
-(Gunakan data di atas untuk menjawab pertanyaan user. Jika user bertanya "Gimana performa warung?", berikan analisa mendalam dari data bulanan dan mingguan.)
+6. KELOLA MENU (Hanya Admin): 
+   - Tambah menu baru, upload foto dari galeri HP, atur harga, dan hapus menu.
+   - Tambah kategori baru pakai tombol (+) hijau, hapus pakai (x) merah.
+
+7. SETTING & STUDIO TAMPILAN (Hanya Admin):
+   - Edit profil toko & Tambah akun Karyawan/Kasir.
+   - STUDIO TAMPILAN: Tempat rahasia untuk ganti Latar Belakang (pakai warna hex atau foto dari galeri) dan ganti warna semua tombol aplikasi.
+
+FITUR SPESIAL APLIKASI INI:
+- OFFLINE MODE: Tanda koneksi ada di bawah nama toko di Lobi. Hijau = Online, Merah berkedip = Offline. Aplikasi tetap 100% BISA dipakai jualan saat offline/mati lampu. Data akan diupload otomatis ke cloud saat internet nyala.
+- KEMBALI AMAN: Saat di menu, menekan tombol "Back" (kembali) di HP tidak akan mengeluarkan user dari aplikasi, tapi membawanya pulang ke layar Lobi.
 `;
 }
 
@@ -161,7 +167,7 @@ export async function askGroqAI(userMessage, systemPrompt) {
                     { role: "user", content: userMessage }
                 ],
                 temperature: 0.7, 
-                max_tokens: 1200 // Token diperbanyak agar jawabannya bisa panjang lebar
+                max_tokens: 1200 
             })
         });
 
