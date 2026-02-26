@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=19.17">
+    <link rel="stylesheet" href="css/style.css?v=19.19">
 </head>
 <body>
 
@@ -55,7 +55,7 @@
                 <p class="text-center text-sm text-gray-600">Sudah punya akun? <span onclick="window.toggleAuth('login')" class="text-blue-600 font-bold cursor-pointer hover:underline">Login di sini</span></p>
             </div>
         </div>
-        <div class="p-4 text-center text-xs text-gray-400">App v19.18 (For more fitur contact us 081559557553)</div>
+        <div class="p-4 text-center text-xs text-gray-400">App v19.19 (For more fitur contact us 081559557553)</div>
     </div>
 
     <div id="view-lobby" class="page-container hide bg-gray-900 z-50">
@@ -107,7 +107,7 @@
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.17 (For more fitur contact us 081559557553)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.19 (For more fitur contact us 081559557553)</p>
 
             <button onclick="toggleDarkMode()" class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2">Dark Mode</button>
             <button onclick="backupData()" class="text-xs bg-green-600 text-white px-2 py-1 rounded mt-2">Backup CSV</button>
@@ -222,16 +222,17 @@
     <div id="theme-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
-                <h3 class="font-bold text-gray-800"><i class="fas fa-paint-brush mr-2 text-indigo-600"></i>Edit Tombol</h3>
+                <h3 class="font-bold text-gray-800"><i class="fas fa-paint-brush mr-2 text-indigo-600"></i>Edit Tampilan</h3>
                 <button onclick="document.getElementById('theme-modal').classList.add('hidden')" class="text-gray-500 text-xl"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-5 space-y-4">
                 <input type="hidden" id="edit-theme-id">
                 
                 <div id="modal-group-text">
-                    <label class="text-xs font-bold text-gray-500">Nama Teks Menu</label>
+                    <label class="text-xs font-bold text-gray-500">Nama Teks</label>
                     <input type="text" id="edit-theme-text" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
                 </div>
+
                 <div>
                     <label class="text-xs font-bold text-gray-500">Pilih Warna</label>
                     <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1 font-bold">
@@ -239,24 +240,6 @@
                 </div>
 
                 <div id="modal-group-icon">
-                    <label class="text-xs font-bold text-gray-500">Icon (FontAwesome)</label>
-                    <div class="flex gap-2 mt-1">
-
-                <div>
-                    <label class="text-xs font-bold text-gray-500">Pilih Warna (Tailwind)</label>
-                    <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
-                        <option value="bg-blue-600">Biru Terang</option>
-                        <option value="bg-blue-800">Biru Gelap</option>
-                        <option value="bg-orange-600">Orange</option>
-                        <option value="bg-emerald-600">Hijau Zamrud</option>
-                        <option value="bg-red-600">Merah</option>
-                        <option value="bg-purple-600">Ungu</option>
-                        <option value="bg-gray-800">Abu-abu Gelap</option>
-                        <option value="bg-pink-500">Pink</option>
-                    </select>
-                </div>
-
-                <div>
                     <label class="text-xs font-bold text-gray-500">Icon (FontAwesome)</label>
                     <div class="flex gap-2 mt-1">
                         <input type="text" id="edit-theme-icon" class="flex-1 p-2 border rounded-lg text-sm outline-none" placeholder="fa-utensils">
@@ -276,7 +259,6 @@
             </div>
         </div>
     </div>
-    
     <div id="view-cashier" class="page-container hide">
         <div id="edit-mode-indicator" class="edit-mode-banner hidden">MODE EDIT TRANSAKSI</div>
         <div class="bg-white shadow-sm z-10 flex-none w-full">
@@ -616,11 +598,11 @@
         </div>
     </div>
 
-    <script type="module" src="js/app.js?v=19.17"></script>
+    <script type="module" src="js/app.js?v=19.19"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js?v=19.17')
+                navigator.serviceWorker.register('./service-worker.js?v=19.19')
                     .then(reg => {
                         console.log('✅ App Siap Offline!', reg.scope);
                         reg.update();
