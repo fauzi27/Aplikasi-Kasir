@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#111827">
     <link rel="manifest" href="manifest.json">
-    <title>SAHABAT USAHAMU(Online)</title>
+    <title>SAHABAT USAHAMU</title>
     <link rel="icon" type="image/png" href="asset/logokasir.png">
      <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -18,16 +18,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <link rel="stylesheet" href="css/style.css?v=18.02">
-
+    <link rel="stylesheet" href="css/style.css?v=19.12">
 </head>
 <body>
 
-    <div id="view-auth" class="page-container show bg-white z-[100]">
+    <div id="view-auth" class="page-container show bg-zinc z-[300]">
         <div class="flex-1 flex flex-col justify-center px-8 overflow-y-auto">
             <div class="text-center mb-8">
             <img src="asset/logokasir.png" alt="Logo Kasir" class="w-20 h-20 object-contain mx-auto mb-3 rounded-full shadow-sm">
-
                 <h1 class="text-3xl font-extrabold text-gray-800">SAHABAT USAHAMU</h1>
                 <p class="text-gray-500 text-sm">Kelola usaha dengan mudah & gratis</p>
             </div>
@@ -57,54 +55,60 @@
                 <p class="text-center text-sm text-gray-600">Sudah punya akun? <span onclick="window.toggleAuth('login')" class="text-blue-600 font-bold cursor-pointer hover:underline">Login di sini</span></p>
             </div>
         </div>
-        <div class="p-4 text-center text-xs text-gray-400">App v18.02 (For more fitur contact us 081559557553)</div>
+        <div class="p-4 text-center text-xs text-gray-400">App v19.12 (For more fitur contact us 081559557553)</div>
     </div>
 
     <div id="view-lobby" class="page-container hide bg-gray-900 z-50">
         <div class="flex-1 flex flex-col items-center justify-center p-6 text-white text-center overflow-y-auto">
             <div class="mb-6 flex-none">
                 <h1 class="text-3xl font-extrabold text-yellow-400 mb-1" id="business-name-lobby">SAHABAT USAHAMU</h1>
-                <p class="text-gray-400 text-sm"><span id="business-address-lobby">Nusadua Bali</span> • <span class="text-green-400 font-bold">ONLINE</span></p>
+                <p class="text-gray-400 text-sm"><span id="business-address-lobby">Nusadua Bali</span></p>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-sm md:max-w-3xl flex-none">
-                <button onclick="navigate('view-cashier')" class="col-span-2 md:col-span-4 bg-blue-600 hover:bg-blue-700 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left">
-                    <div class="bg-blue-800 p-3 rounded-full w-10 h-10 flex items-center justify-center">
+                <button id="real_btn_cashier" onclick="navigate('view-cashier')" class="col-span-2 md:col-span-4 bg-blue-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex items-center gap-3 transition transform active:scale-95 text-left text-white">
+                    <div class="bg-black bg-opacity-20 p-3 rounded-full w-10 h-10 flex items-center justify-center">
                         <i class="fas fa-cash-register text-lg"></i>
                     </div>
                     <div>
                         <h3 class="font-bold text-base">Mulai Jualan</h3>
-                        <p class="text-[10px] text-blue-200">Buka Kasir Menu</p>
+                        <p class="text-[10px] text-gray-200">Buka Kasir Menu</p>
                     </div>
                 </button>
 
-                <button onclick="navigate('view-stock')" class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button id="real_btn_stock" onclick="navigate('view-stock')" class="bg-indigo-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-boxes text-2xl mb-1"></i>
                     <h3 class="font-bold text-sm">Stok</h3>
                 </button>
 
-                <button onclick="navigate('view-database')" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button id="real_btn_report" onclick="navigate('view-database')" class="bg-purple-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-file-invoice text-2xl mb-1"></i>
                     <h3 class="font-bold text-sm">Laporan</h3>
                 </button>
+               
+                <button id="real_btn_table" onclick="navigate('view-table')" class="bg-emerald-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
+                    <i class="fas fa-table text-2xl mb-1"></i>
+                    <h3 class="font-bold text-xs">Tabel Rekap</h3>
+                </button>
 
-                <button onclick="navigate('view-calculator')" class="bg-teal-600 hover:bg-teal-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button id="real_btn_calc" onclick="navigate('view-calculator')" class="bg-teal-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-calculator text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Manual</h3>
                 </button>
 
-                <button onclick="navigate('view-admin')" class="bg-orange-600 hover:bg-orange-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button id="real_btn_admin" onclick="navigate('view-admin')" class="bg-orange-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-utensils text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Kelola Menu</h3>
                 </button>
 
-                <button onclick="navigate('view-settings')" class="bg-gray-600 hover:bg-gray-700 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center">
+                <button id="real_btn_setting" onclick="navigate('view-settings')" class="bg-gray-600 hover:opacity-90 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 transition transform active:scale-95 text-center justify-center text-white">
                     <i class="fas fa-cog text-2xl mb-1"></i>
                     <h3 class="font-bold text-xs">Setting</h3>
                 </button>
             </div>
             
-            <p class="mt-8 text-xs text-gray-600 flex-none">App v18.02 (For more fitur contact us 081559557553)</p>
+            <p class="mt-8 text-xs text-gray-600 flex-none">App v19.12 (For more fitur contact us 081559557553)</p>
+
             <button onclick="toggleDarkMode()" class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2">Dark Mode</button>
             <button onclick="backupData()" class="text-xs bg-green-600 text-white px-2 py-1 rounded mt-2">Backup CSV</button>
             <button onclick="doLogout()" class="text-xs bg-red-600 text-white px-2 py-1 rounded mt-2">Logout</button>
@@ -128,11 +132,11 @@
                     <i class="fas fa-save"></i> Simpan Perubahan
                 </button>
             </div>
-
-          <div class="hidden bg-white p-4 rounded-xl shadow mb-4">
+            
+            <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah Karyawan</h3>
                 <input type="text" id="new-emp-name" placeholder="Nama Karyawan" class="w-full p-2 text-sm border rounded outline-none mb-2">
-                <input type="email" id="new-emp-email" placeholder="Email Karyawan" class="w-full p-2 text-sm border rounded outline-none mb-2">
+                <input type="email" id="new-emp-email" placeholder="user id karyawan" class="w-full p-2 text-sm border rounded outline-none mb-2">
                 <input type="password" id="new-emp-pass" placeholder="Password Karyawan (Min 6 Karakter)" class="w-full p-2 text-sm border rounded outline-none mb-2">
                 
                 <select id="new-emp-role" class="w-full p-2 text-sm border rounded outline-none mb-2">
@@ -143,9 +147,123 @@
                     <i class="fas fa-user-plus"></i> Tambah Karyawan
                 </button>
             </div>
+
+            <div class="bg-white p-4 rounded-xl shadow mb-4">
+                <h3 class="font-bold text-gray-700 mb-3 text-sm">Desain Aplikasi (Theme)</h3>
+                <p class="text-xs text-gray-500 mb-3">Kustomisasi warna dan icon tombol halaman utama khusus untuk kasir warung Anda.</p>
+                <button onclick="navigate('view-studio')" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-paint-roller"></i> Buka Studio Tampilan
+                </button>
+            </div>
         </div>
     </div>
 
+    <div id="view-studio" class="page-container hide bg-gray-100 flex flex-col">
+        <div class="bg-indigo-800 text-white p-4 shadow-md flex-none z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="navigate('view-settings')" class="active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
+                <div>
+                    <h2 class="font-bold text-lg">Studio Tampilan</h2>
+                    <p class="text-[10px] text-indigo-200">Klik icon di bawah untuk mengedit warnanya</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto p-4 flex flex-col items-center">
+            <div class="bg-gray-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-800 relative" style="height: 70vh;">
+                <div class="p-6 text-center mt-4">
+                    <h1 class="text-2xl font-extrabold text-yellow-400 mb-1">PREVIEW LOBI</h1>
+                    <p class="text-gray-400 text-xs">Ketuk tombol untuk edit</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 p-4 w-full overflow-y-auto max-h-[50vh] pb-10 hide-scrollbar">
+                    <button onclick="window.openThemeEditor('btn_cashier', 'Mulai Jualan', 'bg-blue-600', 'fa-cash-register')" class="col-span-2 bg-blue-600 p-4 rounded-xl shadow-lg flex items-center gap-3 active:scale-95 transition">
+                        <div class="bg-black bg-opacity-20 p-3 rounded-full w-10 h-10 flex items-center justify-center text-white"><i class="fas fa-cash-register"></i></div>
+                        <div class="text-left text-white"><h3 class="font-bold text-sm">Mulai Jualan</h3></div>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_stock', 'Stok', 'bg-indigo-600', 'fa-boxes')" class="bg-indigo-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-boxes text-xl"></i><h3 class="font-bold text-[10px]">Stok</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_report', 'Laporan', 'bg-purple-600', 'fa-file-invoice')" class="bg-purple-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-file-invoice text-xl"></i><h3 class="font-bold text-[10px]">Laporan</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_table', 'Tabel Rekap', 'bg-emerald-600', 'fa-table')" class="bg-emerald-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-table text-xl"></i><h3 class="font-bold text-[10px]">Tabel Rekap</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_calc', 'Manual', 'bg-teal-600', 'fa-calculator')" class="bg-teal-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-calculator text-xl"></i><h3 class="font-bold text-[10px]">Manual</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_admin', 'Kelola Menu', 'bg-orange-600', 'fa-utensils')" class="bg-orange-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-utensils text-xl"></i><h3 class="font-bold text-[10px]">Kelola Menu</h3>
+                    </button>
+
+                    <button onclick="window.openThemeEditor('btn_setting', 'Setting', 'bg-gray-600', 'fa-cog')" class="bg-gray-600 p-4 rounded-xl shadow-lg flex flex-col items-center gap-2 active:scale-95 transition text-white">
+                        <i class="fas fa-cog text-xl"></i><h3 class="font-bold text-[10px]">Setting</h3>
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="window.saveThemeToFirebase()" class="mt-6 bg-green-600 text-white w-full max-w-sm py-3 rounded-xl font-bold shadow-lg active:scale-95 transition">
+                <i class="fas fa-cloud-upload-alt mr-1"></i> Terapkan Tema ke Semua HP
+            </button>
+
+        </div>
+    </div>
+
+    <div id="theme-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-gray-100 p-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-gray-800"><i class="fas fa-paint-brush mr-2 text-indigo-600"></i>Edit Tombol</h3>
+                <button onclick="document.getElementById('theme-modal').classList.add('hidden')" class="text-gray-500 text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="edit-theme-id">
+                
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Nama Teks Menu</label>
+                    <input type="text" id="edit-theme-text" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Pilih Warna (Tailwind)</label>
+                    <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
+                        <option value="bg-blue-600">Biru Terang</option>
+                        <option value="bg-blue-800">Biru Gelap</option>
+                        <option value="bg-orange-600">Orange</option>
+                        <option value="bg-emerald-600">Hijau Zamrud</option>
+                        <option value="bg-red-600">Merah</option>
+                        <option value="bg-purple-600">Ungu</option>
+                        <option value="bg-gray-800">Abu-abu Gelap</option>
+                        <option value="bg-pink-500">Pink</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Icon (FontAwesome)</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" id="edit-theme-icon" class="flex-1 p-2 border rounded-lg text-sm outline-none" placeholder="fa-utensils">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center border"><i id="preview-theme-icon" class="fas fa-box text-gray-600"></i></div>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1">Contoh: fa-coffee, fa-store, fa-shopping-cart</p>
+                </div>
+                
+                <div class="border border-dashed border-gray-300 p-3 rounded-xl bg-gray-50 text-center opacity-50 cursor-not-allowed" title="Segera Hadir">
+                    <i class="fas fa-image text-gray-400 mb-1"></i>
+                    <p class="text-[10px] text-gray-500 font-bold">Upload Gambar Kustom (Coming Soon)</p>
+                </div>
+
+                <button onclick="window.applyThemeToPreview()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow active:scale-95 transition">
+                    Preview Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <div id="view-cashier" class="page-container hide">
         <div id="edit-mode-indicator" class="edit-mode-banner hidden">MODE EDIT TRANSAKSI</div>
         <div class="bg-white shadow-sm z-10 flex-none w-full">
@@ -216,26 +334,26 @@
             <div class="bg-white p-4 rounded-xl shadow mb-4">
                 <h3 class="font-bold text-gray-700 mb-3 text-sm">Tambah / Edit Menu</h3>
                 <div class="flex gap-2 overflow-x-auto mb-3 pb-1" id="admin-cat-tiles"></div>
-<div class="space-y-3">
-    <input type="text" id="new-menu-name" placeholder="Nama Menu (ex: Mie Setan)" class="w-full p-2 text-sm border rounded focus:border-blue-500 outline-none">
-    <div class="flex gap-2">
-        <input type="number" id="new-menu-price" placeholder="Harga" class="w-1/2 p-2 text-sm border rounded outline-none">
-        <input type="number" id="new-menu-stock" placeholder="Stok Awal" class="w-1/2 p-2 text-sm border rounded outline-none" value="100">
-    </div>
-    
-    <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50 relative hover:bg-gray-100 transition">
-        <input type="file" id="new-menu-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.previewImage(this, 'preview-add-img')">
-        <div id="preview-add-img" class="flex flex-col items-center pointer-events-none">
-            <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 mb-1"></i>
-            <span class="text-xs text-gray-500 font-bold">Tap untuk Upload Foto Menu</span>
-        </div>
-    </div>
-    
-    <input type="hidden" id="selected-admin-cat" value="makanan">
-    <button onclick="window.addNewMenu()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 active:scale-95 transition">
-        <i class="fas fa-save"></i> Simpan ke Cloud
-    </button>
-</div>
+                <div class="space-y-3">
+                    <input type="text" id="new-menu-name" placeholder="Nama Menu (ex: Mie Setan)" class="w-full p-2 text-sm border rounded focus:border-blue-500 outline-none">
+                    <div class="flex gap-2">
+                        <input type="number" id="new-menu-price" placeholder="Harga" class="w-1/2 p-2 text-sm border rounded outline-none">
+                        <input type="number" id="new-menu-stock" placeholder="Stok Awal" class="w-1/2 p-2 text-sm border rounded outline-none" value="100">
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50 relative hover:bg-gray-100 transition">
+                        <input type="file" id="new-menu-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.previewImage(this, 'preview-add-img')">
+                        <div id="preview-add-img" class="flex flex-col items-center pointer-events-none">
+                            <i class="fas fa-cloud-upload-alt text-2xl text-blue-400 mb-1"></i>
+                            <span class="text-xs text-gray-500 font-bold">Tap untuk Upload Foto Menu</span>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="selected-admin-cat" value="makanan">
+                    <button onclick="window.addNewMenu()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 active:scale-95 transition">
+                        <i class="fas fa-save"></i> Simpan ke Cloud
+                    </button>
+                </div>
             </div>
             <h3 class="font-bold text-gray-600 text-xs mb-2 px-1">Daftar Menu (Filter: <span id="admin-filter-label">Semua</span>)</h3>
             <input type="text" id="admin-search" placeholder="Cari nama menu..." class="w-full p-2 rounded text-gray-800 text-sm outline-none mb-2">
@@ -262,63 +380,71 @@
         </div>
     </div>
 
-    <div id="view-database" class="page-container hide bg-white">
-        <div class="bg-purple-800 text-white p-4 shadow-md flex-none z-10">
-            <div class="flex items-center justify-between mb-3">
+    <div id="view-database" class="page-container hide bg-gray-50">
+        <div class="bg-purple-800 text-white p-4 shadow-md flex-none z-10 rounded-b-2xl">
+            <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
                     <button onclick="navigate('view-lobby')" class="active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
-                    <h2 class="font-bold text-lg">Laporan</h2>
+                    <h2 class="font-bold text-lg">Dashboard Analitik</h2>
                 </div>
-                <div class="text-right">
-                    <p class="text-[10px] opacity-80" id="report-period-label">Total Omzet</p>
-                    <p class="font-bold text-lg" id="report-grand-total">Rp 0</p>
+                <div class="flex gap-2">
+                    <button onclick="window.exportToPDF()" class="w-8 h-8 bg-purple-700 rounded-full flex items-center justify-center hover:bg-purple-600 transition"><i class="fas fa-file-pdf text-xs"></i></button>
+                    <button onclick="window.exportToExcel()" class="w-8 h-8 bg-purple-700 rounded-full flex items-center justify-center hover:bg-purple-600 transition"><i class="fas fa-file-excel text-xs"></i></button>
                 </div>
             </div>
             
-            <div class="flex gap-2 overflow-x-auto pb-2 border-b border-purple-600 mb-2" id="report-filters">
-                <button onclick="window.setReportFilter('today')" class="filter-btn active px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Hari Ini</button>
-                <button onclick="window.setReportFilter('yesterday')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Kemarin</button>
-                <button onclick="window.setReportFilter('month')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Bulan Ini</button>
+            <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar" id="report-filters">
+                <button onclick="window.setReportFilter('today')" class="filter-btn active px-4 py-1.5 rounded-full text-xs font-bold border border-purple-400 bg-white text-purple-800 transition whitespace-nowrap shadow-sm">Hari Ini</button>
+                <button onclick="window.setReportFilter('yesterday')" class="filter-btn px-4 py-1.5 rounded-full text-xs font-bold border border-purple-400 bg-purple-700 text-purple-100 transition whitespace-nowrap">Kemarin</button>
+                <button onclick="window.setReportFilter('7days')" class="filter-btn px-4 py-1.5 rounded-full text-xs font-bold border border-purple-400 bg-purple-700 text-purple-100 transition whitespace-nowrap">7 Hari Terakhir</button>
+                <button onclick="window.setReportFilter('month')" class="filter-btn px-4 py-1.5 rounded-full text-xs font-bold border border-purple-400 bg-purple-700 text-purple-100 transition whitespace-nowrap">Bulan Ini</button>
                 <div class="relative">
                     <input type="date" id="custom-date-picker" onchange="window.setReportFilter('custom', this.value)" class="absolute opacity-0 w-full h-full cursor-pointer">
-                    <button class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap flex items-center gap-1">
-                        <i class="fas fa-calendar-alt"></i> Tanggal
+                    <button class="filter-btn px-4 py-1.5 rounded-full text-xs font-bold border border-purple-400 bg-purple-700 text-purple-100 transition whitespace-nowrap flex items-center gap-1">
+                        <i class="fas fa-calendar-alt"></i> Pilih Tgl
                     </button>
                 </div>
             </div>
+        </div>
 
-            <div class="flex gap-2 overflow-x-auto pb-1" id="report-payment-filters">
-                <button onclick="window.setReportPaymentFilter('all')" class="payment-filter-btn active px-4 py-1 rounded-full text-xs font-bold border border-white text-white bg-purple-600 transition whitespace-nowrap">Semua</button>
-                <button onclick="window.setReportPaymentFilter('TUNAI')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Tunai</button>
-                <button onclick="window.setReportPaymentFilter('HUTANG')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">Hutang</button>
-                <button onclick="window.setReportPaymentFilter('QRIS')" class="payment-filter-btn px-4 py-1 rounded-full text-xs font-bold border border-white text-purple-200 bg-purple-700 transition whitespace-nowrap">QRIS</button>
-            </div>
+        <div class="flex-1 overflow-y-auto p-4 pb-24">
             
-            <div class="flex gap-2 overflow-x-auto pb-1 mt-2" id="report-query-filters">
-                <button onclick="window.setQueryFilter('top_menus')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Menu Terlaris</button>
-                <button onclick="window.setQueryFilter('daily_menu')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Penjualan Harian Menu</button>
-                <button onclick="window.setQueryFilter('category_omzet')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Omzet per Kategori</button>
-                <button onclick="window.setQueryFilter('top_hutang')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Hutang Terbanyak</button>
-                <button onclick="window.setQueryFilter('tren_mingguan')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Tren Mingguan</button>
-                <button onclick="window.setQueryFilter('item_per_hari')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Item Terjual per Hari</button>
-                <button onclick="window.setQueryFilter('payment_breakdown')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Breakdown Pembayaran</button>
-                <button onclick="window.setQueryFilter('pelanggan_setia')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Pelanggan Setia</button>
-                <button onclick="window.setQueryFilter('revisi_transaksi')" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold border border-purple-300 bg-white text-purple-700 transition whitespace-nowrap">Revisi Transaksi</button>
+            <div class="bg-white rounded-2xl shadow-lg p-5 mb-6 border border-gray-100 relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-50 rounded-full opacity-50"></div>
+                
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1" id="report-period-label">Total Omzet Kotor</p>
+                <h3 class="text-3xl font-extrabold text-gray-800 mb-4" id="report-grand-total">Rp 0</h3>
+                
+                <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold mb-1"><i class="fas fa-money-bill-wave text-green-500 mr-1"></i> Masuk Tunai</p>
+                        <p class="font-bold text-sm text-gray-700" id="dash-tunai">Rp 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold mb-1"><i class="fas fa-qrcode text-blue-500 mr-1"></i> Masuk QRIS</p>
+                        <p class="font-bold text-sm text-gray-700" id="dash-qris">Rp 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold mb-1"><i class="fas fa-book-open text-red-500 mr-1"></i> Sisa Hutang</p>
+                        <p class="font-bold text-sm text-red-600" id="dash-hutang">Rp 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold mb-1"><i class="fas fa-receipt text-purple-500 mr-1"></i> Jml Transaksi</p>
+                        <p class="font-bold text-sm text-gray-700" id="dash-count">0 Nota</p>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="flex justify-end p-2 bg-gray-50">
-            <button onclick="window.exportToPDF()" class="text-xs bg-green-600 text-white px-2 py-1 rounded ml-2">
-                <i class="fas fa-file-pdf"></i> Export PDF
-            </button>
-            <button onclick="window.exportToCSV()" class="text-xs bg-blue-600 text-white px-2 py-1 rounded ml-2">
-                <i class="fas fa-file-csv"></i> Export CSV
-            </button>
-            <button onclick="window.exportToExcel()" class="text-xs bg-indigo-600 text-white px-2 py-1 rounded ml-2">
-                <i class="fas fa-file-excel"></i> Export Excel
-            </button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-2 bg-gray-50 pb-20" id="transaction-list">
-             <div class="text-center mt-10 text-gray-400 text-xs"><i class="fas fa-circle-notch fa-spin"></i> Mengambil Data...</div>
+
+            <div class="flex gap-2 overflow-x-auto pb-3 mb-2" id="report-query-filters">
+                <button onclick="window.setQueryFilter('top_menus')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 transition whitespace-nowrap shadow-sm"><i class="fas fa-trophy text-yellow-500 mr-1"></i>Terlaris</button>
+                <button onclick="window.setQueryFilter('top_hutang')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 transition whitespace-nowrap shadow-sm"><i class="fas fa-user-clock text-red-400 mr-1"></i>Hutang Terbanyak</button>
+                <button onclick="window.setQueryFilter('pelanggan_setia')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 transition whitespace-nowrap shadow-sm"><i class="fas fa-star text-blue-400 mr-1"></i>Pelanggan Setia</button>
+            </div>
+
+            <h3 class="font-bold text-gray-800 text-sm mb-3">Rincian Transaksi</h3>
+            <div id="transaction-list" class="space-y-3">
+                 <div class="text-center mt-10 text-gray-400 text-xs"><i class="fas fa-circle-notch fa-spin"></i> Memuat Data...</div>
+            </div>
         </div>
     </div>
 
@@ -362,8 +488,43 @@
             </button>
         </div>
     </div>
+    
+    <div id="view-table" class="page-container hide bg-gray-50 flex flex-col">
+        <div class="bg-emerald-700 text-white p-4 shadow-md flex-none z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <button onclick="navigate('view-lobby')" class="active:scale-90 transition p-1"><i class="fas fa-arrow-left text-xl"></i></button>
+                    <h2 class="font-bold text-lg">Buku Besar Transaksi</h2>
+                </div>
+                <button onclick="window.exportToExcel()" class="bg-emerald-800 px-3 py-1.5 rounded-lg text-xs font-bold shadow flex items-center gap-1 active:scale-95">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+            </div>
+        </div>
 
-       <div id="bill-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="flex-1 overflow-auto p-4 pb-24">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b border-gray-200">
+                                <th class="p-3 font-bold">No</th>
+                                <th class="p-3 font-bold min-w-[100px]">Tanggal</th>
+                                <th class="p-3 font-bold min-w-[120px]">Pelanggan</th>
+                                <th class="p-3 font-bold min-w-[180px]">Item Dibeli</th>
+                                <th class="p-3 font-bold text-right">Total</th>
+                                <th class="p-3 font-bold text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body-data" class="divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bill-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-gray-100 p-3 flex justify-between items-center border-b">
                 <h3 class="font-bold text-gray-700" id="bill-modal-title">Detail Transaksi</h3>
@@ -405,9 +566,9 @@
         </div>
     </div>
 
-<button id="tombol-jelajah-ai" onclick="window.toggleChat()" class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-500 rounded-full shadow-xl z-[9999] flex items-center justify-center text-white transition-transform active:scale-90 touch-none">
-    <i class="fas fa-robot text-2xl"></i>
-</button>
+    <button id="tombol-jelajah-ai" onclick="window.toggleChat()" class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-500 rounded-full shadow-xl z-[9999] flex items-center justify-center text-white transition-transform active:scale-90 touch-none">
+        <i class="fas fa-robot text-2xl"></i>
+    </button>
 
     <div id="ai-chat-window" class="fixed bottom-24 right-6 w-80 max-w-[85vw] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[100] hidden flex-col overflow-hidden transition-all duration-300">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 flex justify-between items-center text-white">
@@ -429,40 +590,32 @@
             </div>
         </div>
         
-<div class="p-2 border-t bg-white flex items-center gap-2">
-    <input type="text" id="chat-input" placeholder="Ketik atau tekan mic..." class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
-    
-    <button onclick="window.startVoiceInput()" id="btn-mic" class="bg-gray-200 text-gray-600 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-300 active:scale-95 transition flex-none">
-        <i class="fas fa-microphone text-xs"></i>
-    </button>
+        <div class="p-2 border-t bg-white flex items-center gap-2">
+            <input type="text" id="chat-input" placeholder="Ketik atau tekan mic..." class="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
+            
+            <button onclick="window.startVoiceInput()" id="btn-mic" class="bg-gray-200 text-gray-600 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-300 active:scale-95 transition flex-none">
+                <i class="fas fa-microphone text-xs"></i>
+            </button>
 
-    <button onclick="window.sendChatMessage()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 active:scale-95 transition flex-none">
-        <i class="fas fa-paper-plane text-xs -ml-0.5 mt-0.5"></i>
-    </button>
-</div>
+            <button onclick="window.sendChatMessage()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 active:scale-95 transition flex-none">
+                <i class="fas fa-paper-plane text-xs -ml-0.5 mt-0.5"></i>
+            </button>
+        </div>
+    </div>
 
-    <script type="module" src="js/app.js?v=18.02"></script>
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            // Tambahkan versi di parameter agar SW juga ikut update
-            navigator.serviceWorker.register('./service-worker.js?v=18.02')
-                .then(reg => {
-                    console.log('✅ App Siap Offline!', reg.scope);
-                    
-                    // 1. Paksa browser mengecek apakah ada file service-worker.js yang baru di server
-                    reg.update();
-                    
-                    // 2. Jika ada update baru terdeteksi
-                    reg.onupdatefound = () => {
-                        const installingWorker = reg.installing;
-                        installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed') {
-                                if (navigator.serviceWorker.controller) {
-                                    // Kode baru sudah siap, beri tahu user
+    <script type="module" src="js/app.js?v=19.12"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js?v=19.12')
+                    .then(reg => {
+                        console.log('✅ App Siap Offline!', reg.scope);
+                        reg.update();
+                        reg.onupdatefound = () => {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                     console.log('🚀 Update baru tersedia!');
-                                    
-                                    // Munculkan popup dari SweetAlert
                                     Swal.fire({
                                         title: 'Update Tersedia!',
                                         text: 'Versi terbaru aplikasi sudah siap. Muat ulang sekarang?',
@@ -473,24 +626,19 @@
                                         allowOutsideClick: false
                                     }).then((result) => {
                                         if (result.isConfirmed) {
-                                            // Bersihkan cache lama (opsional tapi disarankan)
                                             caches.keys().then((names) => {
                                                 for (let name of names) caches.delete(name);
                                             });
-                                            // Refresh halaman secara paksa untuk memuat kode baru
                                             window.location.reload();
                                         }
                                     });
                                 }
-                            }
+                            };
                         };
-                    };
-                })
-                .catch(err => console.log('❌ Gagal SW:', err));
-        });
-    }
-</script>
-
-
+                    })
+                    .catch(err => console.log('❌ Gagal SW:', err));
+            });
+        }
+    </script>
 </body>
 </html>
