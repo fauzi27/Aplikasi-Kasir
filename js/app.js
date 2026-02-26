@@ -1897,8 +1897,9 @@ window.addEventListener('offline', updateConnectionStatus);
 
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
+    // 🔥 TEMBAK ULANG WARNA SAAT LAYAR SIAP (Anti Gagal)
+    if (window.applyThemeToLobby) window.applyThemeToLobby(); 
 });
-
 // ================= FITUR TABEL BUKU BESAR =================
 window.renderTableView = function() {
     const tbody = document.getElementById('table-body-data');
@@ -2016,38 +2017,48 @@ window.applyThemeToLobby = function() {
     if (!businessData || !businessData.themeData) return;
     const theme = businessData.themeData;
 
-    // 1. Terapkan ke Tombol Mulai Jualan (Bedakan karena icon di dalam lingkaran hitam)
-    if (theme['btn_cashier']) {
-        const btn = document.getElementById('real_btn_cashier');
-        if (btn) {
-            btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme['btn_cashier'].color);
-            btn.querySelector('h3').innerText = theme['btn_cashier'].text;
-            const iconEl = btn.querySelector('.bg-black i');
-            if(iconEl) iconEl.className = `fas ${theme['btn_cashier'].icon} text-lg`;
-        }
-    }
-
-    // 2. Terapkan ke Sisa Tombol Lainnya (Menggunakan Looping agar ringkas)
-    const otherButtons = ['btn_stock', 'btn_report', 'btn_table', 'btn_calc', 'btn_admin', 'btn_setting'];
+    // Daftar semua ID tombol
+    const allButtons = ['btn_cashier', 'btn_stock', 'btn_report', 'btn_table', 'btn_calc', 'btn_admin', 'btn_setting'];
     
-    otherButtons.forEach(btnId => {
+    allButtons.forEach(btnId => {
         if (theme[btnId]) {
-            const btn = document.getElementById('real_' + btnId);
-            if (btn) {
-                // Hapus warna lama, timpa dengan warna baru
-                btn.className = btn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
-                
-                // Ubah teks H3
-                const h3El = btn.querySelector('h3');
+            // 1. Terapkan ke Tombol Lobi Asli
+            const realBtn = document.getElementById('real_' + btnId);
+            if (realBtn) {
+                realBtn.className = realBtn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
+                const h3El = realBtn.querySelector('h3');
                 if(h3El) h3El.innerText = theme[btnId].text;
                 
-                // Ubah Icon
-                const iconEl = btn.querySelector('i.fas');
-                if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-2xl mb-1`;
+                if(btnId === 'btn_cashier') {
+                    const iconEl = realBtn.querySelector('.bg-black i');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-lg`;
+                } else {
+                    const iconEl = realBtn.querySelector('i.fas');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-2xl mb-1`;
+                }
+            }
+
+            // 2. Terapkan JUGA ke Layar Preview Studio (Agar tidak reset ke standar)
+            const previewBtn = document.querySelector(`button[onclick*="openThemeEditor('${btnId}'"]`);
+            if (previewBtn) {
+                previewBtn.className = previewBtn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
+                // Update memori kliknya
+                previewBtn.setAttribute('onclick', `window.openThemeEditor('${btnId}', '${theme[btnId].text}', '${theme[btnId].color}', '${theme[btnId].icon}')`);
+                const h3El = previewBtn.querySelector('h3');
+                if(h3El) h3El.innerText = theme[btnId].text;
+                
+                if(btnId === 'btn_cashier') {
+                    const iconEl = previewBtn.querySelector('.bg-black i');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon}`;
+                } else {
+                    const iconEl = previewBtn.querySelector('i.fas');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-xl`;
+                }
             }
         }
     });
 };
+
 
 // ================= FITUR DEBOUNCE SEARCH (KASIR, ADMIN, STOK) =================
 document.addEventListener('DOMContentLoaded', () => {
