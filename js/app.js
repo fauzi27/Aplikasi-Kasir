@@ -307,17 +307,24 @@ window.navigate = function(viewId) {
         window.setReportFilter('today');
     }
     if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
-    if(viewId === 'view-settings') { 
+     if(viewId === 'view-settings') { 
         document.getElementById('edit-business-name').value = window.shopNameAsli || businessData.name || ''; 
         document.getElementById('edit-business-address').value = window.shopAddressAsli || businessData.address || ''; 
     }
     if(viewId !== 'view-calculator') window.clearCalc();
     if(viewId === 'view-table') window.renderTableView();
+    
+    // 🔥 PAKSA TEMBAK WARNA SETIAP KALI BALIK KE LOBI
+    if(viewId === 'view-lobby') {
+        if(window.applyThemeToLobby) window.applyThemeToLobby();
+    }
+
     if (viewId === 'view-lobby' && editingTransactionId) {
         if(!confirm("Batalkan edit transaksi?")) {
             window.navigate('view-cashier'); 
             return;
         }
+
         exitEditMode();
     }
 }
