@@ -2090,18 +2090,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const cashierSearch = document.getElementById('cashier-search');
     if (cashierSearch) cashierSearch.addEventListener('keyup', debouncedRenderMenuGrid);
 
-    const debouncedRenderAdminList = debounce(renderAdminList, 300);
+        const debouncedRenderAdminList = debounce(renderAdminList, 300);
     const adminSearch = document.getElementById('admin-search');
     if (adminSearch) adminSearch.addEventListener('keyup', debouncedRenderAdminList);
 
     const debouncedRenderStockList = debounce(renderStockList, 300);
     const stockSearch = document.getElementById('stock-search');
     if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
+    
+    // 🔥 TEMBAK WARNA SAAT HP SELESAI GAMBAR HTML (Tunda 100ms agar aman)
+    if (window.applyThemeToLobby) {
+        setTimeout(() => window.applyThemeToLobby(), 100); 
+    }
 });
 
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
-// 🔥 PERBAIKAN: Menambahkan Titik Koma di awal agar tidak crash dengan baris di atasnya
 ;(function initFloatingButton() {
 
     const fab = document.getElementById('tombol-jelajah-ai');
