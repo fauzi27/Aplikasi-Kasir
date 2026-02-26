@@ -116,6 +116,9 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('view-lobby').classList.remove('hide'); 
         document.getElementById('view-lobby').classList.add('show');
         
+        // 🔥 SET SEJARAH AWAL LOBI (Agar tidak langsung keluar saat back ditekan)
+        window.history.replaceState({ id: 'view-lobby' }, '', '#view-lobby');
+        
         // 6. LOAD DATA LAIN (Menu & Transaksi)
         // initUserData sudah kita modifikasi sebelumnya untuk handle local storage
         initUserData(shopOwnerId); 
@@ -291,7 +294,13 @@ window.doLogout = function() {
 }
 
 // --- WINDOW FUNCTIONS ---
-window.navigate = function(viewId) {
+window.navigate = function(viewId, isBacking = false) {
+    // 🔥 CEGAH PENUMPUKAN HISTORY (Jika klik tombol Back di Layar UI, kita suruh HP yang mundur otomatis)
+    if (viewId === 'view-lobby' && !isBacking && window.location.hash !== '#view-lobby' && window.location.hash !== '') {
+        window.history.back();
+        return; 
+    }
+
     document.querySelectorAll('.page-container').forEach(el => {
         if(el.id !== 'view-auth') {
             el.classList.remove('show');
@@ -307,7 +316,7 @@ window.navigate = function(viewId) {
         window.setReportFilter('today');
     }
     if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
-     if(viewId === 'view-settings') { 
+    if(viewId === 'view-settings') { 
         document.getElementById('edit-business-name').value = window.shopNameAsli || businessData.name || ''; 
         document.getElementById('edit-business-address').value = window.shopAddressAsli || businessData.address || ''; 
     }
@@ -321,13 +330,18 @@ window.navigate = function(viewId) {
 
     if (viewId === 'view-lobby' && editingTransactionId) {
         if(!confirm("Batalkan edit transaksi?")) {
-            window.navigate('view-cashier'); 
+            window.history.forward(); // Maju lagi ke kasir jika batal mundur
             return;
         }
-
         exitEditMode();
     }
+
+    // 🔥 CATAT SEJARAH JIKA BUKAN DARI TOMBOL BACK FISIK HP
+    if (!isBacking && viewId !== 'view-auth' && viewId !== 'view-lobby') {
+        window.history.pushState({ id: viewId }, '', '#' + viewId);
+    }
 }
+
 
 // --- LOGIKA KATEGORI DINAMIS ---
 function renderCategoryTiles() {
@@ -2415,3 +2429,20 @@ window.startVoiceInput = function() {
         btnMic.innerHTML = originalHtml;
     }
 }
+// ================= FITUR DETEKSI TOMBOL BACK FISIK HP =================
+window.addEventListener('popstate', (event) => {
+    // Tutup otomatis semua Pop-up/Modal yang terbuka (Biar tidak nyangkut)
+    if (Swal.isVisible()) Swal.close();
+    const billModal = document.getElementById('bill-modal');
+    if (billModal) billModal.classList.add('hidden');
+    const themeModal = document.getElementById('theme-modal');
+    if (themeModal) themeModal.classList.add('hidden');
+
+    // Eksekusi mundur halaman sesuai rekaman History API
+    if (event.state && event.state.id) {
+        window.navigate(event.state.id, true);
+    } else {
+        // Jika history habis, paksa kembali ke Lobi
+        if (currentUser) window.navigate('view-lobby', true);
+    }
+});
