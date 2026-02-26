@@ -1954,64 +1954,84 @@ window.renderTableView = function() {
 // ================= FITUR STUDIO TAMPILAN (THEME BUILDER) =================
 let currentEditingTheme = {};
 
+// 🔥 FUNGSI UPLOAD GAMBAR BACKGROUND KE CLOUDINARY
+window.uploadThemeBgImage = async function(input) {
+    if (input.files && input.files[0]) {
+        Swal.fire({title: 'Mengunggah Latar...', didOpen: () => Swal.showLoading()});
+        try {
+            const url = await window.uploadToCloudinary(input.files[0]);
+            document.getElementById('edit-theme-bg-url').value = url;
+            document.getElementById('preview-theme-bg-container').innerHTML = `<img src="${url}" class="h-20 w-full object-cover rounded shadow-sm">`;
+            Swal.fire({toast: true, position: 'top', icon: 'success', title: 'Latar Siap Diterapkan', timer: 1200, showConfirmButton: false});
+        } catch (e) {
+            Swal.fire('Error', 'Gagal unggah latar: ' + e.message, 'error');
+        }
+    }
+}
+
 window.openThemeEditor = function(buttonId, currentText, currentColor, currentIcon, elementType = 'button') {
     document.getElementById('edit-theme-id').value = buttonId;
-    document.getElementById('edit-theme-id').dataset.type = elementType; // Simpan tipe elemen
+    document.getElementById('edit-theme-id').dataset.type = elementType;
     
-    // Sembunyikan input teks & icon jika sedang edit Latar / Judul
     const groupText = document.getElementById('modal-group-text');
     const groupIcon = document.getElementById('modal-group-icon');
+    const groupUpload = document.getElementById('modal-group-upload');
     
-    if (elementType === 'bg' || elementType === 'title') {
+    // Reset Data Latar
+    document.getElementById('edit-theme-bg-url').value = '';
+    document.getElementById('preview-theme-bg-container').innerHTML = `
+        <i class="fas fa-images text-blue-500 mb-1 text-2xl"></i>
+        <p class="text-[10px] text-blue-700 font-bold">Ketuk untuk Ambil dari Galeri</p>
+    `;
+    
+    if (elementType === 'bg') {
         if(groupText) groupText.style.display = 'none';
         if(groupIcon) groupIcon.style.display = 'none';
+        if(groupUpload) groupUpload.style.display = 'block'; // Tampilkan Upload buat Background
+    } else if (elementType === 'title') {
+        if(groupText) groupText.style.display = 'none';
+        if(groupIcon) groupIcon.style.display = 'none';
+        if(groupUpload) groupUpload.style.display = 'none'; // Sembunyikan Upload
     } else {
         if(groupText) groupText.style.display = 'block';
         if(groupIcon) groupIcon.style.display = 'block';
+        if(groupUpload) groupUpload.style.display = 'none'; // Sembunyikan Upload
         
-        // Isi data lama untuk tombol
         document.getElementById('edit-theme-text').value = currentText;
         let cleanIcon = currentIcon.replace('fa-', '');
         document.getElementById('edit-theme-icon').value = cleanIcon;
         document.getElementById('preview-theme-icon').className = `fas fa-${cleanIcon} text-gray-600`;
-        
         document.getElementById('edit-theme-icon').onkeyup = function() {
             let typedIcon = this.value.replace('fa-', '');
             document.getElementById('preview-theme-icon').className = `fas fa-${typedIcon} text-gray-600`;
         };
     }
     
-    // Ganti daftar warna di Dropdown sesuai apa yang diedit
+    // Isi Dropdown Warna
     const selectColor = document.getElementById('edit-theme-color');
     selectColor.innerHTML = '';
-    let options = [];
+    let options = [{val: 'custom', label: '🎨 WARNA BEBAS (Palet Kanan)'}]; // Opsi Hex
     
     if (elementType === 'bg') {
-        options = [
-            {val: 'bg-gray-900', label: 'Abu Gelap (Default)'},
-            {val: 'bg-slate-800', label: 'Slate Night'},
-            {val: 'bg-blue-900', label: 'Biru Navy'},
-            {val: 'bg-emerald-900', label: 'Hijau Tua'},
-            {val: 'bg-indigo-900', label: 'Indigo Gelap'},
-            {val: 'bg-black', label: 'Hitam Pekat'}
-        ];
+        options.push(
+            {val: 'bg-gray-900', label: 'Abu Gelap (Default)'}, {val: 'bg-slate-800', label: 'Slate Night'},
+            {val: 'bg-blue-900', label: 'Biru Navy'}, {val: 'bg-emerald-900', label: 'Hijau Tua'},
+            {val: 'bg-indigo-900', label: 'Indigo Gelap'}, {val: 'bg-black', label: 'Hitam Pekat'}
+        );
     } else if (elementType === 'title') {
-        options = [
-            {val: 'text-yellow-400', label: 'Kuning (Default)'},
-            {val: 'text-white', label: 'Putih Bersih'},
-            {val: 'text-green-400', label: 'Hijau Cerah'},
-            {val: 'text-blue-400', label: 'Biru Cerah'},
-            {val: 'text-orange-400', label: 'Orange Terang'},
-            {val: 'text-pink-400', label: 'Pink Cerah'}
-        ];
+        options.push(
+            {val: 'text-yellow-400', label: 'Kuning (Default)'}, {val: 'text-white', label: 'Putih Bersih'},
+            {val: 'text-green-400', label: 'Hijau Cerah'}, {val: 'text-blue-400', label: 'Biru Cerah'},
+            {val: 'text-orange-400', label: 'Orange Terang'}, {val: 'text-pink-400', label: 'Pink Cerah'}
+        );
     } else {
-        options = [
+        options.push(
             {val: 'bg-blue-600', label: 'Biru Terang'}, {val: 'bg-blue-800', label: 'Biru Gelap'},
             {val: 'bg-orange-600', label: 'Orange'}, {val: 'bg-emerald-600', label: 'Hijau Zamrud'},
             {val: 'bg-red-600', label: 'Merah'}, {val: 'bg-purple-600', label: 'Ungu'},
             {val: 'bg-teal-600', label: 'Teal/Tosca'}, {val: 'bg-indigo-600', label: 'Indigo'},
             {val: 'bg-gray-800', label: 'Abu Gelap'}, {val: 'bg-pink-500', label: 'Pink'}
-        ];
+        );
     }
     
     options.forEach(opt => {
@@ -2025,39 +2045,68 @@ window.openThemeEditor = function(buttonId, currentText, currentColor, currentIc
 window.applyThemeToPreview = function() {
     const id = document.getElementById('edit-theme-id').value;
     const elementType = document.getElementById('edit-theme-id').dataset.type;
-    const color = document.getElementById('edit-theme-color').value;
+    
+    const selectVal = document.getElementById('edit-theme-color').value;
+    const hexVal = document.getElementById('edit-theme-hex').value;
+    
+    // Apakah user memilih warna bebas dari kotak?
+    const isCustomHex = selectVal === 'custom';
+    
+    let colorClass = isCustomHex ? '' : selectVal; // Kosongkan class jika pakai hex
+    let hexColor = isCustomHex ? hexVal : ''; // Simpan kode hex (ex: #ff0000)
+    let bgUrl = document.getElementById('edit-theme-bg-url').value; 
     
     let text = '';
     let fullIconClass = '';
     
     if (elementType === 'button') {
         text = document.getElementById('edit-theme-text').value;
-        let icon = document.getElementById('edit-theme-icon').value.replace('fa-', '');
-        fullIconClass = 'fa-' + icon;
+        fullIconClass = 'fa-' + document.getElementById('edit-theme-icon').value.replace('fa-', '');
     }
 
-    currentEditingTheme[id] = { type: elementType, color: color, text: text, icon: fullIconClass };
+    currentEditingTheme[id] = { type: elementType, color: colorClass, customHex: hexColor, text: text, icon: fullIconClass, bgImage: bgUrl };
 
-    // Terapkan ke Layar Preview Berdasarkan Tipenya
+    // ================= APPLY KE LAYAR PREVIEW =================
     if (elementType === 'bg') {
         const previewBg = document.getElementById('preview-lobby-container');
         if(previewBg) {
-            previewBg.className = previewBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/, color);
-            const btn = document.querySelector(`button[onclick*="openThemeEditor('lobby_bg'"]`);
-            if(btn) btn.setAttribute('onclick', `window.openThemeEditor('lobby_bg', '', '${color}', '', 'bg')`);
+            // Bersihkan styling lama
+            previewBg.style.backgroundColor = '';
+            previewBg.style.backgroundImage = '';
+            
+            if (bgUrl) {
+                previewBg.style.backgroundImage = `url('${bgUrl}')`;
+                previewBg.style.backgroundSize = 'cover';
+                previewBg.style.backgroundPosition = 'center';
+            } else if (isCustomHex) {
+                previewBg.style.backgroundColor = hexColor;
+                previewBg.className = previewBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/g, ''); // Hapus class tailwind lama
+            } else {
+                previewBg.className = previewBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/g, colorClass);
+            }
         }
     } else if (elementType === 'title') {
         const previewTitle = document.getElementById('preview-lobby-title');
         if(previewTitle) {
-            previewTitle.className = previewTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/, color);
-            const btn = document.querySelector(`button[onclick*="openThemeEditor('lobby_title'"]`);
-            if(btn) btn.setAttribute('onclick', `window.openThemeEditor('lobby_title', '', '${color}', '', 'title')`);
+            previewTitle.style.color = '';
+            if (isCustomHex) {
+                previewTitle.style.color = hexColor;
+                previewTitle.className = previewTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/g, '');
+            } else {
+                previewTitle.className = previewTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/g, colorClass);
+            }
         }
     } else {
         const btn = document.querySelector(`button[onclick*="openThemeEditor('${id}'"]`);
         if(btn) {
-            btn.className = btn.className.replace(/\bbg-[a-z]+-\d+\b/, color); 
-            btn.setAttribute('onclick', `window.openThemeEditor('${id}', '${text}', '${color}', '${fullIconClass}', 'button')`);
+            btn.style.backgroundColor = '';
+            if (isCustomHex) {
+                btn.style.backgroundColor = hexColor;
+                btn.className = btn.className.replace(/\bbg-[a-z]+-\d+\b/g, '');
+            } else {
+                btn.className = btn.className.replace(/\bbg-[a-z]+-\d+\b/g, colorClass); 
+            }
+            
             const textEl = btn.querySelector('h3');
             if(textEl) textEl.innerText = text;
             
@@ -2108,19 +2157,42 @@ window.applyThemeToLobby = function() {
     // 1. Terapkan Latar (Background) Lobi
     if (theme['lobby_bg']) {
         const realBg = document.getElementById('view-lobby');
-        if(realBg) realBg.className = realBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/, theme['lobby_bg'].color);
-        // Sync ke Preview
         const prevBg = document.getElementById('preview-lobby-container');
-        if(prevBg) prevBg.className = prevBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/, theme['lobby_bg'].color);
+        
+        [realBg, prevBg].forEach(el => {
+            if(el) {
+                el.style.backgroundColor = '';
+                el.style.backgroundImage = '';
+                if (theme['lobby_bg'].bgImage) {
+                    el.style.backgroundImage = `url('${theme['lobby_bg'].bgImage}')`;
+                    el.style.backgroundSize = 'cover';
+                    el.style.backgroundPosition = 'center';
+                } else if (theme['lobby_bg'].customHex) {
+                    el.style.backgroundColor = theme['lobby_bg'].customHex;
+                    el.className = el.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/g, '');
+                } else if (theme['lobby_bg'].color) {
+                    el.className = el.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/g, theme['lobby_bg'].color);
+                }
+            }
+        });
     }
 
     // 2. Terapkan Warna Judul Toko
     if (theme['lobby_title']) {
         const realTitle = document.getElementById('business-name-lobby');
-        if(realTitle) realTitle.className = realTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/, theme['lobby_title'].color);
-        // Sync ke Preview
         const prevTitle = document.getElementById('preview-lobby-title');
-        if(prevTitle) prevTitle.className = prevTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/, theme['lobby_title'].color);
+        
+        [realTitle, prevTitle].forEach(el => {
+            if(el) {
+                el.style.color = '';
+                if (theme['lobby_title'].customHex) {
+                    el.style.color = theme['lobby_title'].customHex;
+                    el.className = el.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/g, '');
+                } else if (theme['lobby_title'].color) {
+                    el.className = el.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/g, theme['lobby_title'].color);
+                }
+            }
+        });
     }
 
     // 3. Terapkan 7 Tombol Menu
@@ -2128,35 +2200,30 @@ window.applyThemeToLobby = function() {
     allButtons.forEach(btnId => {
         if (theme[btnId]) {
             const realBtn = document.getElementById('real_' + btnId);
-            if (realBtn) {
-                realBtn.className = realBtn.className.replace(/\bbg-[a-z]+-\d+\b/, theme[btnId].color);
-                const h3El = realBtn.querySelector('h3');
-                if(h3El) h3El.innerText = theme[btnId].text;
-                
-                if(btnId === 'btn_cashier') {
-                    const iconEl = realBtn.querySelector('.bg-black i');
-                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-lg`;
-                } else {
-                    const iconEl = realBtn.querySelector('i.fas');
-                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-2xl mb-1`;
-                }
-            }
-
             const previewBtn = document.querySelector(`button[onclick*="openThemeEditor('${btnId}'"]`);
-            if (previewBtn) {
-                previewBtn.className = previewBtn.className.replace(/\bbg-[a-z]+-\d+\b/, theme[btnId].color);
-                previewBtn.setAttribute('onclick', `window.openThemeEditor('${btnId}', '${theme[btnId].text}', '${theme[btnId].color}', '${theme[btnId].icon}', 'button')`);
-                const h3El = previewBtn.querySelector('h3');
-                if(h3El) h3El.innerText = theme[btnId].text;
-                
-                if(btnId === 'btn_cashier') {
-                    const iconEl = previewBtn.querySelector('.bg-black i');
-                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon}`;
-                } else {
-                    const iconEl = previewBtn.querySelector('i.fas');
-                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-xl`;
+            
+            [realBtn, previewBtn].forEach(btn => {
+                if (btn) {
+                    btn.style.backgroundColor = '';
+                    if (theme[btnId].customHex) {
+                        btn.style.backgroundColor = theme[btnId].customHex;
+                        btn.className = btn.className.replace(/\bbg-[a-z]+-\d+\b/g, '');
+                    } else if (theme[btnId].color) {
+                        btn.className = btn.className.replace(/\bbg-[a-z]+-\d+\b/g, theme[btnId].color);
+                    }
+                    
+                    const h3El = btn.querySelector('h3');
+                    if(h3El) h3El.innerText = theme[btnId].text;
+                    
+                    if(btnId === 'btn_cashier') {
+                        const iconEl = btn.querySelector('.bg-black i');
+                        if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-lg`;
+                    } else {
+                        const iconEl = btn.querySelector('i.fas');
+                        if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-2xl mb-1`;
+                    }
                 }
-            }
+            });
         }
     });
 };
