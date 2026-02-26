@@ -1954,43 +1954,120 @@ window.renderTableView = function() {
 // ================= FITUR STUDIO TAMPILAN (THEME BUILDER) =================
 let currentEditingTheme = {};
 
-window.openThemeEditor = function(buttonId, currentText, currentColor, currentIcon) {
+window.openThemeEditor = function(buttonId, currentText, currentColor, currentIcon, elementType = 'button') {
     document.getElementById('edit-theme-id').value = buttonId;
-    document.getElementById('edit-theme-text').value = currentText;
-    document.getElementById('edit-theme-color').value = currentColor;
-    let cleanIcon = currentIcon.replace('fa-', '');
-    document.getElementById('edit-theme-icon').value = cleanIcon;
-    document.getElementById('preview-theme-icon').className = `fas fa-${cleanIcon} text-gray-600`;
+    document.getElementById('edit-theme-id').dataset.type = elementType; // Simpan tipe elemen
     
-    document.getElementById('edit-theme-icon').onkeyup = function() {
-        let typedIcon = this.value.replace('fa-', '');
-        document.getElementById('preview-theme-icon').className = `fas fa-${typedIcon} text-gray-600`;
-    };
+    // Sembunyikan input teks & icon jika sedang edit Latar / Judul
+    const groupText = document.getElementById('modal-group-text');
+    const groupIcon = document.getElementById('modal-group-icon');
+    
+    if (elementType === 'bg' || elementType === 'title') {
+        if(groupText) groupText.style.display = 'none';
+        if(groupIcon) groupIcon.style.display = 'none';
+    } else {
+        if(groupText) groupText.style.display = 'block';
+        if(groupIcon) groupIcon.style.display = 'block';
+        
+        // Isi data lama untuk tombol
+        document.getElementById('edit-theme-text').value = currentText;
+        let cleanIcon = currentIcon.replace('fa-', '');
+        document.getElementById('edit-theme-icon').value = cleanIcon;
+        document.getElementById('preview-theme-icon').className = `fas fa-${cleanIcon} text-gray-600`;
+        
+        document.getElementById('edit-theme-icon').onkeyup = function() {
+            let typedIcon = this.value.replace('fa-', '');
+            document.getElementById('preview-theme-icon').className = `fas fa-${typedIcon} text-gray-600`;
+        };
+    }
+    
+    // Ganti daftar warna di Dropdown sesuai apa yang diedit
+    const selectColor = document.getElementById('edit-theme-color');
+    selectColor.innerHTML = '';
+    let options = [];
+    
+    if (elementType === 'bg') {
+        options = [
+            {val: 'bg-gray-900', label: 'Abu Gelap (Default)'},
+            {val: 'bg-slate-800', label: 'Slate Night'},
+            {val: 'bg-blue-900', label: 'Biru Navy'},
+            {val: 'bg-emerald-900', label: 'Hijau Tua'},
+            {val: 'bg-indigo-900', label: 'Indigo Gelap'},
+            {val: 'bg-black', label: 'Hitam Pekat'}
+        ];
+    } else if (elementType === 'title') {
+        options = [
+            {val: 'text-yellow-400', label: 'Kuning (Default)'},
+            {val: 'text-white', label: 'Putih Bersih'},
+            {val: 'text-green-400', label: 'Hijau Cerah'},
+            {val: 'text-blue-400', label: 'Biru Cerah'},
+            {val: 'text-orange-400', label: 'Orange Terang'},
+            {val: 'text-pink-400', label: 'Pink Cerah'}
+        ];
+    } else {
+        options = [
+            {val: 'bg-blue-600', label: 'Biru Terang'}, {val: 'bg-blue-800', label: 'Biru Gelap'},
+            {val: 'bg-orange-600', label: 'Orange'}, {val: 'bg-emerald-600', label: 'Hijau Zamrud'},
+            {val: 'bg-red-600', label: 'Merah'}, {val: 'bg-purple-600', label: 'Ungu'},
+            {val: 'bg-teal-600', label: 'Teal/Tosca'}, {val: 'bg-indigo-600', label: 'Indigo'},
+            {val: 'bg-gray-800', label: 'Abu Gelap'}, {val: 'bg-pink-500', label: 'Pink'}
+        ];
+    }
+    
+    options.forEach(opt => {
+        const isSelected = opt.val === currentColor ? 'selected' : '';
+        selectColor.innerHTML += `<option value="${opt.val}" ${isSelected}>${opt.label}</option>`;
+    });
+
     document.getElementById('theme-modal').classList.remove('hidden');
 };
 
 window.applyThemeToPreview = function() {
     const id = document.getElementById('edit-theme-id').value;
-    const text = document.getElementById('edit-theme-text').value;
+    const elementType = document.getElementById('edit-theme-id').dataset.type;
     const color = document.getElementById('edit-theme-color').value;
-    let icon = document.getElementById('edit-theme-icon').value.replace('fa-', '');
-    let fullIconClass = 'fa-' + icon;
+    
+    let text = '';
+    let fullIconClass = '';
+    
+    if (elementType === 'button') {
+        text = document.getElementById('edit-theme-text').value;
+        let icon = document.getElementById('edit-theme-icon').value.replace('fa-', '');
+        fullIconClass = 'fa-' + icon;
+    }
 
-    currentEditingTheme[id] = { text: text, color: color, icon: fullIconClass };
+    currentEditingTheme[id] = { type: elementType, color: color, text: text, icon: fullIconClass };
 
-    const btn = document.querySelector(`button[onclick*="openThemeEditor('${id}'"]`);
-    if(btn) {
-        btn.className = btn.className.replace(/bg-[a-z]+-\d+/, color); 
-        btn.setAttribute('onclick', `window.openThemeEditor('${id}', '${text}', '${color}', '${fullIconClass}')`);
-        const textEl = btn.querySelector('h3');
-        if(textEl) textEl.innerText = text;
-        
-        if(id === 'btn_cashier') {
-            const iconEl = btn.querySelector('.bg-black i');
-            if(iconEl) iconEl.className = `fas ${fullIconClass}`;
-        } else {
-            const iconEl = btn.querySelector('i.fas');
-            if(iconEl) iconEl.className = `fas ${fullIconClass} text-xl`;
+    // Terapkan ke Layar Preview Berdasarkan Tipenya
+    if (elementType === 'bg') {
+        const previewBg = document.getElementById('preview-lobby-container');
+        if(previewBg) {
+            previewBg.className = previewBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/, color);
+            const btn = document.querySelector(`button[onclick*="openThemeEditor('lobby_bg'"]`);
+            if(btn) btn.setAttribute('onclick', `window.openThemeEditor('lobby_bg', '', '${color}', '', 'bg')`);
+        }
+    } else if (elementType === 'title') {
+        const previewTitle = document.getElementById('preview-lobby-title');
+        if(previewTitle) {
+            previewTitle.className = previewTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/, color);
+            const btn = document.querySelector(`button[onclick*="openThemeEditor('lobby_title'"]`);
+            if(btn) btn.setAttribute('onclick', `window.openThemeEditor('lobby_title', '', '${color}', '', 'title')`);
+        }
+    } else {
+        const btn = document.querySelector(`button[onclick*="openThemeEditor('${id}'"]`);
+        if(btn) {
+            btn.className = btn.className.replace(/\bbg-[a-z]+-\d+\b/, color); 
+            btn.setAttribute('onclick', `window.openThemeEditor('${id}', '${text}', '${color}', '${fullIconClass}', 'button')`);
+            const textEl = btn.querySelector('h3');
+            if(textEl) textEl.innerText = text;
+            
+            if(id === 'btn_cashier') {
+                const iconEl = btn.querySelector('.bg-black i');
+                if(iconEl) iconEl.className = `fas ${fullIconClass}`;
+            } else {
+                const iconEl = btn.querySelector('i.fas');
+                if(iconEl) iconEl.className = `fas ${fullIconClass} text-xl`;
+            }
         }
     }
     document.getElementById('theme-modal').classList.add('hidden');
@@ -2005,12 +2082,10 @@ window.saveThemeToFirebase = async function() {
         businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
 
         await setDoc(doc(db, "users", shopOwnerId), { themeData: businessData.themeData }, { merge: true });
-        
-        // 🔥 SIMPAN KE LOKAL SECARA PAKSA
         localStorage.setItem('cached_user_profile', JSON.stringify(businessData));
         
         window.applyThemeToLobby();
-        Swal.fire('Sukses', 'Tema sudah dikunci permanen!', 'success');
+        Swal.fire('Sukses', 'Tema dikunci permanen!', 'success');
         currentEditingTheme = {}; 
     } catch (e) {
         Swal.fire('Error', e.message, 'error');
@@ -2018,7 +2093,6 @@ window.saveThemeToFirebase = async function() {
 };
 
 window.applyThemeToLobby = function() {
-    // 🔥 BACA DARI LOKAL DULU (Penyelamat saat aplikasi di-kill)
     let theme = null;
     if (businessData && businessData.themeData) {
         theme = businessData.themeData;
@@ -2029,18 +2103,33 @@ window.applyThemeToLobby = function() {
             if (parsed && parsed.themeData) theme = parsed.themeData;
         }
     }
-    if (!theme) return; // Kalau memang tidak ada tema sama sekali, biarkan default
+    if (!theme) return;
 
-    // Daftar semua ID tombol
+    // 1. Terapkan Latar (Background) Lobi
+    if (theme['lobby_bg']) {
+        const realBg = document.getElementById('view-lobby');
+        if(realBg) realBg.className = realBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/, theme['lobby_bg'].color);
+        // Sync ke Preview
+        const prevBg = document.getElementById('preview-lobby-container');
+        if(prevBg) prevBg.className = prevBg.className.replace(/\bbg-(?!opacity)[a-z]+(?:-\d+)?\b/, theme['lobby_bg'].color);
+    }
 
+    // 2. Terapkan Warna Judul Toko
+    if (theme['lobby_title']) {
+        const realTitle = document.getElementById('business-name-lobby');
+        if(realTitle) realTitle.className = realTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/, theme['lobby_title'].color);
+        // Sync ke Preview
+        const prevTitle = document.getElementById('preview-lobby-title');
+        if(prevTitle) prevTitle.className = prevTitle.className.replace(/\btext-(yellow|white|green|blue|orange|pink|gray)(?:-\d+)?\b/, theme['lobby_title'].color);
+    }
+
+    // 3. Terapkan 7 Tombol Menu
     const allButtons = ['btn_cashier', 'btn_stock', 'btn_report', 'btn_table', 'btn_calc', 'btn_admin', 'btn_setting'];
-    
     allButtons.forEach(btnId => {
         if (theme[btnId]) {
-            // 1. Terapkan ke Tombol Lobi Asli
             const realBtn = document.getElementById('real_' + btnId);
             if (realBtn) {
-                realBtn.className = realBtn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
+                realBtn.className = realBtn.className.replace(/\bbg-[a-z]+-\d+\b/, theme[btnId].color);
                 const h3El = realBtn.querySelector('h3');
                 if(h3El) h3El.innerText = theme[btnId].text;
                 
@@ -2053,12 +2142,10 @@ window.applyThemeToLobby = function() {
                 }
             }
 
-            // 2. Terapkan JUGA ke Layar Preview Studio (Agar tidak reset ke standar)
             const previewBtn = document.querySelector(`button[onclick*="openThemeEditor('${btnId}'"]`);
             if (previewBtn) {
-                previewBtn.className = previewBtn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
-                // Update memori kliknya
-                previewBtn.setAttribute('onclick', `window.openThemeEditor('${btnId}', '${theme[btnId].text}', '${theme[btnId].color}', '${theme[btnId].icon}')`);
+                previewBtn.className = previewBtn.className.replace(/\bbg-[a-z]+-\d+\b/, theme[btnId].color);
+                previewBtn.setAttribute('onclick', `window.openThemeEditor('${btnId}', '${theme[btnId].text}', '${theme[btnId].color}', '${theme[btnId].icon}', 'button')`);
                 const h3El = previewBtn.querySelector('h3');
                 if(h3El) h3El.innerText = theme[btnId].text;
                 
@@ -2073,6 +2160,8 @@ window.applyThemeToLobby = function() {
         }
     });
 };
+
+// ================= FITUR DEBOUNCE SEARCH (KASIR, ADMIN, STOK) =================
 
 
 // ================= FITUR DEBOUNCE SEARCH (KASIR, ADMIN, STOK) =================
