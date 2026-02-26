@@ -1993,16 +1993,24 @@ window.saveThemeToFirebase = async function() {
     if(Object.keys(currentEditingTheme).length === 0) return Swal.fire('Info', 'Belum ada perubahan tema', 'info');
     Swal.fire({title: 'Menerapkan Tema...', didOpen: () => Swal.showLoading()});
     try {
-        await setDoc(doc(db, "users", shopOwnerId), { themeData: currentEditingTheme }, { merge: true });
+        // 1. GABUNGKAN DATA TEMA LAMA & BARU (Agar warna lain yang tidak diedit tidak hilang)
         if(!businessData.themeData) businessData.themeData = {};
         businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
+
+        // 2. TEMBAK DATA GABUNGAN KE FIREBASE CLOUD
+        await setDoc(doc(db, "users", shopOwnerId), { themeData: businessData.themeData }, { merge: true });
+        
+        // 3. KUNCI DI MEMORI HP LOKAL (Ini yang mencegah warna kembali ke awal saat aplikasi di-kill)
+        localStorage.setItem('cached_user_profile', JSON.stringify(businessData));
+        
         window.applyThemeToLobby();
-        Swal.fire('Sukses', 'Tema berhasil diterapkan ke semua kasir!', 'success');
+        Swal.fire('Sukses', 'Tema sudah dikunci permanen!', 'success');
         currentEditingTheme = {}; 
     } catch (e) {
         Swal.fire('Error', e.message, 'error');
     }
 };
+
 
 window.applyThemeToLobby = function() {
     if (!businessData || !businessData.themeData) return;
