@@ -1552,30 +1552,48 @@ window.viewTransactionDetail = function(id) {
     
     document.getElementById('bill-content').innerHTML = generateReceiptHTML(trx.buyer, trx.items, trx.total, trx.date, trx.method, trx.paid, trx.change, trx.remaining || 0, trx.operatorName || 'Admin');
     
-    // 🔥 LOGIKA TOMBOL READ-ONLY
+    // 🔥 LOGIKA TOMBOL READ-ONLY & INPUT WA
     const actionContainer = document.getElementById('view-actions');
+    
+    // Kita buat wadah input WA-nya di sini agar tidak tertimpa/hilang
+    const inputWaHtml = `<input type="tel" id="modal-buyer-wa" placeholder="No. WA Pelanggan (Cth: 0812...)" class="w-full p-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-green-500 mb-2">`;
     
     if (currentUserRole === 'kasir') {
         // KASIR: Hanya bisa Kirim WA dan Simpan Gambar
         actionContainer.innerHTML = `
-            <button onclick="window.sendToWA()" class="bg-green-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition">
-                <i class="fab fa-whatsapp mr-1"></i> WA
-            </button>
-            <button onclick="window.saveReceiptImage()" class="bg-blue-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition">
-                <i class="fas fa-image mr-1"></i> Simpan
-            </button>
+            ${inputWaHtml}
+            <div class="grid grid-cols-2 gap-2 w-full">
+                <button onclick="window.sendToWA()" class="bg-green-600 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
+                    <i class="fab fa-whatsapp text-xl"></i> Kirim WA
+                </button>
+                <button onclick="window.saveReceiptImage()" class="bg-blue-600 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
+                    <i class="fas fa-download"></i> Simpan
+                </button>
+            </div>
         `;
     } else {
-        // ADMIN: Tampil semua tombol (Edit & Hapus)
+        // ADMIN: Tampil semua tombol (Input WA + 4 Tombol Aksi)
         actionContainer.innerHTML = `
-            <div class="flex gap-2 w-full">
-                <button onclick="window.sendToWA()" class="bg-green-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fab fa-whatsapp"></i></button>
-                <button onclick="window.saveReceiptImage()" class="bg-blue-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fas fa-image"></i></button>
-                <button onclick="window.editTransaction()" class="bg-yellow-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fas fa-edit"></i></button>
-                <button onclick="window.deleteTransaction()" class="bg-red-500 text-white p-3 rounded-xl font-bold flex-1 active:scale-95 transition"><i class="fas fa-trash"></i></button>
+            ${inputWaHtml}
+            <div class="grid grid-cols-2 gap-2 w-full mb-1">
+                <button onclick="window.sendToWA()" class="bg-green-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
+                    <i class="fab fa-whatsapp text-xl"></i> Kirim WA
+                </button>
+                <button onclick="window.saveReceiptImage()" class="bg-blue-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition">
+                    <i class="fas fa-download"></i> Simpan
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 w-full">
+                <button onclick="window.editTransaction()" class="w-full bg-yellow-50 text-yellow-600 border border-yellow-200 py-2 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition text-sm">
+                    <i class="fas fa-edit"></i> Edit / Revisi
+                </button>
+                <button onclick="window.deleteTransaction()" class="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition text-sm">
+                    <i class="fas fa-trash-alt"></i> Hapus
+                </button>
             </div>
         `;
     }
+
     
     document.getElementById('payment-actions').classList.add('hidden');
     document.getElementById('payment-actions').classList.remove('grid');
@@ -1615,34 +1633,37 @@ window.sendToWA = function() {
     if(!currentViewedTrx) return;
     const t = currentViewedTrx;
     
-    // 🔥 PERBAIKAN: Tambahkan cek null agar tidak error jika elemen belum muncul
-    const waInput = document.getElementById('modal-buyer-wa');
-    let noWA = waInput ? waInput.value.trim() : ""; 
+    // 1. Ambil nomor WA dari input HTML yang baru kita buat
+    let noWA = document.getElementById('modal-buyer-wa').value.trim();
     
-    // Format nomor WA (ubah awalan 0 menjadi 62 standar internasional)
+    // 2. Format nomor WA (ubah awalan 0 menjadi 62 standar internasional)
     if (noWA.startsWith('0')) {
         noWA = '62' + noWA.substring(1);
     }
     
-    // Siapkan teks struk sebagai cadangan
+    // 3. Siapkan teks struk sebagai cadangan
     let text = `*Struk ${window.shopNameAsli || businessData.name || 'SAHABAT USAHAMU'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n\n`;
-    t.items.forEach(i => text += `${i.name} (${i.qty}) : Rp ${(parseInt(i.price)||0)*(parseInt(i.qty)||0).toLocaleString('id-ID')}\n`);
+    t.items.forEach(i => text += `${i.name} (${i.qty}) : Rp ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
     text += `\n*Total: Rp ${t.total.toLocaleString('id-ID')}*\nMetode: ${t.method}`;
     if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: Rp ${t.paid.toLocaleString('id-ID')}\nKembali: Rp ${t.change.toLocaleString('id-ID')}`; }
     if(t.remaining > 0) { text += `\nSisa Hutang: Rp ${t.remaining.toLocaleString('id-ID')}`; }
     text += `\n\n_Terima kasih telah berbelanja!_`;
 
+    // 4. Tentukan link tujuan (jika nomor kosong, WA akan minta pilih kontak manual)
     let waLink = noWA ? `https://wa.me/${noWA}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
 
+    // 5. Trik Hybrid: Download Gambar Struk dulu, baru buka WA
     Swal.fire({title: 'Menyiapkan Struk...', text: 'Gambar struk akan di-download otomatis', timer: 1500, showConfirmButton: false});
     
     const el = document.getElementById('bill-content');
     html2canvas(el, {scale:2, backgroundColor:'#fff'}).then(c => {
+        // Proses Download PNG
         const l = document.createElement('a'); 
         l.download = `Struk_${t.buyer}_${Date.now()}.png`; 
         l.href = c.toDataURL(); 
         l.click();
         
+        // Jeda setengah detik lalu Buka WhatsApp
         setTimeout(() => {
             window.open(waLink, '_blank');
         }, 500);
