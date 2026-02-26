@@ -1,4 +1,4 @@
-import { auth, db, secondaryAuth } from './firebase.js?v=19.03';
+import { auth, db, secondaryAuth } from './firebase.js?v=19.12';
 import { generateContext, askGroqAI } from './ai-brain.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -307,17 +307,24 @@ window.navigate = function(viewId) {
         window.setReportFilter('today');
     }
     if(viewId === 'view-stock') { renderCategoryTiles(); renderStockList(); } 
-    if(viewId === 'view-settings') { 
+     if(viewId === 'view-settings') { 
         document.getElementById('edit-business-name').value = window.shopNameAsli || businessData.name || ''; 
         document.getElementById('edit-business-address').value = window.shopAddressAsli || businessData.address || ''; 
     }
     if(viewId !== 'view-calculator') window.clearCalc();
     if(viewId === 'view-table') window.renderTableView();
+    
+    // 🔥 PAKSA TEMBAK WARNA SETIAP KALI BALIK KE LOBI
+    if(viewId === 'view-lobby') {
+        if(window.applyThemeToLobby) window.applyThemeToLobby();
+    }
+
     if (viewId === 'view-lobby' && editingTransactionId) {
         if(!confirm("Batalkan edit transaksi?")) {
             window.navigate('view-cashier'); 
             return;
         }
+
         exitEditMode();
     }
 }
@@ -1897,8 +1904,9 @@ window.addEventListener('offline', updateConnectionStatus);
 
 document.addEventListener('DOMContentLoaded', () => {
     updateConnectionStatus();
+    // 🔥 TEMBAK ULANG WARNA SAAT LAYAR SIAP (Anti Gagal)
+    if (window.applyThemeToLobby) window.applyThemeToLobby(); 
 });
-
 // ================= FITUR TABEL BUKU BESAR =================
 window.renderTableView = function() {
     const tbody = document.getElementById('table-body-data');
@@ -1943,10 +1951,163 @@ window.renderTableView = function() {
     });
 };
 
+// ================= FITUR STUDIO TAMPILAN (THEME BUILDER) =================
+let currentEditingTheme = {};
+
+window.openThemeEditor = function(buttonId, currentText, currentColor, currentIcon) {
+    document.getElementById('edit-theme-id').value = buttonId;
+    document.getElementById('edit-theme-text').value = currentText;
+    document.getElementById('edit-theme-color').value = currentColor;
+    let cleanIcon = currentIcon.replace('fa-', '');
+    document.getElementById('edit-theme-icon').value = cleanIcon;
+    document.getElementById('preview-theme-icon').className = `fas fa-${cleanIcon} text-gray-600`;
+    
+    document.getElementById('edit-theme-icon').onkeyup = function() {
+        let typedIcon = this.value.replace('fa-', '');
+        document.getElementById('preview-theme-icon').className = `fas fa-${typedIcon} text-gray-600`;
+    };
+    document.getElementById('theme-modal').classList.remove('hidden');
+};
+
+window.applyThemeToPreview = function() {
+    const id = document.getElementById('edit-theme-id').value;
+    const text = document.getElementById('edit-theme-text').value;
+    const color = document.getElementById('edit-theme-color').value;
+    let icon = document.getElementById('edit-theme-icon').value.replace('fa-', '');
+    let fullIconClass = 'fa-' + icon;
+
+    currentEditingTheme[id] = { text: text, color: color, icon: fullIconClass };
+
+    const btn = document.querySelector(`button[onclick*="openThemeEditor('${id}'"]`);
+    if(btn) {
+        btn.className = btn.className.replace(/bg-[a-z]+-\d+/, color); 
+        btn.setAttribute('onclick', `window.openThemeEditor('${id}', '${text}', '${color}', '${fullIconClass}')`);
+        const textEl = btn.querySelector('h3');
+        if(textEl) textEl.innerText = text;
+        
+        if(id === 'btn_cashier') {
+            const iconEl = btn.querySelector('.bg-black i');
+            if(iconEl) iconEl.className = `fas ${fullIconClass}`;
+        } else {
+            const iconEl = btn.querySelector('i.fas');
+            if(iconEl) iconEl.className = `fas ${fullIconClass} text-xl`;
+        }
+    }
+    document.getElementById('theme-modal').classList.add('hidden');
+    Swal.fire({toast: true, position: 'top', icon: 'success', title: 'Preview diupdate', timer: 1000, showConfirmButton: false});
+};
+
+window.saveThemeToFirebase = async function() {
+    if(Object.keys(currentEditingTheme).length === 0) return Swal.fire('Info', 'Belum ada perubahan tema', 'info');
+    Swal.fire({title: 'Menerapkan Tema...', didOpen: () => Swal.showLoading()});
+    try {
+        if(!businessData.themeData) businessData.themeData = {};
+        businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
+
+        await setDoc(doc(db, "users", shopOwnerId), { themeData: businessData.themeData }, { merge: true });
+        
+        // 🔥 SIMPAN KE LOKAL SECARA PAKSA
+        localStorage.setItem('cached_user_profile', JSON.stringify(businessData));
+        
+        window.applyThemeToLobby();
+        Swal.fire('Sukses', 'Tema sudah dikunci permanen!', 'success');
+        currentEditingTheme = {}; 
+    } catch (e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+};
+
+window.applyThemeToLobby = function() {
+    // 🔥 BACA DARI LOKAL DULU (Penyelamat saat aplikasi di-kill)
+    let theme = null;
+    if (businessData && businessData.themeData) {
+        theme = businessData.themeData;
+    } else {
+        const cached = localStorage.getItem('cached_user_profile');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.themeData) theme = parsed.themeData;
+        }
+    }
+    if (!theme) return; // Kalau memang tidak ada tema sama sekali, biarkan default
+
+    // Daftar semua ID tombol
+
+    const allButtons = ['btn_cashier', 'btn_stock', 'btn_report', 'btn_table', 'btn_calc', 'btn_admin', 'btn_setting'];
+    
+    allButtons.forEach(btnId => {
+        if (theme[btnId]) {
+            // 1. Terapkan ke Tombol Lobi Asli
+            const realBtn = document.getElementById('real_' + btnId);
+            if (realBtn) {
+                realBtn.className = realBtn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
+                const h3El = realBtn.querySelector('h3');
+                if(h3El) h3El.innerText = theme[btnId].text;
+                
+                if(btnId === 'btn_cashier') {
+                    const iconEl = realBtn.querySelector('.bg-black i');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-lg`;
+                } else {
+                    const iconEl = realBtn.querySelector('i.fas');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-2xl mb-1`;
+                }
+            }
+
+            // 2. Terapkan JUGA ke Layar Preview Studio (Agar tidak reset ke standar)
+            const previewBtn = document.querySelector(`button[onclick*="openThemeEditor('${btnId}'"]`);
+            if (previewBtn) {
+                previewBtn.className = previewBtn.className.replace(/bg-[a-z]+-\d+/, theme[btnId].color);
+                // Update memori kliknya
+                previewBtn.setAttribute('onclick', `window.openThemeEditor('${btnId}', '${theme[btnId].text}', '${theme[btnId].color}', '${theme[btnId].icon}')`);
+                const h3El = previewBtn.querySelector('h3');
+                if(h3El) h3El.innerText = theme[btnId].text;
+                
+                if(btnId === 'btn_cashier') {
+                    const iconEl = previewBtn.querySelector('.bg-black i');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon}`;
+                } else {
+                    const iconEl = previewBtn.querySelector('i.fas');
+                    if(iconEl) iconEl.className = `fas ${theme[btnId].icon} text-xl`;
+                }
+            }
+        }
+    });
+};
+
+
+// ================= FITUR DEBOUNCE SEARCH (KASIR, ADMIN, STOK) =================
+document.addEventListener('DOMContentLoaded', () => {
+
+    const debounce = (func, delay) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func(...args), delay);
+        };
+    };
+
+    const debouncedRenderMenuGrid = debounce(renderMenuGrid, 300);
+    const cashierSearch = document.getElementById('cashier-search');
+    if (cashierSearch) cashierSearch.addEventListener('keyup', debouncedRenderMenuGrid);
+
+        const debouncedRenderAdminList = debounce(renderAdminList, 300);
+    const adminSearch = document.getElementById('admin-search');
+    if (adminSearch) adminSearch.addEventListener('keyup', debouncedRenderAdminList);
+
+    const debouncedRenderStockList = debounce(renderStockList, 300);
+    const stockSearch = document.getElementById('stock-search');
+    if (stockSearch) stockSearch.addEventListener('keyup', debouncedRenderStockList);
+    
+    // 🔥 TEMBAK WARNA SAAT HP SELESAI GAMBAR HTML (Tunda 100ms agar aman)
+    if (window.applyThemeToLobby) {
+        setTimeout(() => window.applyThemeToLobby(), 100); 
+    }
+});
+
 // ================= FITUR AI CHATBOT (FULL SET: BRAIN + UI) =================
 
-// 🔥 PERBAIKAN: Menambahkan Titik Koma di awal agar tidak crash dengan baris di atasnya
 ;(function initFloatingButton() {
+
     const fab = document.getElementById('tombol-jelajah-ai');
     if (!fab) return;
 
@@ -2082,7 +2243,7 @@ window.startVoiceInput = function() {
         const text = event.results[0][0].transcript;
         const inputEl = document.getElementById('chat-input');
         inputEl.value = text;
-        stopMicVisual();
+        stopMicVisual()
     };
 
     recognition.onspeechend = () => {
