@@ -235,8 +235,12 @@
 
                 <div>
                     <label class="text-xs font-bold text-gray-500">Pilih Warna</label>
-                    <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1 font-bold">
-                        </select>
+                    <div class="flex gap-2 mt-1 items-center">
+                        <select id="edit-theme-color" class="flex-1 p-2 border rounded-lg text-sm outline-none font-bold">
+                            </select>
+                        <input type="color" id="edit-theme-hex" class="w-10 h-10 p-0 border-0 rounded cursor-pointer shadow-sm" title="Palet Warna">
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1">Pilih "Warna Bebas" di kiri, lalu ketuk kotak di kanan ➡️</p>
                 </div>
 
                 <div id="modal-group-icon">
@@ -248,9 +252,16 @@
                     <p class="text-[9px] text-gray-400 mt-1">Contoh: fa-coffee, fa-store, fa-shopping-cart</p>
                 </div>
                 
-                <div class="border border-dashed border-gray-300 p-3 rounded-xl bg-gray-50 text-center opacity-50 cursor-not-allowed" title="Segera Hadir">
-                    <i class="fas fa-image text-gray-400 mb-1"></i>
-                    <p class="text-[10px] text-gray-500 font-bold">Upload Gambar Kustom (Coming Soon)</p>
+                <div id="modal-group-upload" class="hidden">
+                    <label class="text-xs font-bold text-gray-500">Atau Pakai Gambar (Latar)</label>
+                    <div class="border-2 border-dashed border-blue-300 mt-1 p-3 rounded-xl bg-blue-50 text-center relative hover:bg-blue-100 transition cursor-pointer">
+                        <input type="file" id="edit-theme-bg-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.uploadThemeBgImage(this)">
+                        <input type="hidden" id="edit-theme-bg-url">
+                        <div id="preview-theme-bg-container" class="pointer-events-none flex flex-col items-center">
+                            <i class="fas fa-images text-blue-500 mb-1 text-2xl"></i>
+                            <p class="text-[10px] text-blue-700 font-bold">Ketuk untuk Ambil dari Galeri</p>
+                        </div>
+                    </div>
                 </div>
 
                 <button onclick="window.applyThemeToPreview()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow active:scale-95 transition">
