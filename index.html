@@ -228,14 +228,21 @@
             <div class="p-5 space-y-4">
                 <input type="hidden" id="edit-theme-id">
                 
-                <div>
+                <div id="modal-group-text">
                     <label class="text-xs font-bold text-gray-500">Nama Teks Menu</label>
                     <input type="text" id="edit-theme-text" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
                 </div>
 
                 <div>
-                    <label class="text-xs font-bold text-gray-500">Pilih Warna (Tailwind)</label>
-                    <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1">
+                    <label class="text-xs font-bold text-gray-500">Pilih Warna</label>
+                    <select id="edit-theme-color" class="w-full p-2 border rounded-lg text-sm outline-none mt-1 font-bold">
+                        </select>
+                </div>
+
+                <div id="modal-group-icon">
+                    <label class="text-xs font-bold text-gray-500">Icon (FontAwesome)</label>
+                    <div class="flex gap-2 mt-1">
+
                         <option value="bg-blue-600">Biru Terang</option>
                         <option value="bg-blue-800">Biru Gelap</option>
                         <option value="bg-orange-600">Orange</option>
