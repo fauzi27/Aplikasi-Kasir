@@ -2001,14 +2001,12 @@ window.saveThemeToFirebase = async function() {
     if(Object.keys(currentEditingTheme).length === 0) return Swal.fire('Info', 'Belum ada perubahan tema', 'info');
     Swal.fire({title: 'Menerapkan Tema...', didOpen: () => Swal.showLoading()});
     try {
-        // 1. GABUNGKAN DATA TEMA LAMA & BARU (Agar warna lain yang tidak diedit tidak hilang)
         if(!businessData.themeData) businessData.themeData = {};
         businessData.themeData = { ...businessData.themeData, ...currentEditingTheme };
 
-        // 2. TEMBAK DATA GABUNGAN KE FIREBASE CLOUD
         await setDoc(doc(db, "users", shopOwnerId), { themeData: businessData.themeData }, { merge: true });
         
-        // 3. KUNCI DI MEMORI HP LOKAL (Ini yang mencegah warna kembali ke awal saat aplikasi di-kill)
+        // 🔥 SIMPAN KE LOKAL SECARA PAKSA
         localStorage.setItem('cached_user_profile', JSON.stringify(businessData));
         
         window.applyThemeToLobby();
@@ -2019,12 +2017,22 @@ window.saveThemeToFirebase = async function() {
     }
 };
 
-
 window.applyThemeToLobby = function() {
-    if (!businessData || !businessData.themeData) return;
-    const theme = businessData.themeData;
+    // 🔥 BACA DARI LOKAL DULU (Penyelamat saat aplikasi di-kill)
+    let theme = null;
+    if (businessData && businessData.themeData) {
+        theme = businessData.themeData;
+    } else {
+        const cached = localStorage.getItem('cached_user_profile');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.themeData) theme = parsed.themeData;
+        }
+    }
+    if (!theme) return; // Kalau memang tidak ada tema sama sekali, biarkan default
 
     // Daftar semua ID tombol
+
     const allButtons = ['btn_cashier', 'btn_stock', 'btn_report', 'btn_table', 'btn_calc', 'btn_admin', 'btn_setting'];
     
     allButtons.forEach(btnId => {
