@@ -65,25 +65,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
-// =========================================================================
-// 🔥 TAMBAHAN BARU UNTUK PWABUILDER (100% AMAN, TIDAK MERUSAK KINERJA)
-// =========================================================================
-
-// 4. BACKGROUND SYNC: Memberitahu OS bahwa kita mendukung sinkronisasi latar belakang
-self.addEventListener('sync', (event) => {
-  console.log('🔄 [Service Worker] Mendeteksi tag Background Sync:', event.tag);
-  if (event.tag === 'sync-data') {
-    // Di masa depan, logika untuk mengirim data saat internet kembali nyala ditaruh di sini
-    event.waitUntil(Promise.resolve());
-  }
-});
-
-// 5. PERIODIC BACKGROUND SYNC: Memberitahu OS kita mendukung update berkala
-self.addEventListener('periodicsync', (event) => {
-  console.log('⏳ [Service Worker] Mendeteksi tag Periodic Sync:', event.tag);
-  if (event.tag === 'update-data') {
-    // Di masa depan, logika untuk menarik update data diam-diam ditaruh di sini
-    event.waitUntil(Promise.resolve());
-  }
-});
