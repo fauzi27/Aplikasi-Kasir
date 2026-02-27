@@ -21,20 +21,21 @@
   "edge_side_panel": {
     "preferred_width": 400
   },
-  "icons": [
+   "icons": [
     {
-      "src": "asset/logokasir.png",
+      "src": "asset/icon-transparan.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "asset/logokasir.png",
+      "src": "asset/icon-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
+
   "shortcuts": [
     {
       "name": "Mulai Jualan",
