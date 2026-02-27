@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "app.vercel.kasirpribadi.twa",
-        "sha256_cert_fingerprints": ["BF:BB:6E:9C:2C:04:FA:D0:17:E8:D8:87:4E:E5:FE:1B:BE:CF:04:47:E7:BF:B4:E5:6F:81:4E:77:F7:A0:92:2D"]
+        "package_name": "store.iszi.twa",
+        "sha256_cert_fingerprints": ["9D:FA:7F:2C:00:1D:29:E0:92:43:9B:33:07:48:5B:55:58:9C:3F:34:73:6D:5D:20:26:EB:10:64:BC:5E:1E:C1"]
       }
     }]
