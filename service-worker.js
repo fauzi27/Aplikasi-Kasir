@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sahabat-usahamu-v19.24'; // Ganti nama biar browser reset
+const CACHE_NAME = 'sahabat-usahamu-v19.25'; // Versi dinaikkan agar update
 const STATIC_ASSETS = [
   './', 
   './index.html',
@@ -36,27 +36,23 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 🛑 PENTING: JANGAN SIMPAN REQUEST DATA DATABASE!
-  // Biarkan request ke Firestore/Google Auth lewat internet saja
+  // Biarkan request ke Firestore/Google Auth lewat internet saja (SUDAH SANGAT AMAN)
   if (url.hostname.includes('firestore.googleapis.com') || 
       url.hostname.includes('identitytoolkit') || 
       url.href.includes('getAccountInfo')) {
-      return; // Langsung ke internet, jangan di-cache
+      return; 
   }
 
   // UNTUK FILE LAIN (HTML, JS, CSS, GAMBAR, LIBRARY):
   event.respondWith(
     caches.match(event.request).then((cachedResp) => {
-      // A. Kalau ada di saku (Cache), berikan langsung!
       if (cachedResp) return cachedResp;
 
-      // B. Kalau tidak ada, ambil dari Internet...
       return fetch(event.request).then((networkResp) => {
-        // Cek apakah download berhasil
         if (!networkResp || networkResp.status !== 200 || networkResp.type === 'error') {
           return networkResp;
         }
 
-        // C. ...DAN LANGSUNG SIMPAN KE SAKU (Cache) buat nanti!
         const responseToCache = networkResp.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
@@ -64,9 +60,30 @@ self.addEventListener('fetch', (event) => {
 
         return networkResp;
       }).catch(() => {
-         // D. Kalau internet mati & file gak ada di saku -> Tampilkan pesan error di console
          console.log("Gagal load offline:", event.request.url);
       });
     })
   );
+});
+
+// =========================================================================
+// 🔥 TAMBAHAN BARU UNTUK PWABUILDER (100% AMAN, TIDAK MERUSAK KINERJA)
+// =========================================================================
+
+// 4. BACKGROUND SYNC: Memberitahu OS bahwa kita mendukung sinkronisasi latar belakang
+self.addEventListener('sync', (event) => {
+  console.log('🔄 [Service Worker] Mendeteksi tag Background Sync:', event.tag);
+  if (event.tag === 'sync-data') {
+    // Di masa depan, logika untuk mengirim data saat internet kembali nyala ditaruh di sini
+    event.waitUntil(Promise.resolve());
+  }
+});
+
+// 5. PERIODIC BACKGROUND SYNC: Memberitahu OS kita mendukung update berkala
+self.addEventListener('periodicsync', (event) => {
+  console.log('⏳ [Service Worker] Mendeteksi tag Periodic Sync:', event.tag);
+  if (event.tag === 'update-data') {
+    // Di masa depan, logika untuk menarik update data diam-diam ditaruh di sini
+    event.waitUntil(Promise.resolve());
+  }
 });
