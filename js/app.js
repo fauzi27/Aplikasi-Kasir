@@ -89,10 +89,10 @@ onAuthStateChanged(auth, async (user) => {
         // 4. ATUR TAMPILAN (UI)
         // Gunakan data dari businessData (entah dari server atau cache)
         if (currentUserRole === 'kasir') {
-            window.shopNameAsli = businessData.shopName || 'SAHABAT USAHAMU';
+            window.shopNameAsli = businessData.shopName || 'ISZI';
             window.shopAddressAsli = businessData.shopAddress || 'Nusadua Bali';
         } else {
-            window.shopNameAsli = businessData.name || 'SAHABAT USAHAMU';
+            window.shopNameAsli = businessData.name || 'ISZI';
             window.shopAddressAsli = businessData.address || 'Nusadua Bali';
         }
         
@@ -1542,7 +1542,7 @@ function generateReceiptHTML(buyer, items, total, date, method, paid = 0, change
 
     let hutangDetails = remaining > 0 ? `<div class="flex justify-between text-xs mt-2 pt-2 border-t border-dashed"><span>Dibayar:</span><span>${paid.toLocaleString()}</span></div><div class="flex justify-between text-xs"><span>Sisa Hutang:</span><span>${remaining.toLocaleString()}</span></div>` : '';
 
-    return `<div class="p-2 text-center"><h2 class="font-bold">${window.shopNameAsli || 'SAHABAT USAHAMU'}</h2><p class="text-[10px] text-gray-600 mb-1">${window.shopAddressAsli || 'Nusadua Bali'}</p><p class="text-xs text-gray-500 mb-2">${date}</p><div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1"><div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>Kasir: ${operatorName}</span></div><div class="text-right text-[10px] text-gray-500 mb-1">${method || '-'}</div>${itemHtml}</div><div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>${paymentDetails}${hutangDetails}<div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Semoga sehat selalu dan di lancarkan semua usahanya</div></div>`;
+    return `<div class="p-2 text-center"><h2 class="font-bold">${window.shopNameAsli || 'ISZI'}</h2><p class="text-[10px] text-gray-600 mb-1">${window.shopAddressAsli || 'Nusadua Bali'}</p><p class="text-xs text-gray-500 mb-2">${date}</p><div class="text-left border-t border-b py-2 border-dashed my-2 space-y-1"><div class="flex justify-between font-bold text-xs"><span>Plg: ${buyer}</span><span>Kasir: ${operatorName}</span></div><div class="text-right text-[10px] text-gray-500 mb-1">${method || '-'}</div>${itemHtml}</div><div class="flex justify-between font-bold text-lg"><span>TOTAL</span><span>Rp ${total.toLocaleString()}</span></div>${paymentDetails}${hutangDetails}<div class="mt-6 text-center text-xs text-gray-400">Terima Kasih - Semoga sehat selalu dan di lancarkan semua usahanya</div></div>`;
 }
 
 window.viewTransactionDetail = function(id) {
@@ -1642,7 +1642,7 @@ window.sendToWA = function() {
     }
     
     // 3. Siapkan teks struk sebagai cadangan
-    let text = `*Struk ${window.shopNameAsli || businessData.name || 'SAHABAT USAHAMU'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n\n`;
+    let text = `*Struk ${window.shopNameAsli || businessData.name || 'ISZI'}*\nTgl: ${t.date}\nPlg: ${t.buyer}\n\n`;
     t.items.forEach(i => text += `${i.name} (${i.qty}) : Rp ${(parseInt(i.price)||0)*(parseInt(i.qty)||0)}\n`);
     text += `\n*Total: Rp ${t.total.toLocaleString('id-ID')}*\nMetode: ${t.method}`;
     if(t.method === 'TUNAI' && t.paid) { text += `\nBayar: Rp ${t.paid.toLocaleString('id-ID')}\nKembali: Rp ${t.change.toLocaleString('id-ID')}`; }
@@ -1699,7 +1699,7 @@ window.exportToPDF = function() {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
     doc.setFontSize(14);
-    doc.text(businessData.name || "SAHABAT USAHAMU Bali", 105, 10, { align: 'center' });
+    doc.text(businessData.name || "ISZI Bali", 105, 10, { align: 'center' });
     doc.setFontSize(10);
     doc.text(businessData.address || "Nusadua Bali", 105, 17, { align: 'center' });
     const reportLabel = document.getElementById('report-period-label').innerText;
@@ -1816,7 +1816,7 @@ window.exportToExcel = function() {
 };
 
 function updateBusinessNameUI() {
-    document.getElementById('business-name-lobby').innerText = window.shopNameAsli || 'SAHABAT USAHAMU';
+    document.getElementById('business-name-lobby').innerText = window.shopNameAsli || 'ISZI';
     const addressLobby = document.getElementById('business-address-lobby');
     
     if(addressLobby) {
