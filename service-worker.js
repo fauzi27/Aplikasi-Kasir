@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sahabat-usahamu-v19.25'; // Versi dinaikkan agar update
+const CACHE_NAME = 'sahabat-usahamu-v19.26'; // Versi dinaikkan agar update
 const STATIC_ASSETS = [
   './', 
   './index.html',
