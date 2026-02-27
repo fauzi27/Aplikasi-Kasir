@@ -1,15 +1,62 @@
 {
   "name": "ISZI",
   "short_name": "ISZI",
+  "id": "/",
+  "description": "Aplikasi Kasir (POS) pintar untuk UMKM. Kelola transaksi, stok, dan laporan usaha Anda dengan mudah dalam satu genggaman.",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#111827",
   "theme_color": "#111827",
   "icons": [
     {
       "src": "asset/logokasir.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "asset/logokasir.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "asset/lobby.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Tampilan Lobi Utama"
+    },
+    {
+      "src": "asset/kasir.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Tampilan Menu Kasir"
+    },
+    {
+      "src": "asset/kelola-menu.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Tampilan Kelola Menu"
+    },
+    {
+      "src": "asset/penjualan-harian.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Tampilan Laporan Penjualan"
+    },
+    {
+      "src": "asset/setting.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Tampilan Pengaturan"
     }
   ]
 }
